@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 
 // Placeholder product data
 const featuredProducts = [
@@ -87,6 +89,7 @@ export default function HomePage() {
 
   return (
     <div>
+      <Header/>
       {/* Hero Slider */}
       <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
         {heroSlides.map((slide, index) => (
@@ -279,7 +282,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-primary/10 to-primary/5 p-8 md:p-16 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Join the Wild Soul Family
+              Join the Wild Soul Club
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto mb-6">
               Sign up for exclusive drops, early access, and members-only pricing.
@@ -295,6 +298,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

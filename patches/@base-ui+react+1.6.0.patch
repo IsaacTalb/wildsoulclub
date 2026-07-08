@@ -1,0 +1,13 @@
+diff --git a/node_modules/@base-ui/react/floating-ui-react/index.mjs b/node_modules/@base-ui/react/floating-ui-react/index.mjs
+index 5847183..5187ce5 100644
+--- a/node_modules/@base-ui/react/floating-ui-react/index.mjs
++++ b/node_modules/@base-ui/react/floating-ui-react/index.mjs
+@@ -16,4 +16,5 @@ export { useHover } from "./hooks/useHover.mjs";
+ export { useListNavigation } from "./hooks/useListNavigation.mjs";
+ export { useTypeahead } from "./hooks/useTypeahead.mjs";
+ export { safePolygon } from "./safePolygon.mjs";
+-export { arrow, autoPlacement, autoUpdate, computePosition, detectOverflow, flip, getOverflowAncestors, hide, inline, limitShift, offset, platform, shift, size } from '@floating-ui/react-dom';
+\ No newline at end of file
++export { arrow, autoPlacement, flip, hide, inline, limitShift, offset, shift, size } from '@floating-ui/react-dom';
++export { autoUpdate, computePosition, detectOverflow, getOverflowAncestors, platform } from '@floating-ui/dom';
+\ No newline at end of file
