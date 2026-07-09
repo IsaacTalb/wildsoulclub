@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Shield, Sparkles, Heart, Globe } from "lucide-react";
+import { Shield, Sparkles, Heart, Globe, MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 
 const values = [
@@ -57,6 +58,52 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/*Contact */}
+      <section className="py-16">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="prose prose-neutral dark:prose-invert max-w-none">
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="font-semibold mb-4">Contact Information</h3>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Address</p>
+                      <p className="text-sm text-muted-foreground">Yangon, Myanmar</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Phone</p>
+                      <p className="text-sm text-muted-foreground">09-123456789</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Email</p>
+                      <p className="text-sm text-muted-foreground">hello@wildsoulclub.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Business Hours</p>
+                      <p className="text-sm text-muted-foreground">
+                        Mon - Sat: 9:00 AM - 6:00 PM<br />
+                        Sunday: Closed
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Values */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
@@ -78,7 +125,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
+      
       {/* CTA */}
       <section className="py-16 text-center">
         <div className="container mx-auto px-4">

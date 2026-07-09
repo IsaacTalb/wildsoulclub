@@ -4,20 +4,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
-import { Menu, X, ShoppingCart, Moon, Sun, Search } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { useCart } from "@/hooks/use-cart";
 
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/collections", label: "Collections" },
-  { href: "/products", label: "Products" },
-  { href: "/about", label: "About" },
+const leftLinks = [
+  { href: "/products", label: "Shop", icon: Store },
+  { href: "/new-drops", label: "New Drop", icon: Sparkles },
+  { href: "/archive-sales", label: "Archive Sale", icon: Percent },
+  { href: "/about", label: "About Us" },
+];
+
+const mobileLinks = [
+  { href: "/products", label: "Shop" },
+  { href: "/new-drops", label: "New Drop" },
+  { href: "/archive-sales", label: "Archive Sale" },
+  { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact" },
+  { href: "/collections", label: "Collections" },
 ];
 
 export function Header() {
@@ -26,29 +35,73 @@ export function Header() {
   const { setTheme, theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-
-  const cartCount = 0; // TODO: connect to cart store
+  const { getItemCount } = useCart();
+  const cartCount = getItemCount();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold tracking-tight">
-            WILD<span className="text-primary">SOUL</span>
-          </span>
-        </Link>
+        {/* Left: Mobile hamburger + search (visible only on mobile) */}
+        <div className="flex items-center gap-1 md:hidden">
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+              <div className="flex flex-col gap-1 mt-8">
+                {mobileLinks.map((link) => (
+                  <SheetClose key={link.href} asChild>
+                    <Link
+                      href={link.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-medium transition-colors hover:text-primary hover:bg-muted",
+                        pathname === link.href
+                          ? "text-foreground bg-muted"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  </SheetClose>
+                ))}
+                <div className="mt-4 pt-4 border-t px-3">
+                  {isSignedIn ? (
+                    <div className="flex items-center gap-3">
+                      <UserButton afterSignOutUrl="/" />
+                      <span className="text-sm font-medium">{user?.fullName}</span>
+                    </div>
+                  ) : (
+                    <SignInButton mode="modal">
+                      <Button className="w-full">Sign In</Button>
+                    </SignInButton>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSearchOpen(!searchOpen)}
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Left: Desktop nav links */}
+        <nav className="hidden md:flex items-center gap-1">
+          {leftLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
+                "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:text-primary hover:bg-muted",
                 pathname === link.href
-                  ? "text-foreground"
+                  ? "text-foreground bg-muted"
                   : "text-muted-foreground"
               )}
             >
@@ -57,13 +110,22 @@ export function Header() {
           ))}
         </nav>
 
+        {/* Center: Logo */}
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+          <span className="text-xl font-bold tracking-tight">
+            wildsoulclub@
+          </span>
+        </Link>
+
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
-          {/* Search */}
+        <div className="flex items-center gap-1">
+          {/* Search - Desktop only */}
           <Button
             variant="ghost"
             size="icon"
+            className="hidden md:inline-flex"
             onClick={() => setSearchOpen(!searchOpen)}
+            aria-label="Search"
           >
             <Search className="h-5 w-5" />
           </Button>
@@ -78,9 +140,35 @@ export function Header() {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
 
+          {/* Auth - Desktop */}
+          <div className="hidden md:block">
+            {isSignedIn ? (
+              <UserButton afterSignOutUrl="/" />
+            ) : (
+              <SignInButton mode="modal">
+                <Button variant="ghost" size="icon" aria-label="Sign in">
+                  <User className="h-5 w-5" />
+                </Button>
+              </SignInButton>
+            )}
+          </div>
+
+          {/* Auth - Mobile (profile icon) */}
+          <div className="md:hidden">
+            {isSignedIn ? (
+              <UserButton afterSignOutUrl="/" />
+            ) : (
+              <Link href="/sign-up">
+                <Button variant="ghost" size="icon" aria-label="Sign in">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
+          </div>
+
           {/* Cart */}
           <Link href="/cart">
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative" aria-label="Cart">
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
                 <Badge
@@ -92,59 +180,6 @@ export function Header() {
               )}
             </Button>
           </Link>
-
-          {/* Auth */}
-          <div className="hidden md:block">
-            {isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
-            ) : (
-              <SignInButton mode="modal">
-                <Button variant="default" size="sm">
-                  Sign In
-                </Button>
-              </SignInButton>
-            )}
-          </div>
-
-          {/* Mobile Menu */}
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <div className="flex flex-col gap-4 mt-8">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "text-lg font-medium transition-colors hover:text-primary",
-                      pathname === link.href
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                <div className="mt-4 pt-4 border-t">
-                  {isSignedIn ? (
-                    <div className="flex items-center gap-3">
-                      <UserButton afterSignOutUrl="/" />
-                      <span className="text-sm">{user?.fullName}</span>
-                    </div>
-                  ) : (
-                    <SignInButton mode="modal">
-                      <Button className="w-full">Sign In</Button>
-                    </SignInButton>
-                  )}
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
 

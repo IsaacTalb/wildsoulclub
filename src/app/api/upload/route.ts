@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const validFolders = ["products", "payments", "avatars", "hero", "collections", "banners", "blogs", "temp", "invoices"];
+    const validFolders = ["products", "payments", "avatars", "hero", "collections", "banners", "blogs", "temp", "invoices", "new-drops", "archive-sales"];
     if (!validFolders.includes(folder)) {
       return NextResponse.json(
         { success: false, error: "Invalid folder" },

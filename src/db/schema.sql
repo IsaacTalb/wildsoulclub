@@ -94,6 +94,10 @@ CREATE TABLE products (
   is_active BOOLEAN DEFAULT true,
   is_archived BOOLEAN DEFAULT false,
   is_featured BOOLEAN DEFAULT false,
+  is_new_drop BOOLEAN DEFAULT false,
+  is_archive_sale BOOLEAN DEFAULT false,
+  new_drop_start_date TIMESTAMPTZ,
+  new_drop_end_date TIMESTAMPTZ,
   meta_title TEXT,
   meta_description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -277,6 +281,10 @@ CREATE TABLE hero_sliders (
   object_key TEXT NOT NULL,
   is_active BOOLEAN DEFAULT true,
   sort_order INT DEFAULT 0,
+  -- Link to a product, collection, or new drop
+  product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+  collection_id UUID REFERENCES collections(id) ON DELETE SET NULL,
+  new_drop_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -292,6 +300,10 @@ CREATE TABLE banners (
   link_url TEXT,
   is_active BOOLEAN DEFAULT true,
   position TEXT NOT NULL CHECK (position IN ('top', 'middle', 'bottom')),
+  -- Link to a product, collection, or new drop
+  product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+  collection_id UUID REFERENCES collections(id) ON DELETE SET NULL,
+  new_drop_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -322,6 +334,20 @@ CREATE TABLE pages (
 );
 
 CREATE INDEX idx_pages_slug ON pages(slug);
+
+-- ==========================================
+-- ADMIN SETTINGS
+-- ==========================================
+CREATE TABLE admin_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  key TEXT UNIQUE NOT NULL,
+  value TEXT NOT NULL,
+  group_name TEXT NOT NULL DEFAULT 'general',
+  description TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_admin_settings_key ON admin_settings(key);
 
 -- ==========================================
 -- NOTIFICATIONS
@@ -370,21 +396,29 @@ CREATE TRIGGER update_pages_updated_at
   BEFORE UPDATE ON pages
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+CREATE TRIGGER update_admin_settings_updated_at
+  BEFORE UPDATE ON admin_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 -- ==========================================
 -- SEED DATA
 -- ==========================================
-INSERT INTO site_settings (key, value, group_name) VALUES
-  ('site_name', 'Wild Soul Club', 'general'),
-  ('site_description', 'Myanmar streetwear brand', 'general'),
-  ('delivery_notice', 'Delivery within 3-5 business days', 'delivery'),
-  ('payment_notice', 'Upload payment screenshot after transfer', 'payment'),
-  ('kpay_number', '09-123456789', 'payment'),
-  ('wave_number', '09-987654321', 'payment'),
-  ('ayapay_number', '09-456789123', 'payment'),
-  ('cbpay_number', '09-789123456', 'payment'),
-  ('contact_email', 'hello@wildsoulclub.com', 'contact'),
-  ('contact_phone', '09-123456789', 'contact'),
-  ('facebook_url', '#', 'social'),
-  ('instagram_url', '#', 'social'),
-  ('tiktok_url', '#', 'social'),
-  ('telegram_url', '#', 'social');
+INSERT INTO admin_settings (key, value, group_name, description) VALUES
+  ('site_name', 'Wild Soul Club', 'general', 'Website title'),
+  ('site_description', 'Myanmar streetwear brand', 'general', 'Site meta description'),
+  ('delivery_notice', 'Delivery within 3-5 business days', 'delivery', 'Delivery info notice'),
+  ('payment_notice', 'Upload payment screenshot after transfer', 'payment', 'Payment instructions'),
+  ('kpay_number', '09-123456789', 'payment', 'K Pay account number'),
+  ('wave_number', '09-987654321', 'payment', 'Wave Pay account number'),
+  ('ayapay_number', '09-456789123', 'payment', 'Ayapay account number'),
+  ('cbpay_number', '09-789123456', 'payment', 'CB Pay account number'),
+  ('contact_email', 'hello@wildsoulclub.com', 'contact', 'Contact email'),
+  ('contact_phone', '09-123456789', 'contact', 'Contact phone'),
+  ('facebook_url', '#', 'social', 'Facebook URL'),
+  ('instagram_url', '#', 'social', 'Instagram URL'),
+  ('tiktok_url', '#', 'social', 'TikTok URL'),
+  ('telegram_url', '#', 'social', 'Telegram URL'),
+  ('new_drop_frequency', 'monthly', 'settings', 'New drop release frequency'),
+  ('archive_sale_duration', '30', 'settings', 'Archive sale duration in days'),
+  ('free_delivery_threshold', '100000', 'settings', 'Free delivery threshold (MMK)'),
+  ('default_delivery_fee', '3000', 'settings', 'Default delivery fee (MMK)');

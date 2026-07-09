@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Shield, Truck, Clock } from "lucide-react";
+import { ArrowRight, Sparkles, Shield, Truck, Clock, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
@@ -49,26 +49,18 @@ const featuredProducts = [
   },
 ];
 
-const heroSlides = [
-  {
-    title: "New Collection Drops",
-    subtitle: "Monsoon 2026 - Embrace the wild within",
-    cta: "Shop Now",
-    bg: "from-zinc-900 to-zinc-800",
-  },
-  {
-    title: "Limited Edition",
-    subtitle: "After Rain Collection - Only while stocks last",
-    cta: "Explore",
-    bg: "from-neutral-900 to-stone-800",
-  },
-  {
-    title: "Streetwear Redefined",
-    subtitle: "Premium quality apparel made for the bold",
-    cta: "Discover",
-    bg: "from-gray-900 to-slate-800",
-  },
-];
+// Create hero slides from the 3 newest products
+const heroSlides = featuredProducts
+  .filter(product => product.is_new)
+  .slice(0, 3)
+  .map(product => ({
+    id: product.id,
+    title: product.name,
+    subtitle: product.category,
+    cta: "Live Now",
+    image: product.image,
+    price: product.sale_price || product.price,
+  }));
 
 const collections = [
   { name: "After Rain", slug: "after-rain", image: "/images/placeholder.svg" },
@@ -95,7 +87,12 @@ export default function HomePage() {
         {heroSlides.map((slide, index) => (
           <motion.div
             key={index}
-            className={`absolute inset-0 bg-gradient-to-r ${slide.bg} flex items-center`}
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              backgroundImage: `url(${slide.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
             initial={{ opacity: 0 }}
             animate={{
               opacity: index === currentSlide ? 1 : 0,
@@ -134,9 +131,9 @@ export default function HomePage() {
                   }}
                   transition={{ delay: 0.6, duration: 0.5 }}
                 >
-                  <Link href="/products">
-                    <Button size="lg" className="text-base">
-                      {slide.cta} <ArrowRight className="ml-2 h-5 w-5" />
+                  <Link href="/new-drops">
+                    <Button size="lg" className="bg-white text-black hover:bg-gray-100">
+                      Live Now
                     </Button>
                   </Link>
                 </motion.div>
@@ -228,53 +225,47 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {featuredProducts.map((product) => (
-              <Link key={product.id} href={`/products/${product.id}`}>
-                <Card className="group overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="relative aspect-square bg-muted">
-                      {product.sale_price && (
-                        <Badge className="absolute top-2 left-2 z-10 bg-red-500">
-                          SALE
-                        </Badge>
-                      )}
-                      {product.is_new && (
-                        <Badge className="absolute top-2 right-2 z-10" variant="secondary">
-                          NEW
-                        </Badge>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                        {product.category}
-                      </p>
-                      <h3 className="font-medium mt-1 group-hover:text-primary transition-colors">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {product.sale_price ? (
-                          <>
-                            <span className="font-semibold">
-                              {product.sale_price.toLocaleString()} MMK
-                            </span>
-                            <span className="text-sm text-muted-foreground line-through">
-                              {product.price.toLocaleString()} MMK
-                            </span>
-                          </>
-                        ) : (
-                          <span className="font-semibold">
-                            {product.price.toLocaleString()} MMK
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+              {featuredProducts.map((product, index) => (
+                <Link key={product.id} href={`/products/${product.id}`} className="relative block">
+                  {/* Card container */}
+                  <motion.div
+                    className="group overflow-visible rounded-[24px] bg-[#FAFAFA] shadow-[0_20px_60px_rgba(0,0,0,0.08)] p-4"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ y: -8, rotateX: 2, boxShadow: '0 30px 80px rgba(0,0,0,0.12)' }}
+                    transition={{ type: 'spring', duration: 0.6 }}
+                    style={{
+                      background: 'radial-gradient(circle at center, rgba(255,255,255,0.8), rgba(240,240,240,0.4))',
+                      // Editorial vertical offsets
+                      transform: `translateY(${[0, -18, 12, -10][index % 4]}px)`,
+                    }}
+                  >
+                    {/* Image container */}
+                    <motion.div
+                      className="relative w-full h-0 pb-[100%]"
+                      whileHover={{ scale: 0.96, y: -6 }}
+                      transition={{ type: 'spring', duration: 0.6 }}
+                    >
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </motion.div>
+                    {/* Hover arrow icon */}
+                    <motion.div
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                      initial={{ opacity: 0 }}
+                      whileHover={{ opacity: 1 }}
+                    >
+                      <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
+                    </motion.div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
       </section>
 
       {/* Banner CTA */}
