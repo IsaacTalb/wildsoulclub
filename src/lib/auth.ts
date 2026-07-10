@@ -1,4 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { supabaseAdmin } from "./supabase";
 
 export async function getAuthUser() {
   const user = await currentUser();
@@ -14,8 +15,18 @@ export async function isAdmin() {
   const { userId } = await auth();
   if (!userId) return false;
 
-  const adminIds = (process.env.CLERK_ADMIN_USER_IDS || "").split(",");
-  return adminIds.includes(userId);
+  // Check if the user is an admin in Supabase
+  const { data: adminData, error: adminError } = await supabaseAdmin
+    .from("admins")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (adminError || !adminData) {
+    return false;
+  }
+
+  return true;
 }
 
 export async function requireAdmin() {

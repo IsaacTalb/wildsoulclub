@@ -1,83 +1,66 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 
-const newDrops = [
-  {
-    id: "nd1",
-    name: "Monsoon Tee",
-    price: 35000,
-    sale_price: 25000,
-    category: "T-Shirts",
-    image: "/images/placeholder.svg",
-    drop_date: "July 2026",
-  },
-  {
-    id: "nd2",
-    name: "Wild Spirit Hoodie",
-    price: 65000,
-    category: "Hoodies",
-    image: "/images/placeholder.svg",
-    drop_date: "July 2026",
-  },
-  {
-    id: "nd3",
-    name: "Soul Cap",
-    price: 18000,
-    sale_price: 15000,
-    category: "Accessories",
-    image: "/images/placeholder.svg",
-    drop_date: "June 2026",
-  },
-  {
-    id: "nd4",
-    name: "After Rain Jacket",
-    price: 85000,
-    category: "Outerwear",
-    image: "/images/placeholder.svg",
-    drop_date: "June 2026",
-  },
-  {
-    id: "nd5",
-    name: "Storm Joggers",
-    price: 48000,
-    category: "Bottoms",
-    image: "/images/placeholder.svg",
-    drop_date: "July 2026",
-  },
-  {
-    id: "nd6",
-    name: "Rebel Beanie",
-    price: 15000,
-    category: "Accessories",
-    image: "/images/placeholder.svg",
-    drop_date: "June 2026",
-  },
-  {
-    id: "nd7",
-    name: "Eclipse Tote",
-    price: 22000,
-    category: "Accessories",
-    image: "/images/placeholder.svg",
-    drop_date: "July 2026",
-  },
-  {
-    id: "nd8",
-    name: "Thunder Socks",
-    price: 8000,
-    category: "Accessories",
-    image: "/images/placeholder.svg",
-    drop_date: "June 2026",
-  },
-];
-
 export default function NewDropsPage() {
+  const [newDrops, setNewDrops] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchNewDrops = async () => {
+      try {
+        const res = await fetch("/api/new-drops");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setNewDrops(data.data || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNewDrops();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Sparkles className="h-4 w-4" />
+            Fresh off the press
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">New Drops</h1>
+          <p className="text-muted-foreground">Loading latest drops...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Sparkles className="h-4 w-4" />
+            Fresh off the press
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">New Drops</h1>
+          <p className="text-muted-foreground">Failed to load drops. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero */}
@@ -98,18 +81,26 @@ export default function NewDropsPage() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {newDrops.map((item, index) => (
+        {newDrops.map((item) => (
           <motion.div
             key={item.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
+            transition={{ delay: Math.random() * 0.3 }}
           >
             <Link href={`/products/${item.id}`}>
               <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-0">
                   <div className="aspect-square bg-muted relative flex items-center justify-center">
-                    <span className="text-muted-foreground/40 text-sm">Product Image</span>
+                    {item.product_images?.[0] ? (
+                      <img
+                        src={`${process.env.R2_PUBLIC_BASE_URL}/${item.product_images[0].object_key}`}
+                        alt={item.name}
+                        className="object-contain w-full h-full"
+                      />
+                    ) : (
+                      <span className="text-muted-foreground/40 text-sm">Product Image</span>
+                    )}
                     <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground">
                       New Drop
                     </Badge>
@@ -120,21 +111,39 @@ export default function NewDropsPage() {
                     )}
                   </div>
                   <div className="p-4">
-                    <p className="text-xs text-muted-foreground mb-1">{item.category}</p>
-                    <h3 className="font-semibold group-hover:text-primary transition-colors">{item.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {item.category || "Uncategorized"}
+                    </p>
+                    <h3 className="font-semibold group-hover:text-primary transition-colors">
+                      {item.name}
+                    </h3>
                     <div className="flex items-center gap-2 mt-1">
                       {item.sale_price ? (
                         <>
-                          <span className="text-sm font-bold text-primary">{formatPrice(item.sale_price)}</span>
-                          <span className="text-xs text-muted-foreground line-through">{formatPrice(item.price)}</span>
+                          <span className="text-sm font-bold text-primary">
+                            {formatPrice(item.sale_price)}
+                          </span>
+                          <span className="text-xs text-muted-foreground line-through">
+                            {formatPrice(item.price)}
+                          </span>
                         </>
                       ) : (
-                        <span className="text-sm font-bold">{formatPrice(item.price)}</span>
+                        <span className="text-sm font-bold">
+                          {formatPrice(item.price)}
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {item.drop_date}
+                      {item.new_drop_start_date ? (
+                        new Date(item.new_drop_start_date).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      ) : (
+                        "Available now"
+                      )}
                     </div>
                   </div>
                 </CardContent>

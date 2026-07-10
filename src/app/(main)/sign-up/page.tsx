@@ -1,4 +1,4 @@
-import { SignUp } from "@clerk/nextjs";
+import { SignUp, ClerkProvider } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -23,10 +23,19 @@ export default function SignUpPage() {
         console.error("Failed to synchronize user:", error);
       }
     };
-    
-    // Clerk does not expose a direct event for sign-up completion,
-    // so we rely on the webhook for synchronization.
-    // This is a placeholder for manual synchronization if needed.
+
+    // Listen for Clerk's user session event
+    const handleUserSession = () => {
+      handleUserCreated();
+    };
+
+    // Use Clerk's event listener for sign-up completion
+    const unlisten = ClerkProvider.hooks.useUserEventListener(
+      'user.created',
+      handleUserCreated
+    );
+
+    return () => unlisten();
   }, [router]);
 
   return <SignUp />;

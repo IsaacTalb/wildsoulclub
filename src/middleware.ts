@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -18,11 +19,24 @@ const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = auth();
-  const adminIds = process.env.CLERK_ADMIN_USER_IDS?.split(",") || [];
+  const adminIds = process.env.CLERK_ADMIN_USER_IDS?.split(",").map(id => id.trim()).filter(id => id) || [];
 
   if (isAdminRoute(req)) {
     await auth.protect();
-    if (!userId || !adminIds.includes(userId)) {
+    if (!userId) {
+      console.log(`Access denied to admin route. User ID: ${userId}, Admin IDs: ${adminIds.join(",")}`);
+      return Response.redirect(new URL("/", req.url));
+    }
+
+    // Check if the user is an admin in Supabase
+    const { data: adminData, error: adminError } = await supabaseAdmin
+      .from("admins")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (adminError || !adminData) {
+      console.log(`Access denied to admin route. User ID: ${userId} is not an admin in Supabase.`);
       return Response.redirect(new URL("/", req.url));
     }
   }

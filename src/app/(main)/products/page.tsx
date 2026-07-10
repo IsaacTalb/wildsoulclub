@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, ShoppingCart } from "lucide-react";
+import { Search, SlidersHorizontal, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,36 +26,59 @@ const categories = [
   { id: "5", name: "Bottoms" },
 ];
 
-const placeholderProducts = Array.from({ length: 12 }, (_, i) => ({
-  id: String(i + 1),
-  name: [
-    "Monsoon Tee", "Wild Spirit Hoodie", "Soul Cap", "After Rain Jacket",
-    "Urban Cargo Pants", "Midnight Crewneck", "Savage Shorts", "Eclipse Tote",
-    "Thunder Socks", "Wilderness Tee", "Storm Joggers", "Rebel Beanie"
-  ][i],
-  price: [35000, 65000, 18000, 85000, 55000, 45000, 28000, 22000, 8000, 32000, 48000, 15000][i],
-  sale_price: [25000, null, 15000, null, null, null, null, null, null, null, null, null][i],
-  category: categories[Math.floor(i / 2) + (i % 2 === 0 ? 1 : 0)]?.name || "T-Shirts",
-  image: "/images/placeholder.svg",
-  is_new: i < 4,
-}));
 
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("newest");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filtered = placeholderProducts
-    .filter((p) => {
-      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = category === "all" || p.category === categories.find(c => c.id === category)?.name;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (sort === "price-asc") return a.price - b.price;
-      if (sort === "price-desc") return b.price - a.price;
-      return 0;
-    });
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (search) params.append("search", search);
+        if (category !== "all") params.append("category", category);
+        if (sort) params.append("sort", sort);
+
+        const res = await fetch(`/api/public/products?${params.toString()}`);
+        if (!res.ok) throw new Error("Failed to fetch products");
+        const data = await res.json();
+        setProducts(data.data || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [search, category, sort]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-16">
+          <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">Error loading products</h3>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -101,7 +124,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Products Grid */}
-      {filtered.length === 0 ? (
+      {products.length === 0 ? (
         <div className="text-center py-16">
           <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium">No products found</h3>
@@ -109,7 +132,7 @@ export default function ProductsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {filtered.map((product, index) => (
+          {products.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 20 }}
@@ -120,6 +143,15 @@ export default function ProductsPage() {
                 <Card className="group overflow-hidden h-full">
                   <CardContent className="p-0">
                     <div className="relative aspect-square bg-muted">
+                      {product.product_images?.[0] ? (
+                        <img
+                          src={`${process.env.R2_PUBLIC_BASE_URL}/${product.product_images[0].object_key}`}
+                          alt={product.name}
+                          className="object-contain w-full h-full"
+                        />
+                      ) : (
+                        <span className="text-muted-foreground/40 text-sm">Product Image</span>
+                      )}
                       {product.sale_price && (
                         <Badge className="absolute top-2 left-2 z-10 bg-red-500">SALE</Badge>
                       )}
