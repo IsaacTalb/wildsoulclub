@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { Plus, Shield, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,16 +19,10 @@ import { Label } from "@/components/ui/label";
 import { getInitials } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
-const [admins, setAdmins] = useState([]);
 
-useEffect(() => {
-  const fetchAdmins = async () => {
-    const { data, error } = await supabase.from("admins").select("*");
-    if (error) console.error("Error fetching admins:", error);
-    else setAdmins(data || []);
-  };
-  fetchAdmins();
-}, []);
+export default function AdminManagementPage() {
+  const [admins, setAdmins] = useState([]);
+  const [open, setOpen] = useState(false);
 
 return (
   <div className="space-y-6">
@@ -92,3 +88,4 @@ return (
     </Card>
   </div>
 );
+}
