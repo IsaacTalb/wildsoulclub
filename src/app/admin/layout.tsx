@@ -218,7 +218,7 @@ export default function AdminLayout({
               </Badge>
             </Button>
             <div className="flex items-center gap-2">
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
               <div className="hidden md:block text-sm">
                 <p className="font-medium">{user?.fullName || "Admin"}</p>
                 <p className="text-xs text-muted-foreground">Administrator</p>

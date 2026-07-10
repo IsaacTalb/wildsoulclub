@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
+import { ArchiveSaleProduct } from "@/types/product";
 
 export default function ArchiveSalesPage() {
-  const [archiveSales, setArchiveSales] = useState([]);
+  const [archiveSales, setArchiveSales] = useState<ArchiveSaleProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchArchiveSales = async () => {
@@ -23,7 +24,7 @@ export default function ArchiveSalesPage() {
         const data = await res.json();
         setArchiveSales(data.data || []);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to fetch archive sales");
       } finally {
         setLoading(false);
       }
@@ -95,7 +96,7 @@ export default function ArchiveSalesPage() {
                       <span className="text-muted-foreground/40 text-sm">Product Image</span>
                     )}
                     <Badge variant="destructive" className="absolute top-3 left-3">
-                      -{item.discount}%
+                      -{item.discount || Math.round(((item.price - item.sale_price) / item.price) * 100)}%
                     </Badge>
                   </div>
                   <div className="p-4">

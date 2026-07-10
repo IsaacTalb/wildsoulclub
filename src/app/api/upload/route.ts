@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const uploadUrl = await getSignedUploadUrl(folder, contentType);
-    const objectKey = uploadUrl.split("?")[0].split("/").pop();
+    const objectKey = typeof uploadUrl === 'string' ? (uploadUrl as string).split("?")[0].split("/").pop() : '';
 
     return NextResponse.json({
       success: true,

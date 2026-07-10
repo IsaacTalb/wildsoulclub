@@ -6,10 +6,18 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  product_count: number;
+  products?: number;
+}
+
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -20,7 +28,7 @@ export default function CategoriesPage() {
         const data = await res.json();
         setCategories(data.data || []);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to fetch categories");
       } finally {
         setLoading(false);
       }

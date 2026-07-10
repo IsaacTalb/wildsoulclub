@@ -38,7 +38,7 @@ export default function AdminTownshipsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Townships</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Township</Button></DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Township</Button>
           <DialogContent>
             <DialogHeader><DialogTitle>New Township</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
@@ -70,7 +70,9 @@ export default function AdminTownshipsPage() {
                   <td className="py-3 px-4 text-muted-foreground">{t.city}</td>
                   <td className="py-3 px-4">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <Button variant="ghost" size="icon" onClick={() => {}}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600"><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>

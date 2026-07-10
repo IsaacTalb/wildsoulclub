@@ -38,13 +38,10 @@ export default function AdminNewDropsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">New Drops</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Add New Drop</Button>
-          </DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add New Drop</Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Drop</DialogTitle>
-              <DialogDescription>Create a new product drop with special pricing.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
@@ -106,11 +103,9 @@ export default function AdminNewDropsPage() {
                   </td>
                   <td className="py-3 px-4">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {}}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Pencil className="h-4 w-4 mr-2" /> Edit

@@ -7,10 +7,20 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+export interface Collection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  banner_color: string;
+  product_count: number;
+  products?: number;
+}
+
 export default function CollectionsPage() {
-  const [collections, setCollections] = useState([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -21,7 +31,7 @@ export default function CollectionsPage() {
         const data = await res.json();
         setCollections(data.data || []);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to fetch collections");
       } finally {
         setLoading(false);
       }
@@ -73,7 +83,7 @@ export default function CollectionsPage() {
                     <h3 className="text-white text-xl font-bold">{collection.name}</h3>
                     <p className="text-white/80 text-sm mt-1">{collection.description}</p>
                     <div className="flex items-center justify-between mt-3">
-                      <span className="text-white/60 text-xs">{collection.products || 0} Products</span>
+                      <span className="text-white/60 text-xs">{collection.product_count || 0} Products</span>
                       <span className="text-white text-sm group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                         Explore <ArrowRight className="h-4 w-4" />
                       </span>

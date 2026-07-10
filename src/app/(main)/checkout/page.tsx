@@ -62,7 +62,7 @@ export default function CheckoutPage() {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-        <Button asChild>
+        <Button>
           <Link href="/products">Shop Now</Link>
         </Button>
       </div>

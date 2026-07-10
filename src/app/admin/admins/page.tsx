@@ -17,19 +17,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getInitials } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 
 export default function AdminManagementPage() {
-  const [admins, setAdmins] = useState([]);
+  const [admins, setAdmins] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
 
-return (
-  <div className="space-y-6">
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      const { data, error } = await supabaseAdmin.from("admins").select("*");
+      if (error) console.error("Error fetching admins:", error);
+      else setAdmins(data || []);
+    };
+    fetchAdmins();
+  }, []);
+
+  return (
+    <div className="space-y-6">
     <div className="flex items-center justify-between">
       <h1 className="text-2xl font-bold">Admin Management</h1>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Admin</Button></DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Admin</Button>
         <DialogContent>
           <DialogHeader><DialogTitle>Add Admin</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">

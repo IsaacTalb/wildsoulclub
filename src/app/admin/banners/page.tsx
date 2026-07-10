@@ -35,7 +35,7 @@ export default function AdminBannersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Banners</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Banner</Button></DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Banner</Button>
           <DialogContent>
             <DialogHeader><DialogTitle>New Banner</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
@@ -79,7 +79,7 @@ export default function AdminBannersPage() {
                   <td className="py-3 px-4"><Badge variant={b.active ? "default" : "secondary"}>{b.active ? "Active" : "Inactive"}</Badge></td>
                   <td className="py-3 px-4">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <Button variant="ghost" size="icon" onClick={() => {}}><MoreHorizontal className="h-4 w-4" /></Button>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600"><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>

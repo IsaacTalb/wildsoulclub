@@ -44,32 +44,30 @@ export function Header() {
         {/* Left: Mobile hamburger + search (visible only on mobile) */}
         <div className="flex items-center gap-1 md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
+            <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setIsOpen(true)}>
+              <Menu className="h-5 w-5" />
+            </Button>
             <SheetContent side="left" className="w-[280px] sm:w-[320px]">
               <div className="flex flex-col gap-1 mt-8">
                 {mobileLinks.map((link) => (
-                  <SheetClose key={link.href} asChild>
-                    <Link
-                      href={link.href}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-medium transition-colors hover:text-primary hover:bg-muted",
-                        pathname === link.href
-                          ? "text-foreground bg-muted"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  </SheetClose>
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-medium transition-colors hover:text-primary hover:bg-muted",
+                      pathname === link.href
+                        ? "text-foreground bg-muted"
+                        : "text-muted-foreground"
+                    )}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
                 ))}
                 <div className="mt-4 pt-4 border-t px-3">
                   {isSignedIn ? (
                     <div className="flex items-center gap-3">
-                      <UserButton afterSignOutUrl="/" />
+                      <UserButton />
                       <span className="text-sm font-medium">{user?.fullName}</span>
                     </div>
                   ) : (
@@ -143,7 +141,7 @@ export function Header() {
           {/* Auth - Desktop */}
           <div className="hidden md:block">
             {isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             ) : (
               <SignInButton mode="modal">
                 <Button variant="ghost" size="icon" aria-label="Sign in">
@@ -156,7 +154,7 @@ export function Header() {
           {/* Auth - Mobile (profile icon) */}
           <div className="md:hidden">
             {isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             ) : (
               <Link href="/sign-up">
                 <Button variant="ghost" size="icon" aria-label="Sign in">

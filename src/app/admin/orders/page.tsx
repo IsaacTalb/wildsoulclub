@@ -24,7 +24,7 @@ const orders = [
 ];
 
 export default function AdminOrdersPage() {
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const filtered = statusFilter === "all" ? orders : orders.filter((o) => o.status === statusFilter);
 
@@ -39,7 +39,7 @@ export default function AdminOrdersPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Search orders..." className="pl-10" />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter || undefined} onValueChange={(value) => setStatusFilter(value || "all")}>
               <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>

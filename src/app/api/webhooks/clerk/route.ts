@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
   const payload = await req.text();
   console.log("Webhook payload:", payload);
-  const headersList = headers();
+  const headersList = await headers();
   const svixId = headersList.get("svix-id");
   const svixTimestamp = headersList.get("svix-timestamp");
   const svixSignature = headersList.get("svix-signature");

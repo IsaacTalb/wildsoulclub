@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
+import { Product } from "@/types/product";
 
 const categories = [
   { id: "all", name: "All Products" },
@@ -29,11 +30,11 @@ const categories = [
 
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [sort, setSort] = useState("newest");
-  const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState<string>("all");
+  const [sort, setSort] = useState<string>("newest");
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -49,7 +50,7 @@ export default function ProductsPage() {
         const data = await res.json();
         setProducts(data.data || []);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to fetch products");
       } finally {
         setLoading(false);
       }
@@ -99,7 +100,7 @@ export default function ProductsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select value={category} onValueChange={setCategory}>
+        <Select value={category} onValueChange={(value) => setCategory(value || "all")}>
           <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
@@ -111,7 +112,7 @@ export default function ProductsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={sort} onValueChange={setSort}>
+        <Select value={sort} onValueChange={(value) => setSort(value || "newest")}>
           <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>

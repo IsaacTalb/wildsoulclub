@@ -23,7 +23,7 @@ const payments = [
 ];
 
 export default function AdminPaymentsPage() {
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState<string>("all");
 
   const filtered = filter === "all" ? payments : payments.filter((p) => p.status === filter);
 
@@ -39,7 +39,7 @@ export default function AdminPaymentsPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Search payments..." className="pl-10" />
             </div>
-            <Select value={filter} onValueChange={setFilter}>
+            <Select value={filter || undefined} onValueChange={(value) => setFilter(value || "all")}>
               <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>

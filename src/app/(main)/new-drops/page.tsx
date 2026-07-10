@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
+import { ArchiveSaleProduct } from "@/types/product";
 
 export default function NewDropsPage() {
-  const [newDrops, setNewDrops] = useState([]);
+  const [newDrops, setNewDrops] = useState<ArchiveSaleProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchNewDrops = async () => {
@@ -22,7 +23,7 @@ export default function NewDropsPage() {
         const data = await res.json();
         setNewDrops(data.data || []);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "Failed to fetch new drops");
       } finally {
         setLoading(false);
       }

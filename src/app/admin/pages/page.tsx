@@ -38,7 +38,7 @@ export default function AdminPagesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Pages</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />New Page</Button></DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Page</Button>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Create New Page</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
@@ -73,7 +73,9 @@ export default function AdminPagesPage() {
                   <td className="py-3 px-4 text-muted-foreground">{p.updated}</td>
                   <td className="py-3 px-4">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <Button variant="ghost" size="icon" onClick={() => {}}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600"><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>

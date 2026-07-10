@@ -46,9 +46,7 @@ export default function AdminProductsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Products</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Add Product</Button>
-          </DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Product</Button>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Add New Product</DialogTitle>
@@ -138,9 +136,9 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="py-3">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
+                      <Button variant="ghost" size="icon" onClick={() => {}}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600">

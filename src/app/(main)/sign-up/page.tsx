@@ -32,12 +32,10 @@ export default function SignUpPage() {
     };
 
     // Use Clerk's event listener for sign-up completion
-    const unlisten = ClerkProvider.hooks.useUserEventListener(
-      'user.created',
-      handleUserCreated
-    );
+    // Note: ClerkProvider.hooks is not available in the current version of Clerk.
+    // We'll rely on the webhook for synchronization.
 
-    return () => unlisten();
+    return () => {};
   }, [router]);
 
   return <SignUp />;

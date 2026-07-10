@@ -38,13 +38,10 @@ export default function AdminArchiveSalesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Archive Sales</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Add Archive Sale</Button>
-          </DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Archive Sale</Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add Archive Sale</DialogTitle>
-              <DialogDescription>Create a discount promotion for archived products.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
@@ -108,11 +105,9 @@ export default function AdminArchiveSalesPage() {
                   </td>
                   <td className="py-3 px-4">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {}}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Pencil className="h-4 w-4 mr-2" /> Edit

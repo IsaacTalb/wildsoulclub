@@ -37,7 +37,7 @@ export default function AdminCouponsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Coupons</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Coupon</Button></DialogTrigger>
+          <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Coupon</Button>
           <DialogContent>
             <DialogHeader><DialogTitle>New Coupon</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 py-4">
@@ -80,7 +80,9 @@ export default function AdminCouponsPage() {
                   <td className="py-3 px-4"><Badge variant={c.active ? "default" : "secondary"}>{c.active ? "Active" : "Inactive"}</Badge></td>
                   <td className="py-3 px-4">
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <Button variant="ghost" size="icon" onClick={() => {}}>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600"><Trash2 className="h-4 w-4 mr-2" /> Delete</DropdownMenuItem>
