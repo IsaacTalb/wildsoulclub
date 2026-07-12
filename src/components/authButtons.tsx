@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ export function SignOutButton() {
 }
 
 export function UserButton() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const getSession = async () => {
@@ -87,7 +88,7 @@ export function UserButton() {
         <p className="text-sm font-medium">
           {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
         </p>
-        <Button variant="ghost" size="icon-only" onClick={handleSignOut}>
+        <Button variant="ghost" size="icon" onClick={handleSignOut}>
           <X className="h-4 w-4" />
         </Button>
       </div>

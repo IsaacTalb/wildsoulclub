@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -69,11 +68,8 @@ export default function CollectionsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {collections.map((collection, index) => (
-          <motion.div
+          <div
             key={collection.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
           >
             <Link href={`/collections/${collection.slug}`}>
               <Card className="group overflow-hidden border-0">
@@ -92,7 +88,7 @@ export default function CollectionsPage() {
                 </CardContent>
               </Card>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

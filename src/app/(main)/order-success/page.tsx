@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { CheckCircle, Package, ArrowRight, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,11 +11,8 @@ export default function OrderSuccessPage() {
 
   return (
     <div className="container mx-auto px-4 py-16">
-      <motion.div
+      <div
         className="max-w-lg mx-auto text-center"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
       >
         <div className="mb-6">
           <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
@@ -70,7 +66,7 @@ export default function OrderSuccessPage() {
             <Button variant="outline">View Orders</Button>
           </Link>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

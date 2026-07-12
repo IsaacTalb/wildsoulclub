@@ -1,3 +1,5 @@
+"use client";
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem, Product } from "@/types";
@@ -75,6 +77,7 @@ export const useCart = create<CartStore>()(
     }),
     {
       name: "wildsoul-cart",
+      skipHydration: true,
     }
   )
 );

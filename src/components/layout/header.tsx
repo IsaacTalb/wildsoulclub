@@ -2,11 +2,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { SignInButton, SignOutButton } from "@/components/authButtons";
 import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -31,11 +31,7 @@ const mobileLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -54,11 +50,9 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Left: Mobile hamburger + search (visible only on mobile) */}
         <div className="flex items-center gap-1 md:hidden">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setIsOpen(true)}>
-              <Menu className="h-5 w-5" />
-            </Button>
-          </Sheet>
+          <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setIsOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
         </div>
 
         {/* Center: Logo (visible on all screens) */}
@@ -101,16 +95,18 @@ export function Header() {
           </Button>
 
           {/* Cart button */}
-          <Button variant="ghost" size="icon" aria-label="Cart" asChild>
-            <Link href="/cart">
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <Badge className="absolute top-1 right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center">
-                  {cartCount}
-                </Badge>
-              )}
-            </Link>
-          </Button>
+          <Link
+            href="/cart"
+            aria-label="Cart"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cartCount > 0 && (
+              <Badge className="absolute top-1 right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center">
+                {cartCount}
+              </Badge>
+            )}
+          </Link>
 
           {/* Theme toggle */}
           <Button
@@ -132,7 +128,8 @@ export function Header() {
       </div>
 
       {/* Mobile navigation sheet */}
-      <SheetContent side="left">
+      {isOpen && (
+        <div className="fixed inset-y-0 left-0 z-50 w-80 bg-background border-r p-6 shadow-lg md:hidden">
         <div className="flex flex-col gap-4 pt-8">
           {mobileLinks.map((link) => (
             <Link
@@ -148,7 +145,8 @@ export function Header() {
             </Link>
           ))}
         </div>
-      </SheetContent>
+      </div>
+      )}
 
       {/* Search overlay */}
       {searchOpen && (

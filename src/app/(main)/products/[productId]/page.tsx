@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { ChevronLeft, Minus, Plus, ShoppingCart, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,13 +96,11 @@ export default function ProductDetailPage() {
           <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
             {product.category}
           </p>
-          <motion.h1
+          <h1
             className="text-3xl md:text-4xl font-bold mb-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
           >
             {product.name}
-          </motion.h1>
+          </h1>
 
           <div className="flex items-center gap-3 mb-6">
             {product.sale_price ? (

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
