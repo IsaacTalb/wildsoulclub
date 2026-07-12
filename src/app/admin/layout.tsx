@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { UserButton } from "@/components/authButtons";
 import {
   LayoutDashboard,
   Package,
@@ -33,6 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn, getInitials } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 const sidebarLinks = [
   {
@@ -133,8 +134,26 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user } = useUser();
+  const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Fetch user session on mount and subscribe to auth changes
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

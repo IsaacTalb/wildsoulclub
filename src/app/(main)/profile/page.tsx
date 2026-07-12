@@ -1,103 +1,146 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getInitials, formatDate } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
 import { User, Mail, Phone, MapPin, Package } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user } = useUser();
-  const [mounted, setMounted] = useState(false);
+  const [session, setSession] = useState(null);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+  }, []);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  if (!mounted) return null;
+  // Extract first and last name from user_metadata on mount
+  useEffect(() => {
+    if (session?.user?.user_metadata?.full_name) {
+      const fullName = session.user.user_metadata.full_name;
+      const [first, ...last] = fullName.split(" ");
+      setFirstName(first || "");
+      setLastName(last.join(" ") || "");
+    } else if (session?.user?.user_metadata?.first_name) {
+      setFirstName(session.user.user_metadata.first_name);
+      setLastName(session.user.user_metadata.last_name || "");
+    }
+  }, [session]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        first_name: firstName,
+        last_name: lastName,
+      },
+    });
+
+    if (updateError) {
+      setError(updateError.message);
+      setLoading(false);
+      return;
+    }
+
+    setSuccess("Profile updated successfully!");
+    setLoading(false);
+  };
+
+  if (!session) {
+    return <div>Loading...</div>;
+  }
+
+  const user = session.user;
+  const fullName = user.user_metadata?.full_name || `${firstName} ${lastName}`.trim() || user.email?.split("@")[0] || "User";
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center gap-4 mb-8">
-        <Avatar className="h-16 w-16">
-          <AvatarImage src={user?.imageUrl} />
-          <AvatarFallback>{user?.fullName ? getInitials(user.fullName) : "U"}</AvatarFallback>
-        </Avatar>
+        <div className="h-16 w-16 flex items-center justify-center bg-primary/20 text-primary rounded-full">
+          {getInitials(`${firstName && lastName ? `${firstName[0]}${lastName[0]}` : user.email?.[0] ?? "U"}`)}
+        </div>
         <div>
-          <h1 className="text-2xl font-bold">{user?.fullName || "User"}</h1>
-          <p className="text-muted-foreground text-sm">{user?.primaryEmailAddress?.emailAddress}</p>
+          <h1 className="text-2xl font-bold">{(user.user_metadata?.full_name || user.email?.split("@")[0]) ?? "User"}</h1>
+          <p className="text-muted-foreground text-sm">{user.email}</p>
         </div>
       </div>
 
       <Tabs defaultValue="profile">
-        <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="addresses">Addresses</TabsTrigger>
+        <TabsList className="grid w-[200px] grid-cols-1">
+          <TabsTrigger value="profile">
+            <User className="h-4 w-4 mr-2" /> Profile
+          </TabsTrigger>
+          <TabsTrigger value="orders">
+            <Package className="h-4 w-4 mr-2" /> Orders
+          </TabsTrigger>
+          <TabsTrigger value="addresses">
+            <MapPin className="h-4 w-4 mr-2" /> Addresses
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-6 space-y-6">
+          {success && (
+            <div className="bg-green-100 text-green-800 text-sm p-3 rounded-md">
+              {success}
+            </div>
+          )}
+          {error && (
+            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
+              {error}
+            </div>
+          )}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Personal Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>First Name</Label>
-                  <Input defaultValue={user?.firstName || ""} />
+            <CardContent className="space-y-6">
+              <form onSubmit={handleUpdateProfile} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>First Name</Label>
+                    <Input
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>Last Name</Label>
+                    <Input
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>Last Name</Label>
-                  <Input defaultValue={user?.lastName || ""} />
-                </div>
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input defaultValue={user?.primaryEmailAddress?.emailAddress || ""} disabled />
-              </div>
-              <div>
-                <Label>Phone</Label>
-                <Input placeholder="09-xxxxxxxxx" />
-              </div>
-              <Button>Save Changes</Button>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="orders" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Order History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-3" />
-                <p>No orders yet</p>
-                <a href="/products">
-                  <Button variant="outline" className="mt-3">Start Shopping</Button>
-                </a>
-              </div>
-            </CardContent>
-          </Card>
+          <p className="text-center py-8">Your order history will appear here.</p>
         </TabsContent>
 
         <TabsContent value="addresses" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Saved Addresses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <MapPin className="h-12 w-12 mx-auto mb-3" />
-                <p>No addresses saved yet</p>
-                <Button variant="outline" className="mt-3">Add Address</Button>
-              </div>
-            </CardContent>
-          </Card>
+          <p className="text-center py-8">Your saved addresses will appear here.</p>
         </TabsContent>
       </Tabs>
     </div>

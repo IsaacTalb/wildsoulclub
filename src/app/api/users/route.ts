@@ -18,11 +18,11 @@ export async function POST(req: Request) {
     const { data, error } = await supabaseAdmin
       .from("users")
       .upsert({
-        clerk_id: user.id,
-        email: email || user.emailAddresses?.[0]?.emailAddress,
-        full_name: fullName || user.fullName,
-        phone: phone || user.phoneNumbers?.[0]?.phoneNumber,
-        avatar_url: imageUrl || user.imageUrl,
+        id: user.id,
+        email: user.email,
+        ...(fullName !== undefined && { full_name: fullName }),
+        ...(phone !== undefined && { phone: phone }),
+        ...(imageUrl !== undefined && { avatar_url: imageUrl }),
       })
       .select()
       .single();

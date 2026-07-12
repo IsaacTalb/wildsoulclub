@@ -1,56 +1,109 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/products(.*)",
-  "/collections(.*)",
-  "/about",
-  "/new-drops",
-  "/archive-sales",
-  "/delivery",
-  "/privacy",
-  "/terms",
-  "/api/public(.*)",
-  "/api/products(.*)",
-]);
+// Helper to match route patterns
+function matchesPattern(pathname: string, pattern: string): boolean {
+  if (pattern.endsWith("(.*)")) {
+    const prefix = pattern.slice(0, -3);
+    return pathname === prefix || pathname.startsWith(prefix + "/");
+  }
+  return pathname === pattern;
+}
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+function isPublicRoute(pathname: string): boolean {
+  const publicPatterns = [
+    "/",
+    "/products(.*)",
+    "/collections(.*)",
+    "/about",
+    "/new-drops",
+    "/archive-sales",
+    "/delivery",
+    "/privacy",
+    "/terms",
+    "/api/public(.*)",
+    "/api/products(.*)",
+    "/sign-in",
+    "/sign-up",
+    "/api/auth(.*)",
+  ];
+  return publicPatterns.some(p => matchesPattern(pathname, p));
+}
 
-export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
-  const adminIds = process.env.CLERK_ADMIN_USER_IDS?.split(",").map(id => id.trim()).filter(id => id) || [];
+function isAdminRoute(pathname: string): boolean {
+  return matchesPattern(pathname, "/admin(.*)");
+}
 
-  if (isAdminRoute(req)) {
-    await auth.protect();
-    if (!userId) {
-      console.log(`Access denied to admin route. User ID: ${userId}, Admin IDs: ${adminIds.join(",")}`);
-      return Response.redirect(new URL("/", req.url));
+export async function middleware(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
+
+  // Create a Supabase client for the middleware using cookies
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
     }
+  );
 
-    // Check if the user is an admin in Supabase
+  // Read the session from cookies
+  const { data: { user } } = await supabase.auth.getUser(
+    req.cookies.get("sb-access-token")?.value
+      ? undefined
+      : undefined
+  );
+
+  // Admin route protection
+  if (isAdminRoute(pathname)) {
+    if (!user) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/sign-in";
+      return NextResponse.redirect(url);
+    }
+    // Check if user is an admin by checking the admins table
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      }
+    );
     const { data: adminData, error: adminError } = await supabaseAdmin
       .from("admins")
       .select("*")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .single();
 
     if (adminError || !adminData) {
-      console.log(`Access denied to admin route. User ID: ${userId} is not an admin in Supabase.`);
-      return Response.redirect(new URL("/", req.url));
+      const url = req.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
     }
+    return NextResponse.next();
   }
 
-  if (!isPublicRoute(req)) {
-    await auth.protect();
+  // Protect non-public routes
+  if (!isPublicRoute(pathname)) {
+    if (!user) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/sign-in";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
   }
-});
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

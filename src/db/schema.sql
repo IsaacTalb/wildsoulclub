@@ -9,8 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- USERS
 -- ==========================================
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  clerk_id TEXT UNIQUE NOT NULL,
+  id UUID PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
   phone TEXT,
@@ -19,7 +18,6 @@ CREATE TABLE users (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_users_clerk_id ON users(clerk_id);
 CREATE INDEX idx_users_email ON users(email);
 
 -- ==========================================

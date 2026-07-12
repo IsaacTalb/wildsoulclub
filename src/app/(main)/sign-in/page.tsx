@@ -7,40 +7,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-export default function SignUpPage() {
+export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
 
-  const handleEmailSignUp = async (e: React.FormEvent) => {
+  const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setMessage(null);
 
-    const { error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
     });
 
     if (error) {
       setError(error.message);
     } else {
-      setMessage("Check your email for the confirmation link!");
+      router.push("/");
+      router.refresh();
     }
     setLoading(false);
   };
 
-  const handleGoogleSignUp = async () => {
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     setError(null);
 
@@ -57,7 +52,7 @@ export default function SignUpPage() {
     }
   };
 
-  const handleFacebookSignUp = async () => {
+  const handleFacebookSignIn = async () => {
     setLoading(true);
     setError(null);
 
@@ -78,8 +73,8 @@ export default function SignUpPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Create an Account</CardTitle>
-          <CardDescription>Join Wild Soul Club</CardDescription>
+          <CardTitle className="text-2xl">Welcome Back</CardTitle>
+          <CardDescription>Sign in to your Wild Soul Club account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
@@ -87,24 +82,8 @@ export default function SignUpPage() {
               {error}
             </div>
           )}
-          {message && (
-            <div className="bg-green-100 text-green-800 text-sm p-3 rounded-md">
-              {message}
-            </div>
-          )}
 
-          <form onSubmit={handleEmailSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            </div>
+          <form onSubmit={handleEmailSignIn} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -125,11 +104,10 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Sign Up with Email"}
+              {loading ? "Signing in..." : "Sign In with Email"}
             </Button>
           </form>
 
@@ -143,7 +121,7 @@ export default function SignUpPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" onClick={handleGoogleSignUp} disabled={loading}>
+            <Button variant="outline" onClick={handleGoogleSignIn} disabled={loading}>
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -164,7 +142,7 @@ export default function SignUpPage() {
               </svg>
               Google
             </Button>
-            <Button variant="outline" onClick={handleFacebookSignUp} disabled={loading}>
+            <Button variant="outline" onClick={handleFacebookSignIn} disabled={loading}>
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
@@ -173,9 +151,9 @@ export default function SignUpPage() {
           </div>
 
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/sign-in" className="text-primary hover:underline">
-              Sign in
+            Don't have an account?{" "}
+            <Link href="/sign-up" className="text-primary hover:underline">
+              Sign up
             </Link>
           </p>
         </CardContent>

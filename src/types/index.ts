@@ -4,7 +4,6 @@
 
 export interface User {
   id: string;
-  clerk_id: string;
   email: string;
   full_name: string;
   phone?: string;

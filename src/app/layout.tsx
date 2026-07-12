@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -35,12 +35,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body className="min-h-full flex flex-col font-sans">
           <Providers>{children}</Providers>
         </body>
       </html>
-    </ClerkProvider>
   );
 }
