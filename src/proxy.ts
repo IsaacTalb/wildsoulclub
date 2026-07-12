@@ -35,10 +35,10 @@ function isAdminRoute(pathname: string): boolean {
   return matchesPattern(pathname, "/admin(.*)");
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Create a Supabase client for the middleware using cookies
+  // Create a Supabase client for the proxy using cookies
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

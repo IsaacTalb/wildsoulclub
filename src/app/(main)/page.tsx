@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Shield, Truck, Clock, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,7 +84,7 @@ export default function HomePage() {
       {/* Hero Slider */}
       <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
         {heroSlides.map((slide, index) => (
-          <motion.div
+          <div
             key={index}
             className="absolute inset-0 flex items-center justify-center"
             style={{
@@ -93,53 +92,30 @@ export default function HomePage() {
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: index === currentSlide ? 1 : 0,
-            }}
-            transition={{ duration: 0.7 }}
           >
             <div className="container mx-auto px-4">
               <div className="max-w-2xl">
-                <motion.h1
+                <h1
                   className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4"
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{
-                    y: index === currentSlide ? 0 : 30,
-                    opacity: index === currentSlide ? 1 : 0,
-                  }}
-                  transition={{ delay: 0.2, duration: 0.5 }}
                 >
                   {slide.title}
-                </motion.h1>
-                <motion.p
+                </h1>
+                <p
                   className="text-lg md:text-xl text-gray-300 mb-8"
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{
-                    y: index === currentSlide ? 0 : 30,
-                    opacity: index === currentSlide ? 1 : 0,
-                  }}
-                  transition={{ delay: 0.4, duration: 0.5 }}
                 >
                   {slide.subtitle}
-                </motion.p>
-                <motion.div
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{
-                    y: index === currentSlide ? 0 : 30,
-                    opacity: index === currentSlide ? 1 : 0,
-                  }}
-                  transition={{ delay: 0.6, duration: 0.5 }}
+                </p>
+                <div
                 >
                   <Link href="/new-drops">
                     <Button size="lg" className="bg-white text-black hover:bg-gray-100">
                       Live Now
                     </Button>
                   </Link>
-                </motion.div>
+                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
 
         {/* Slide Indicators */}
@@ -228,12 +204,8 @@ export default function HomePage() {
               {featuredProducts.map((product, index) => (
                 <Link key={product.id} href={`/products/${product.id}`} className="relative block">
                   {/* Card container */}
-                  <motion.div
+                  <div
                     className="group overflow-visible rounded-[24px] bg-[#FAFAFA] shadow-[0_20px_60px_rgba(0,0,0,0.08)] p-4"
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ y: -8, rotateX: 2, boxShadow: '0 30px 80px rgba(0,0,0,0.12)' }}
-                    transition={{ type: 'spring', duration: 0.6 }}
                     style={{
                       background: 'radial-gradient(circle at center, rgba(255,255,255,0.8), rgba(240,240,240,0.4))',
                       // Editorial vertical offsets
@@ -241,10 +213,8 @@ export default function HomePage() {
                     }}
                   >
                     {/* Image container */}
-                    <motion.div
+                    <div
                       className="relative w-full h-0 pb-[100%]"
-                      whileHover={{ scale: 0.96, y: -6 }}
-                      transition={{ type: 'spring', duration: 0.6 }}
                     >
                       <Image
                         src={product.image}
@@ -252,16 +222,14 @@ export default function HomePage() {
                         fill
                         className="object-contain"
                       />
-                    </motion.div>
+                    </div>
                     {/* Hover arrow icon */}
-                    <motion.div
+                    <div
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100"
-                      initial={{ opacity: 0 }}
-                      whileHover={{ opacity: 1 }}
                     >
                       <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
-                    </motion.div>
-                  </motion.div>
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>

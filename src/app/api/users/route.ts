@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -33,23 +33,7 @@ export async function POST(req: Request) {
     }
     console.log("User data inserted into Supabase:", data);
 
-    // Check if the user is an admin and update the admins table
-    const adminIds = (process.env.CLERK_ADMIN_USER_IDS || "").split(",");
-    if (adminIds.includes(user.id)) {
-      console.log("User is an admin, assigning admin role...");
-      const { error: adminError } = await supabaseAdmin
-        .from("admins")
-        .upsert({
-          user_id: user.id,
-          role: "admin",
-        });
-
-      if (adminError) {
-        console.error("Failed to assign admin role:", adminError);
-      } else {
-        console.log("Admin role assigned successfully");
-      }
-    }
+    // Admins are managed through the Supabase `admins` table instead of Clerk env lists.
 
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error) {

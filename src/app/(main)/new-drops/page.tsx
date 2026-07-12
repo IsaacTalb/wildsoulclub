@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,10 +64,8 @@ export default function NewDropsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero */}
-      <motion.div
+      <div
         className="mb-12 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
       >
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
           <Sparkles className="h-4 w-4" />
@@ -78,16 +75,13 @@ export default function NewDropsPage() {
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
           Be the first to rock our latest styles — fresh drops every month.
         </p>
-      </motion.div>
+      </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {newDrops.map((item) => (
-          <motion.div
+          <div
             key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.random() * 0.3 }}
           >
             <Link href={`/products/${item.id}`}>
               <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
@@ -150,16 +144,13 @@ export default function NewDropsPage() {
                 </CardContent>
               </Card>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* CTA */}
-      <motion.div
+      <div
         className="mt-16 text-center py-12 px-4 rounded-xl bg-muted/50"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
       >
         <h2 className="text-2xl font-bold mb-2">Want early access?</h2>
         <p className="text-muted-foreground mb-6">Sign up for notifications on our next drop.</p>
@@ -168,7 +159,7 @@ export default function NewDropsPage() {
             Notify Me <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Link>
-      </motion.div>
+      </div>
     </div>
   );
 }
