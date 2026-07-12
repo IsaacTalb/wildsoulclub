@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,7 @@ import { getInitials } from "@/lib/utils";
 import { User, Mail, Phone, MapPin, Package } from "lucide-react";
 
 export default function ProfilePage() {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

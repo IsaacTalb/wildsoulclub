@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { SignInButton, SignOutButton } from "@/components/authButtons";
 import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,16 +32,18 @@ const mobileLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setSession(session)
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const { setTheme, theme } = useTheme();
@@ -50,20 +53,42 @@ export function Header() {
   const cartCount = getItemCount();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="liquid-glass sticky top-0 z-50 w-full border-b border-white/20 bg-background/70 supports-[backdrop-filter]:bg-background/55">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Left: Mobile hamburger + search (visible only on mobile) */}
         <div className="flex items-center gap-1 md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setIsOpen(true)}>
+            <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setIsOpen(true)} className="rounded-full">
               <Menu className="h-5 w-5" />
             </Button>
+
+            {/* Mobile navigation sheet */}
+            <SheetContent side="left">
+              <div className="flex flex-col gap-4 pt-8">
+                <div className="flex items-center gap-2 font-bold text-lg">
+                  <Store className="h-5 w-5" /> WILD SOUL CLUB
+                </div>
+                {mobileLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "rounded-full px-4 py-3 text-sm font-medium transition-colors hover:bg-white/20 hover:text-primary",
+                      pathname === link.href ? "bg-white/25 text-primary" : "text-muted-foreground"
+                    )}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </SheetContent>
           </Sheet>
         </div>
 
         {/* Center: Logo (visible on all screens) */}
         <div className="flex-1 md:flex-none">
-          <Link href="/" className="flex items-center gap-2 font-bold">
+          <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
             <Store className="h-6 w-6" />
             <span className="hidden md:inline">WILD SOUL CLUB</span>
             <span className="md:hidden">WSC</span>
@@ -73,14 +98,14 @@ export function Header() {
         {/* Right: Desktop nav + cart + theme toggle */}
         <div className="flex items-center gap-2">
           {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-4">
+          <nav className="hidden md:flex items-center gap-2 liquid-pill px-2 py-1">
             {leftLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  pathname === link.href ? "text-primary" : "text-muted-foreground"
+                  "rounded-full px-3 py-2 text-sm font-medium transition-colors hover:bg-white/20 hover:text-primary",
+                  pathname === link.href ? "bg-white/25 text-primary" : "text-muted-foreground"
                 )}
               >
                 {link.icon && <link.icon className="h-4 w-4 mr-1 inline" />}
@@ -95,13 +120,13 @@ export function Header() {
             size="icon"
             aria-label="Search"
             onClick={() => setSearchOpen(!searchOpen)}
-            className="md:hidden"
+            className="rounded-full md:hidden"
           >
             <Search className="h-5 w-5" />
           </Button>
 
           {/* Cart button */}
-          <Button variant="ghost" size="icon" aria-label="Cart" asChild>
+          <Button variant="ghost" size="icon" aria-label="Cart" asChild className="relative rounded-full">
             <Link href="/cart">
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
@@ -118,6 +143,7 @@ export function Header() {
             size="icon"
             aria-label="Toggle theme"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="rounded-full"
           >
             {theme === "dark" ? (
               <Sun className="h-5 w-5" />
@@ -126,38 +152,25 @@ export function Header() {
             )}
           </Button>
 
+          <Button variant="ghost" size="icon" aria-label="Profile" asChild className="hidden rounded-full sm:inline-flex">
+            <Link href="/profile">
+              <User className="h-5 w-5" />
+            </Link>
+          </Button>
+
           {/* Auth buttons */}
           {session ? <SignOutButton /> : <SignInButton />}
         </div>
       </div>
 
-      {/* Mobile navigation sheet */}
-      <SheetContent side="left">
-        <div className="flex flex-col gap-4 pt-8">
-          {mobileLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                pathname === link.href ? "text-primary" : "text-muted-foreground"
-              )}
-              onClick={() => setIsOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      </SheetContent>
-
       {/* Search overlay */}
       {searchOpen && (
-        <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-40">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-xl z-40">
           <div className="container mx-auto flex h-16 items-center px-4">
-            <div className="flex-1">
+            <div className="flex-1 liquid-glass rounded-full px-4 py-2">
               <Input
                 placeholder="Search products..."
-                className="text-lg"
+                className="border-0 bg-transparent text-lg shadow-none focus-visible:ring-0"
                 autoFocus
                 onBlur={() => setSearchOpen(false)}
               />
@@ -167,7 +180,7 @@ export function Header() {
               size="icon"
               aria-label="Close search"
               onClick={() => setSearchOpen(false)}
-              className="ml-2"
+              className="ml-2 rounded-full"
             >
               <X className="h-5 w-5" />
             </Button>

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Percent, ArrowRight, Tag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,10 +57,8 @@ export default function ArchiveSalesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero */}
-      <motion.div
+      <div
         className="mb-12 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
       >
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-destructive/10 text-destructive text-sm font-medium mb-4">
           <Percent className="h-4 w-4" />
@@ -71,16 +68,13 @@ export default function ArchiveSalesPage() {
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
           Past season favourites at discounted prices — once they're gone, they're gone.
         </p>
-      </motion.div>
+      </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {archiveSales.map((item) => (
-          <motion.div
+          <div
             key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.random() * 0.3 }}
           >
             <Link href={`/products/${item.id}`}>
               <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
@@ -122,16 +116,13 @@ export default function ArchiveSalesPage() {
                 </CardContent>
               </Card>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* CTA */}
-      <motion.div
+      <div
         className="mt-16 text-center py-12 px-4 rounded-xl bg-muted/50"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
       >
         <h2 className="text-2xl font-bold mb-2">Don't miss out!</h2>
         <p className="text-muted-foreground mb-6">
@@ -142,7 +133,7 @@ export default function ArchiveSalesPage() {
             View All Collections <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Link>
-      </motion.div>
+      </div>
     </div>
   );
 }

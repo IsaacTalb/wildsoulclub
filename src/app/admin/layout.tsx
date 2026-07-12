@@ -1,6 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@/components/authButtons";
@@ -134,7 +137,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Fetch user session on mount and subscribe to auth changes
@@ -239,7 +242,7 @@ export default function AdminLayout({
             <div className="flex items-center gap-2">
               <UserButton />
               <div className="hidden md:block text-sm">
-                <p className="font-medium">{user?.fullName || "Admin"}</p>
+                <p className="font-medium">{user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Admin"}</p>
                 <p className="text-xs text-muted-foreground">Administrator</p>
               </div>
             </div>

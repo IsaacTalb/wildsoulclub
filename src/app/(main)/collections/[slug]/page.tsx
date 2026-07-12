@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowLeft, ShoppingBag, Heart, Share2, Minus, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,9 +36,7 @@ export default function CollectionDetailPage({ params }: { params: { slug: strin
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <Link key={product.id} href={`/products/${product.id}`}>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+            <div
               className="group"
             >
               <div className="aspect-square bg-muted rounded-lg mb-3 relative overflow-hidden">
@@ -55,7 +52,7 @@ export default function CollectionDetailPage({ params }: { params: { slug: strin
               </div>
               <h3 className="font-medium group-hover:text-primary transition-colors">{product.name}</h3>
               <p className="text-sm text-muted-foreground">{formatPrice(product.price)}</p>
-            </motion.div>
+            </div>
           </Link>
         ))}
       </div>
