@@ -22,18 +22,21 @@ export default function SignUpPage() {
     setError(null);
     setMessage(null);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
         },
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
 
     if (error) {
       setError(error.message);
+    } else if (data?.user?.identities?.length === 0) {
+      setError("This email is already registered. Please sign in instead.");
     } else {
       setMessage("Check your email for the confirmation link!");
     }

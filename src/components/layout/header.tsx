@@ -1,14 +1,15 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { SignInButton, SignOutButton } from "@/components/authButtons";
+import { SignInButton, SignOutButton, UserButton } from "@/components/authButtons";
 import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
@@ -47,143 +48,167 @@ export function Header() {
   }, []);
 
   const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { getItemCount } = useCart();
   const cartCount = getItemCount();
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <header className="liquid-glass sticky top-0 z-50 w-full border-b border-white/20 bg-background/70 supports-[backdrop-filter]:bg-background/55">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Left: Mobile hamburger + search (visible only on mobile) */}
         <div className="flex items-center gap-1 md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setIsOpen(true)} className="rounded-full">
-              <Menu className="h-5 w-5" />
-            </Button>
-
-            {/* Mobile navigation sheet */}
-            <SheetContent side="left">
-              <div className="flex flex-col gap-4 pt-8">
-                <div className="flex items-center gap-2 font-bold text-lg">
-                  <Store className="h-5 w-5" /> WILD SOUL CLUB
-                </div>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+              <div className="flex flex-col gap-1 mt-8">
                 {mobileLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "rounded-full px-4 py-3 text-sm font-medium transition-colors hover:bg-white/20 hover:text-primary",
-                      pathname === link.href ? "bg-white/25 text-primary" : "text-muted-foreground"
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-medium transition-colors hover:text-primary hover:bg-muted",
+                      pathname === link.href
+                        ? "text-foreground bg-muted"
+                        : "text-muted-foreground"
                     )}
                     onClick={() => setIsOpen(false)}
                   >
                     {link.label}
                   </Link>
                 ))}
+                <div className="mt-4 pt-4 border-t px-3">
+                  {session ? (
+                    <div className="flex items-center gap-3">
+                      <UserButton />
+                      <span className="text-sm font-medium">{session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User'}</span>
+                    </div>
+                  ) : (
+                    <SignInButton />
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>
-        </div>
 
-        {/* Center: Logo (visible on all screens) */}
-        <div className="flex-1 md:flex-none">
-          <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-            <Store className="h-6 w-6" />
-            <span className="hidden md:inline">WILD SOUL CLUB</span>
-            <span className="md:hidden">WSC</span>
-          </Link>
-        </div>
-
-        {/* Right: Desktop nav + cart + theme toggle */}
-        <div className="flex items-center gap-2">
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-2 liquid-pill px-2 py-1">
-            {leftLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "rounded-full px-3 py-2 text-sm font-medium transition-colors hover:bg-white/20 hover:text-primary",
-                  pathname === link.href ? "bg-white/25 text-primary" : "text-muted-foreground"
-                )}
-              >
-                {link.icon && <link.icon className="h-4 w-4 mr-1 inline" />}
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Search button */}
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Search"
             onClick={() => setSearchOpen(!searchOpen)}
-            className="rounded-full md:hidden"
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Left: Desktop nav links */}
+        <nav className="hidden md:flex items-center gap-1">
+          {leftLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:text-primary hover:bg-muted",
+                pathname === link.href
+                  ? "text-foreground bg-muted"
+                  : "text-muted-foreground"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Center: Logo */}
+        <Link href="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+          <span className="text-xl font-bold tracking-tight">
+            wildsoulclub@
+          </span>
+        </Link>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-1">
+          {/* Search - Desktop only */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:inline-flex"
+            onClick={() => setSearchOpen(!searchOpen)}
+            aria-label="Search"
           >
             <Search className="h-5 w-5" />
           </Button>
 
-          {/* Cart button */}
-          <Button variant="ghost" size="icon" aria-label="Cart" asChild className="relative rounded-full">
-            <Link href="/cart">
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <Badge className="absolute top-1 right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center">
-                  {cartCount}
-                </Badge>
-              )}
-            </Link>
-          </Button>
-
-          {/* Theme toggle */}
+          {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Toggle theme"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-full"
           >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5" />
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          </Button>
+
+          {/* Auth - Desktop */}
+          <div className="hidden md:block">
+            {session ? (
+              <UserButton />
             ) : (
-              <Moon className="h-5 w-5" />
+              <SignInButton />
             )}
-          </Button>
+          </div>
 
-          <Button variant="ghost" size="icon" aria-label="Profile" asChild className="hidden rounded-full sm:inline-flex">
-            <Link href="/profile">
-              <User className="h-5 w-5" />
-            </Link>
-          </Button>
+          {/* Auth - Mobile (profile icon) */}
+          <div className="md:hidden">
+            {session ? (
+              <UserButton />
+            ) : (
+              <Link href="/sign-up">
+                <Button variant="ghost" size="icon" aria-label="Sign in">
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
+          </div>
 
-          {/* Auth buttons */}
-          {session ? <SignOutButton /> : <SignInButton />}
+          {/* Cart */}
+          <Link href="/cart">
+            <Button variant="ghost" size="icon" className="relative" aria-label="Cart">
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Search overlay */}
+      {/* Search Bar */}
       {searchOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-xl z-40">
-          <div className="container mx-auto flex h-16 items-center px-4">
-            <div className="flex-1 liquid-glass rounded-full px-4 py-2">
+        <div className="border-t py-4 px-4 bg-background">
+          <div className="container mx-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
-                className="border-0 bg-transparent text-lg shadow-none focus-visible:ring-0"
+                className="pl-10"
                 autoFocus
-                onBlur={() => setSearchOpen(false)}
               />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Close search"
-              onClick={() => setSearchOpen(false)}
-              className="ml-2 rounded-full"
-            >
-              <X className="h-5 w-5" />
-            </Button>
           </div>
         </div>
       )}
