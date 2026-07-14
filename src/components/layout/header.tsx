@@ -20,6 +20,7 @@ const leftLinks = [
   { href: "/new-drops", label: "New Drop", icon: Sparkles },
   { href: "/archive-sales", label: "Archive Sale", icon: Percent },
   { href: "/about", label: "About Us" },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 const mobileLinks = [
@@ -29,6 +30,7 @@ const mobileLinks = [
   { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact" },
   { href: "/collections", label: "Collections" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export function Header() {

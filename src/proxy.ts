@@ -14,14 +14,18 @@ function matchesPattern(pathname: string, pattern: string): boolean {
 function isPublicRoute(pathname: string): boolean {
   const publicPatterns = [
     "/",
+    "/products",
     "/products(.*)",
     "/collections(.*)",
     "/about",
     "/new-drops",
+    "/api/new-drops",
     "/archive-sales",
+    "/api/archive-sales",
     "/delivery",
     "/privacy",
     "/terms",
+    "/profile",
     "/api/public(.*)",
     "/api/products(.*)",
     "/sign-in",
@@ -53,8 +57,6 @@ export async function proxy(req: NextRequest) {
   // Read the session from cookies
   const { data: { user } } = await supabase.auth.getUser(
     req.cookies.get("sb-access-token")?.value
-      ? undefined
-      : undefined
   );
 
   // Admin route protection
