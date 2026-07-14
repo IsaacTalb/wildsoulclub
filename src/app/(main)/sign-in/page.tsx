@@ -51,7 +51,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
       },
     });
 
@@ -68,7 +68,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
       },
     });
 
