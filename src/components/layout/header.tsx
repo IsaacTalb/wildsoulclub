@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { SignInButton, SignOutButton, UserButton } from "@/components/authButtons";
-import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon } from "lucide-react";
+import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon, LogOut, UserCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useCart } from "@/hooks/use-cart";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 const leftLinks = [
   { href: "/products", label: "Shop", icon: Store },
@@ -163,7 +165,31 @@ export function Header() {
           {/* Auth - Desktop */}
           <div className="hidden md:block">
             {session ? (
-              <UserButton />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <UserCircle className="h-5 w-5" />
+                    <span className="text-sm font-medium">
+                      {session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User'}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 w-full text-left">
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <SignInButton />
             )}
@@ -172,7 +198,28 @@ export function Header() {
           {/* Auth - Mobile (profile icon) */}
           <div className="md:hidden">
             {session ? (
-              <UserButton />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Profile">
+                    <UserCircle className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 w-full text-left">
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link href="/sign-up">
                 <Button variant="ghost" size="icon" aria-label="Sign in">

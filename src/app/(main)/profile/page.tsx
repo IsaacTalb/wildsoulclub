@@ -7,18 +7,52 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getInitials } from "@/lib/utils";
 import { User, Mail, Phone, MapPin, Package } from "lucide-react";
 
 export default function ProfilePage() {
   const [session, setSession] = useState<Session | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setSession(session)
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch orders when session is available
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!session) return;
+      
+      setLoadingOrders(true);
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*, order_items(*)")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        setOrders(data || []);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+    
+    fetchOrders();
+  }, [session]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -137,7 +171,56 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="orders" className="mt-6">
-          <p className="text-center py-8">Your order history will appear here.</p>
+          {loadingOrders ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : orders.length > 0 ? (
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <Card key={order.id}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="font-medium">Order #{order.id}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-lg">${order.total.toFixed(2)}</p>
+                        <Badge variant={order.status === "pending" ? "outline" : "default"}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="space-y-2 border-t pt-4">
+                      {order.order_items?.map((item: any) => (
+                        <div key={item.id} className="flex justify-between text-sm">
+                          <span>{item.quantity} x {item.product_id}</span>
+                          <span>${item.total.toFixed(2)}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between font-bold border-t pt-2 mt-2">
+                        <span>Total</span>
+                        <span>${order.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No orders yet.</p>
+              <p className="text-sm">Start shopping to see your order history here.</p>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="addresses" className="mt-6">
