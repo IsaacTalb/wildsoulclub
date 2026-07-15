@@ -5,24 +5,22 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { SignInButton, SignOutButton, UserButton } from "@/components/authButtons";
+import { SignInButton, UserButton } from "@/components/authButtons";
 import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon, LogOut, UserCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
- import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useCart } from "@/hooks/use-cart";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
 
 const leftLinks = [
   { href: "/products", label: "Shop", icon: Store },
   { href: "/new-drops", label: "New Drop", icon: Sparkles },
   { href: "/archive-sales", label: "Archive Sale", icon: Percent },
   { href: "/about", label: "About Us" },
-  { href: "/profile", label: "Profile", icon: User },
 ];
 
 const mobileLinks = [
@@ -30,9 +28,7 @@ const mobileLinks = [
   { href: "/new-drops", label: "New Drop" },
   { href: "/archive-sales", label: "Archive Sale" },
   { href: "/about", label: "About Us" },
-  { href: "/contact", label: "Contact" },
   { href: "/collections", label: "Collections" },
-  { href: "/profile", label: "Profile" },
 ];
 
 export function Header() {
@@ -166,23 +162,21 @@ export function Header() {
           <div className="hidden md:block">
             {session ? (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
+                <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
                     <UserCircle className="h-5 w-5" />
                     <span className="text-sm font-medium">
                       {session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User'}
                     </span>
-                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem>
+                    <Link href="/profile" className="flex w-full items-center gap-2 cursor-pointer">
                       <User className="h-4 w-4" />
                       Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 w-full text-left">
                       <LogOut className="h-4 w-4" />
                       Sign Out
@@ -199,20 +193,18 @@ export function Header() {
           <div className="md:hidden">
             {session ? (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Profile">
+                <DropdownMenuTrigger className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground" aria-label="Profile">
                     <UserCircle className="h-5 w-5" />
-                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem>
+                    <Link href="/profile" className="flex w-full items-center gap-2 cursor-pointer">
                       <User className="h-4 w-4" />
                       Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem>
                     <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 w-full text-left">
                       <LogOut className="h-4 w-4" />
                       Sign Out

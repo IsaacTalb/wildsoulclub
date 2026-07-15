@@ -16,6 +16,16 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const getSafeRedirect = () => {
+    const redirect = new URLSearchParams(window.location.search).get("redirect");
+
+    if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
+      return "/";
+    }
+
+    return redirect;
+  };
+
   // Check for error in URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -38,7 +48,7 @@ export default function SignInPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/");
+      router.push(getSafeRedirect());
       router.refresh();
     }
     setLoading(false);
@@ -51,7 +61,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
       },
     });
 
@@ -68,7 +78,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
       },
     });
 

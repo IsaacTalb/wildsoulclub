@@ -31,13 +31,13 @@ function isPublicRoute(pathname: string): boolean {
     "/sign-in",
     "/sign-up",
     "/api/auth(.*)",
+    // Let admin pages load so the client-side Supabase session can be verified
+    // by src/app/admin/layout.tsx. Admin API routes are still protected.
+    "/admin(.*)",
   ];
   return publicPatterns.some(p => matchesPattern(pathname, p));
 }
 
-function isAdminRoute(pathname: string): boolean {
-  return matchesPattern(pathname, "/admin(.*)");
-}
 
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
@@ -59,37 +59,9 @@ export async function proxy(req: NextRequest) {
     req.cookies.get("sb-access-token")?.value
   );
 
-  // Admin route protection
-  if (isAdminRoute(pathname)) {
-    if (!user) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/sign-in";
-      return NextResponse.redirect(url);
-    }
-    // Check if user is an admin by checking the admins table
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      }
-    );
-    const { data: adminData, error: adminError } = await supabaseAdmin
-      .from("admins")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (adminError || !adminData) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.next();
-  }
+  // Admin authorization is enforced in the admin layout and admin API routes.
+  // Supabase browser sessions live in client-managed storage, so this proxy cannot
+  // reliably read them from cookies without the Supabase SSR cookie adapter.
 
   // Protect non-public routes
   if (!isPublicRoute(pathname)) {
