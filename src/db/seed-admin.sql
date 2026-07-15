@@ -9,7 +9,7 @@
 INSERT INTO admins (user_id, role, permissions)
 SELECT users.id, 'super_admin', '["*"]'::jsonb
 FROM users
-WHERE users.email = 'admin@wildsoulclub.com'
+WHERE users.email = 'skeltonmarnez@gmail.com'
 ON CONFLICT (user_id) DO UPDATE SET
   role = EXCLUDED.role,
   permissions = EXCLUDED.permissions;
