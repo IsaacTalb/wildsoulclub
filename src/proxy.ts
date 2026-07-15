@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 // Helper to match route patterns
 function matchesPattern(pathname: string, pattern: string): boolean {
   if (pattern.endsWith("(.*)")) {
-    const prefix = pattern.slice(0, -3);
+    const prefix = pattern.slice(0, -4);
     return pathname === prefix || pathname.startsWith(prefix + "/");
   }
   return pathname === pattern;
@@ -31,74 +31,54 @@ function isPublicRoute(pathname: string): boolean {
     "/sign-in",
     "/sign-up",
     "/api/auth(.*)",
+    // Let admin pages load so the client-side Supabase session can be verified
+    // by src/app/admin/layout.tsx.
+    "/admin(.*)",
+    // Let admin route handlers receive Bearer tokens from the browser; each
+    // /api/admin route still enforces admin access server-side.
+    "/api/admin(.*)",
   ];
-  return publicPatterns.some(p => matchesPattern(pathname, p));
+  return publicPatterns.some((pattern) => matchesPattern(pathname, pattern));
 }
 
-function isAdminRoute(pathname: string): boolean {
-  return matchesPattern(pathname, "/admin(.*)");
+function redirectToSignIn(req: NextRequest) {
+  const url = req.nextUrl.clone();
+  url.pathname = "/sign-in";
+  url.searchParams.set("redirect", req.nextUrl.pathname);
+  return NextResponse.redirect(url);
 }
 
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Create a Supabase client for the proxy using cookies
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    }
-  );
+  // Public/admin-page routes must return before Supabase cookie checks. Supabase
+  // browser auth stores sessions client-side in this app, so /admin pages are
+  // authorized by the admin layout after hydration. /api/admin routes are not
+  // public and remain protected by their route handlers.
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next();
+  }
 
-  // Read the session from cookies
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return redirectToSignIn(req);
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
   const { data: { user } } = await supabase.auth.getUser(
     req.cookies.get("sb-access-token")?.value
   );
 
-  // Admin route protection
-  if (isAdminRoute(pathname)) {
-    if (!user) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/sign-in";
-      return NextResponse.redirect(url);
-    }
-    // Check if user is an admin by checking the admins table
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      }
-    );
-    const { data: adminData, error: adminError } = await supabaseAdmin
-      .from("admins")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (adminError || !adminData) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.next();
-  }
-
-  // Protect non-public routes
-  if (!isPublicRoute(pathname)) {
-    if (!user) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/sign-in";
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.next();
+  if (!user) {
+    return redirectToSignIn(req);
   }
 
   return NextResponse.next();

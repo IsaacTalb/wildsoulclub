@@ -16,14 +16,45 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Check for error in URL params
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlError = urlParams.get('error');
-    if (urlError) {
-      setError(decodeURIComponent(urlError));
+  const getSafeRedirect = () => {
+    const redirect = new URLSearchParams(window.location.search).get("redirect");
+
+    if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
+      return "/";
     }
-  }, []);
+
+    return redirect;
+  };
+
+  // Handle OAuth/error query params and preserve the intended destination.
+  useEffect(() => {
+    const handleAuthRedirect = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlError = urlParams.get("error");
+      const authCode = urlParams.get("code");
+
+      if (urlError) {
+        setError(decodeURIComponent(urlError));
+        return;
+      }
+
+      if (!authCode) return;
+
+      setLoading(true);
+      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      router.replace(getSafeRedirect());
+      router.refresh();
+    };
+
+    handleAuthRedirect();
+  }, [router]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +69,7 @@ export default function SignInPage() {
     if (error) {
       setError(error.message);
     } else {
-      router.push("/");
+      router.push(getSafeRedirect());
       router.refresh();
     }
     setLoading(false);
@@ -51,7 +82,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
       },
     });
 
@@ -68,7 +99,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
       },
     });
 
