@@ -6,7 +6,7 @@ export async function GET() {
     const { data, error } = await supabaseAdmin
       .from("categories")
       .select("*, products:products(count)")
-      .eq("status", "active")
+      .eq("is_active", true)
       .order("name");
 
     if (error) throw error;
