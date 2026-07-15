@@ -10,85 +10,100 @@ import Image from "next/image";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
-// Placeholder product data
-const featuredProducts = [
-  {
-    id: "1",
-    name: "Monsoon Tee",
-    price: 35000,
-    sale_price: 25000,
-    image: "/images/placeholder.svg",
-    category: "T-Shirts",
-    is_new: true,
-  },
-  {
-    id: "2",
-    name: "Wild Spirit Hoodie",
-    price: 65000,
-    image: "/images/placeholder.svg",
-    category: "Hoodies",
-    is_new: false,
-  },
-  {
-    id: "3",
-    name: "Soul Cap",
-    price: 18000,
-    sale_price: 15000,
-    image: "/images/placeholder.svg",
-    category: "Accessories",
-    is_new: true,
-  },
-  {
-    id: "4",
-    name: "After Rain Jacket",
-    price: 85000,
-    image: "/images/placeholder.svg",
-    category: "Outerwear",
-    is_new: false,
-  },
-];
+type HomeProduct = {
+  id: string;
+  name: string;
+  price: number;
+  sale_price?: number | null;
+  category?: string | null;
+  is_new_drop?: boolean | null;
+  is_featured?: boolean | null;
+  thumbnail_url?: string | null;
+  product_images?: { url?: string | null; image_url?: string | null; object_key?: string | null }[] | null;
+};
 
-// Create hero slides from the 3 newest products
-const heroSlides = featuredProducts
-  .filter(product => product.is_new)
-  .slice(0, 3)
-  .map(product => ({
-    id: product.id,
-    title: product.name,
-    subtitle: product.category,
-    cta: "Live Now",
-    image: product.image,
-    price: product.sale_price || product.price,
-  }));
+type HomeCollection = {
+  id: string;
+  name: string;
+  slug: string;
+  image_url?: string | null;
+};
 
-const collections = [
-  { name: "After Rain", slug: "after-rain", image: "/images/placeholder.svg" },
-  { name: "Monsoon 2026", slug: "monsoon-2026", image: "/images/placeholder.svg" },
-  { name: "Summer", slug: "summer", image: "/images/placeholder.svg" },
-  { name: "Limited", slug: "limited", image: "/images/placeholder.svg" },
-];
+function getProductImage(product: HomeProduct) {
+  return (
+    product.thumbnail_url ||
+    product.product_images?.[0]?.url ||
+    product.product_images?.[0]?.image_url ||
+    product.product_images?.[0]?.object_key ||
+    ""
+  );
+}
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [featuredProducts, setFeaturedProducts] = useState<HomeProduct[]>([]);
+  const [collections, setCollections] = useState<HomeCollection[]>([]);
+
+  const heroSlides = featuredProducts
+    .filter((product) => product.is_new_drop || product.is_featured)
+    .slice(0, 3)
+    .map((product) => ({
+      id: product.id,
+      title: product.name,
+      subtitle: product.category || "Wild Soul Club",
+      image: getProductImage(product),
+    }));
 
   useEffect(() => {
+    const fetchHomeData = async () => {
+      const [productsResponse, collectionsResponse] = await Promise.all([
+        fetch("/api/public/products?sort=newest"),
+        fetch("/api/public/collections"),
+      ]);
+
+      if (productsResponse.ok) {
+        const productsJson = await productsResponse.json();
+        const products = (productsJson.data || []) as HomeProduct[];
+        setFeaturedProducts(products.filter((product) => product.is_featured).slice(0, 4));
+      }
+
+      if (collectionsResponse.ok) {
+        const collectionsJson = await collectionsResponse.json();
+        setCollections(((collectionsJson.data || []) as HomeCollection[]).slice(0, 4));
+      }
+    };
+
+    fetchHomeData();
+  }, []);
+
+  useEffect(() => {
+    if (heroSlides.length <= 1) return;
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroSlides.length]);
 
   return (
     <div>
       <Header/>
       {/* Hero Slider */}
       <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
-        {heroSlides.map((slide, index) => (
+        {heroSlides.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <div className="container mx-auto px-4 text-center">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4">Wild Soul Club</h1>
+              <p className="text-lg md:text-xl text-muted-foreground mb-8">Add featured or new-drop products in Supabase to power this hero.</p>
+              <Link href="/products"><Button size="lg">Shop Now</Button></Link>
+            </div>
+          </div>
+        ) : heroSlides.map((slide, index) => (
           <div
             key={index}
-            className="absolute inset-0 flex items-center justify-center"
+            className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
             style={{
-              backgroundImage: `url(${slide.image})`,
+              backgroundImage: slide.image ? `url(${slide.image})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
@@ -168,7 +183,9 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {collections.map((collection) => (
+            {collections.length === 0 ? (
+              <Card className="col-span-full border-dashed"><CardContent className="p-8 text-center text-muted-foreground">No active collections found in the database yet.</CardContent></Card>
+            ) : collections.map((collection) => (
               <Link key={collection.slug} href={`/collections/${collection.slug}`}>
                 <Card className="group overflow-hidden border-0">
                   <CardContent className="p-0 relative aspect-[3/4] bg-muted">
@@ -201,7 +218,9 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {featuredProducts.map((product, index) => (
+              {featuredProducts.length === 0 ? (
+              <Card className="col-span-full border-dashed"><CardContent className="p-8 text-center text-muted-foreground">No featured products found in the database yet.</CardContent></Card>
+            ) : featuredProducts.map((product, index) => (
                 <Link key={product.id} href={`/products/${product.id}`} className="relative block">
                   {/* Card container */}
                   <div
@@ -217,7 +236,7 @@ export default function HomePage() {
                       className="relative w-full h-0 pb-[100%]"
                     >
                       <Image
-                        src={product.image}
+                        src={getProductImage(product) || "/images/placeholder.svg"}
                         alt={product.name}
                         fill
                         className="object-contain"

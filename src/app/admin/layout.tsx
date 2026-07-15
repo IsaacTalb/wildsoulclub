@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { UserButton } from "@/components/authButtons";
 import {
   LayoutDashboard,
@@ -137,26 +137,56 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Fetch user session on mount and subscribe to auth changes
+  // Fetch user session on mount, verify admin access against the database,
+  // and subscribe to auth changes so admin pages work with Supabase browser auth.
   useEffect(() => {
-    const getSession = async () => {
+    const verifyAdmin = async () => {
+      setCheckingAccess(true);
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+
+      if (!session) {
+        setUser(null);
+        router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
+        return;
+      }
+
+      const response = await fetch("/api/admin/me", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (!response.ok) {
+        setUser(null);
+        router.replace("/");
+        return;
+      }
+
+      setUser(session.user);
+      setCheckingAccess(false);
     };
 
-    getSession();
+    verifyAdmin();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
+      () => {
+        verifyAdmin();
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [pathname, router]);
+
+  if (checkingAccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
+        Checking admin access...
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
