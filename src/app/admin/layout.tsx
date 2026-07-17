@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { UserButton } from "@/components/authButtons";
@@ -136,7 +135,6 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -150,13 +148,11 @@ export default function AdminLayout({
 
       if (!session) {
         sessionStorage.removeItem("wsc-admin-user");
-        setUser(null);
         router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
         return;
       }
 
       if (!force && sessionStorage.getItem("wsc-admin-user") === session.user.id) {
-        setUser(session.user);
         setCheckingAccess(false);
         return;
       }
@@ -167,13 +163,11 @@ export default function AdminLayout({
 
       if (!response.ok) {
         sessionStorage.removeItem("wsc-admin-user");
-        setUser(null);
         router.replace("/");
         return;
       }
 
       sessionStorage.setItem("wsc-admin-user", session.user.id);
-      setUser(session.user);
       setCheckingAccess(false);
     };
 
@@ -277,13 +271,7 @@ export default function AdminLayout({
                 3
               </Badge>
             </Button>
-            <div className="flex items-center gap-2">
-              <UserButton admin />
-              <div className="hidden md:block text-sm">
-                <p className="font-medium">{user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Admin"}</p>
-                <p className="text-xs text-muted-foreground">Administrator</p>
-              </div>
-            </div>
+            <UserButton admin />
           </div>
         </header>
 

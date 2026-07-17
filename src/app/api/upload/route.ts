@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSignedUploadUrl } from "@/lib/upload";
+import { requireAdmin } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
+    await requireAdmin();
     const body = await req.json();
     const { folder, contentType, fileName } = body;
 
@@ -29,9 +31,11 @@ export async function POST(req: Request) {
       data: { uploadUrl: url, objectKey, imageUrl: publicBaseUrl ? `${publicBaseUrl}/${objectKey}` : objectKey },
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to generate upload URL";
+    const status = message === "Unauthorized" ? 401 : message.includes("Forbidden") ? 403 : 500;
     return NextResponse.json(
-      { success: false, error: "Failed to generate upload URL" },
-      { status: 500 }
+      { success: false, error: message === "Unauthorized" || message.includes("Forbidden") ? message : "Failed to generate upload URL" },
+      { status }
     );
   }
 }
