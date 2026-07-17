@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     await requireAdmin();
 
     const body = await req.json();
-    const { name, description, price, category_id, collection_id, images, variants } = body;
+    const { name, description, price, category_id, collection_id, images, variants, slug, stock, sku } = body;
 
     if (!name || !price) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     const { data: product, error: productError } = await supabaseAdmin
       .from("products")
-      .insert({ name, description, price, category_id, collection_id, status: "active" })
+      .insert({ name, slug: slug || name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""), description: description || "", price, category_id: category_id || null, collection_id: collection_id || null, stock: stock || 0, sku: sku || null, is_active: true })
       .select()
       .single();
 
@@ -49,8 +49,9 @@ export async function POST(req: Request) {
         .from("product_images")
         .insert(images.map((url: string, index: number) => ({
           product_id: product.id,
-          url,
-          is_primary: index === 0,
+          image_url: url,
+          object_key: url,
+          is_thumbnail: index === 0,
         })));
 
       if (imagesError) throw imagesError;
