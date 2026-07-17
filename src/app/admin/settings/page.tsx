@@ -9,6 +9,6 @@ export default function Page() {
   ];
 
   return (
-    <ResourceManager title="Website settings" resource="admin_settings" fields={fields} />
+    <ResourceManager title="Site settings" resource="site_settings" fields={fields} />
   );
 }
