@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSignedUploadUrl, getSignedReadUrl } from "@/lib/upload";
+import { getSignedUploadUrl } from "@/lib/upload";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { folder, contentType } = body;
+    const { folder, contentType, fileName } = body;
 
     if (!folder || !contentType) {
       return NextResponse.json(
@@ -21,12 +21,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const uploadUrl = await getSignedUploadUrl(folder, contentType);
-    const objectKey = typeof uploadUrl === 'string' ? (uploadUrl as string).split("?")[0].split("/").pop() : '';
+    const { url, objectKey } = await getSignedUploadUrl(folder, contentType, fileName);
+    const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "") || "";
 
     return NextResponse.json({
       success: true,
-      data: { uploadUrl, objectKey },
+      data: { uploadUrl: url, objectKey, imageUrl: publicBaseUrl ? `${publicBaseUrl}/${objectKey}` : objectKey },
     });
   } catch (error) {
     return NextResponse.json(

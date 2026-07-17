@@ -28,7 +28,9 @@ export type UploadFolder =
   | "banners"
   | "blogs"
   | "temp"
-  | "invoices";
+  | "invoices"
+  | "new-drops"
+  | "archive-sales";
 
 export interface UploadResult {
   objectKey: string;
