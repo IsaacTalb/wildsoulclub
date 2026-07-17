@@ -23,7 +23,6 @@ import {
   BarChart3,
   Menu,
   X,
-  ChevronDown,
   Bell,
   Search,
   MapPin,
@@ -33,9 +32,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
 const sidebarLinks = [
@@ -270,7 +268,7 @@ export default function AdminLayout({
               </Badge>
             </Button>
             <div className="flex items-center gap-2">
-              <UserButton />
+              <UserButton admin />
               <div className="hidden md:block text-sm">
                 <p className="font-medium">{user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Admin"}</p>
                 <p className="text-xs text-muted-foreground">Administrator</p>
