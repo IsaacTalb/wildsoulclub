@@ -53,7 +53,16 @@ export async function uploadFile(
   const objectKey = `${folder}/${uuidv4()}.${ext}`;
   const body = file instanceof File ? Buffer.from(await file.arrayBuffer()) : file;
   const mimeType =
-    file instanceof File ? file.type : `image/${ext === "png" ? "png" : "jpeg"}`;
+  file instanceof File
+    ? file.type
+    : ({
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        webp: "image/webp",
+        gif: "image/gif",
+        avif: "image/avif",
+      }[ext?.toLowerCase() || "jpg"] || "application/octet-stream");
 
   await r2Client.send(
     new PutObjectCommand({

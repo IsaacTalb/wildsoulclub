@@ -340,6 +340,7 @@ CREATE TABLE site_settings (
   key TEXT UNIQUE NOT NULL,
   value TEXT NOT NULL,
   group_name TEXT NOT NULL DEFAULT 'general',
+  description TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
