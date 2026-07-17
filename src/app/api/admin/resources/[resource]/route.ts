@@ -11,7 +11,7 @@ const resources = {
   banners: { table: "banners", fields: ["title", "subtitle", "image_url", "object_key", "link_url", "is_active", "position", "product_id", "collection_id"] },
   hero_sliders: { table: "hero_sliders", fields: ["title", "subtitle", "button_text", "button_url", "image_url", "object_key", "is_active", "sort_order", "product_id", "collection_id"] },
   pages: { table: "pages", fields: ["title", "slug", "content", "meta_title", "meta_description", "is_published"] },
-  site_settings: { table: "site_settings", fields: ["key", "value", "group_name"] },
+  site_settings: { table: "site_settings", fields: ["key", "value", "group_name", "description"] },
 } as const;
 
 type ResourceName = keyof typeof resources;
