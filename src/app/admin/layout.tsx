@@ -140,16 +140,24 @@ export default function AdminLayout({
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Fetch user session on mount, verify admin access against the database,
-  // and subscribe to auth changes so admin pages work with Supabase browser auth.
+  // Verify admin access once per browser session/user. Client-side navigation
+  // between /admin tabs reuses this layout, so we avoid repeating the admin
+  // database check on every sidebar click.
   useEffect(() => {
-    const verifyAdmin = async () => {
+    const verifyAdmin = async (force = false) => {
       setCheckingAccess(true);
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
+        sessionStorage.removeItem("wsc-admin-user");
         setUser(null);
         router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
+        return;
+      }
+
+      if (!force && sessionStorage.getItem("wsc-admin-user") === session.user.id) {
+        setUser(session.user);
+        setCheckingAccess(false);
         return;
       }
 
@@ -158,11 +166,13 @@ export default function AdminLayout({
       });
 
       if (!response.ok) {
+        sessionStorage.removeItem("wsc-admin-user");
         setUser(null);
         router.replace("/");
         return;
       }
 
+      sessionStorage.setItem("wsc-admin-user", session.user.id);
       setUser(session.user);
       setCheckingAccess(false);
     };
@@ -171,12 +181,12 @@ export default function AdminLayout({
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       () => {
-        verifyAdmin();
+        verifyAdmin(true);
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [pathname, router]);
+  }, [router]);
 
   if (checkingAccess) {
     return (
