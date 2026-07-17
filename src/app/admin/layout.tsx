@@ -274,12 +274,12 @@ export default function AdminLayout({
               </Badge>
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                </Button>
+              <DropdownMenuTrigger
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent transition-colors"
+              >
+                <User className="h-5 w-5" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="right-0">
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>
