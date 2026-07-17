@@ -74,14 +74,43 @@ export function UserButton({ admin = false }: { admin?: boolean }) {
     router.refresh();
   };
 
-  if (!user) {
-    return null;
-  }
-
-  const initials = getInitials(
-    user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
-  );
+  if (!user) return null;
 
   const name = user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
-  return <DropdownMenu><DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"><Avatar className="h-9 w-9 cursor-pointer border"><AvatarFallback>{initials}</AvatarFallback></Avatar></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-56"><DropdownMenuLabel><p className="truncate font-medium">{name}</p><p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p></DropdownMenuLabel><DropdownMenuSeparator /><DropdownMenuItem render={<Link href="/profile" />}><UserRound className="mr-2 h-4 w-4" />Profile</DropdownMenuItem>{admin && <DropdownMenuItem render={<Link href="/admin/settings" />}><Settings className="mr-2 h-4 w-4" />Website settings</DropdownMenuItem>}<DropdownMenuSeparator /><DropdownMenuItem variant="destructive" onClick={handleSignOut}><LogOut className="mr-2 h-4 w-4" />Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>;
+  const initials = getInitials(name);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex max-w-[220px] items-center gap-2 rounded-full px-1 py-1 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:rounded-lg sm:px-2">
+        <Avatar className="h-9 w-9 cursor-pointer border">
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+        {admin && (
+          <span className="hidden min-w-0 text-left text-sm sm:block">
+            <span className="block truncate font-medium">{name}</span>
+            <span className="block truncate text-xs text-muted-foreground">Administrator</span>
+          </span>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>
+          <p className="truncate font-medium">{name}</p>
+          <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href="/profile" />}>
+          <UserRound className="mr-2 h-4 w-4" />Profile
+        </DropdownMenuItem>
+        {admin && (
+          <DropdownMenuItem render={<Link href="/admin/settings" />}>
+            <Settings className="mr-2 h-4 w-4" />Admin settings
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }

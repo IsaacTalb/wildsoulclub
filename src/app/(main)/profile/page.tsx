@@ -192,7 +192,7 @@ export default function ProfilePage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-lg">${order.total.toFixed(2)}</p>
+                        <p className="font-bold text-lg">${Number(order.total).toFixed(2)}</p>
                         <Badge variant={order.status === "pending" ? "outline" : "default"}>
                           {order.status}
                         </Badge>
@@ -202,12 +202,12 @@ export default function ProfilePage() {
                       {order.order_items?.map((item: any) => (
                         <div key={item.id} className="flex justify-between text-sm">
                           <span>{item.quantity} x {item.product_id}</span>
-                          <span>${item.total.toFixed(2)}</span>
+                          <span>${Number(item.price ?? 0).toFixed(2)}</span>
                         </div>
                       ))}
                       <div className="flex justify-between font-bold border-t pt-2 mt-2">
                         <span>Total</span>
-                        <span>${order.total.toFixed(2)}</span>
+                        <span>${Number(order.total).toFixed(2)}</span>
                       </div>
                     </div>
                   </CardContent>

@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { UserButton } from "@/components/authButtons";
@@ -136,20 +135,25 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Fetch user session on mount, verify admin access against the database,
-  // and subscribe to auth changes so admin pages work with Supabase browser auth.
+  // Verify admin access once per browser session/user. Client-side navigation
+  // between /admin tabs reuses this layout, so we avoid repeating the admin
+  // database check on every sidebar click.
   useEffect(() => {
-    const verifyAdmin = async () => {
+    const verifyAdmin = async (force = false) => {
       setCheckingAccess(true);
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        setUser(null);
+        sessionStorage.removeItem("wsc-admin-user");
         router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
+        return;
+      }
+
+      if (!force && sessionStorage.getItem("wsc-admin-user") === session.user.id) {
+        setCheckingAccess(false);
         return;
       }
 
@@ -158,12 +162,12 @@ export default function AdminLayout({
       });
 
       if (!response.ok) {
-        setUser(null);
+        sessionStorage.removeItem("wsc-admin-user");
         router.replace("/");
         return;
       }
 
-      setUser(session.user);
+      sessionStorage.setItem("wsc-admin-user", session.user.id);
       setCheckingAccess(false);
     };
 
@@ -171,12 +175,12 @@ export default function AdminLayout({
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       () => {
-        verifyAdmin();
+        verifyAdmin(true);
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [pathname, router]);
+  }, [router]);
 
   if (checkingAccess) {
     return (
@@ -267,13 +271,7 @@ export default function AdminLayout({
                 3
               </Badge>
             </Button>
-            <div className="flex items-center gap-2">
-              <UserButton admin />
-              <div className="hidden md:block text-sm">
-                <p className="font-medium">{user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Admin"}</p>
-                <p className="text-xs text-muted-foreground">Administrator</p>
-              </div>
-            </div>
+            <UserButton admin />
           </div>
         </header>
 

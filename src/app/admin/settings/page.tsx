@@ -5,10 +5,10 @@ export default function Page() {
     { key: "key", label: "Setting key", required: true },
     { key: "value", label: "Value", required: true },
     { key: "group_name", label: "Group", required: true },
-    { key: "description", label: "Description", type: "textarea" as const, required: false },
+    { key: "description", label: "Description", type: "textarea" as const },
   ];
 
   return (
-    <ResourceManager title="Site settings" resource="site_settings" fields={fields} />
+    <ResourceManager title="Admin settings" resource="admin_settings" fields={fields} />
   );
 }

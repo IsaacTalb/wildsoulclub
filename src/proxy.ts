@@ -31,6 +31,7 @@ function isPublicRoute(pathname: string): boolean {
     "/sign-in",
     "/sign-up",
     "/api/auth(.*)",
+    "/api/upload",
     // Let admin pages load so the client-side Supabase session can be verified
     // by src/app/admin/layout.tsx.
     "/admin(.*)",

@@ -7,14 +7,14 @@ export async function GET() {
     await requireAdmin();
 
     const { data, error } = await supabaseAdmin
-      .from("site_settings")
+      .from("admin_settings")
       .select("*")
-      .single();
+      .order("updated_at", { ascending: false });
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, data });
-  } catch (error) {
+    return NextResponse.json({ success: true, data: data ?? [] });
+  } catch {
     return NextResponse.json(
       { success: false, error: "Failed to fetch settings" },
       { status: 500 }
@@ -26,18 +26,25 @@ export async function PATCH(req: Request) {
   try {
     await requireAdmin();
 
-    const body = await req.json();
+    const { id, ...body } = await req.json();
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Setting id is required" },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabaseAdmin
-      .from("site_settings")
+      .from("admin_settings")
       .update({ ...body, updated_at: new Date().toISOString() })
-      .eq("id", 1)
+      .eq("id", id)
       .select()
       .single();
 
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: "Failed to update settings" },
       { status: 500 }
