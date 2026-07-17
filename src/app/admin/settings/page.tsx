@@ -1,2 +1,2 @@
 import { ResourceManager } from "@/components/admin/resource-manager";
-export default function Page() { return <ResourceManager title="Website settings" resource="site_settings" fields={[{ key: "key", label: "Setting key", required: true }, { key: "value", label: "Value", required: true }, { key: "group_name", label: "Group", required: true }]} />; }
+export default function Page() { return <ResourceManager title="Website settings" resource="admin_settings" fields={[{ key: "key", label: "Setting key", required: true }, { key: "value", label: "Value", required: true }, { key: "group_name", label: "Group", required: true }, { key: "description", label: "Description", required: false }]} />; }
