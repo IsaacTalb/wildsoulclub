@@ -281,11 +281,17 @@ export default function AdminLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" /> Profile
+                  <Link href="/profile" className="flex w-full items-center gap-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" /> Settings
+                  <Link href="/admin/settings" className="flex w-full items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 w-full text-left">
