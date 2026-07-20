@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { getSignedUploadUrl } from "@/lib/upload";
-import { requireAdmin } from "@/lib/auth";
+import { getAuthUser, requireAdmin } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin();
     const body = await req.json();
     const { folder, contentType, fileName } = body;
 
@@ -21,6 +20,13 @@ export async function POST(req: Request) {
         { success: false, error: "Invalid folder" },
         { status: 400 }
       );
+    }
+
+    if (folder === "payments") {
+      const user = await getAuthUser();
+      if (!user) throw new Error("Unauthorized");
+    } else {
+      await requireAdmin();
     }
 
     const { url, objectKey } = await getSignedUploadUrl(folder, contentType, fileName);

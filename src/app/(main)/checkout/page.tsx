@@ -6,18 +6,12 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreditCard, ShieldCheck, Info } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatPrice } from "@/lib/utils";
@@ -36,6 +30,8 @@ export default function CheckoutPage() {
   const { items, getSubtotal, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState("kpay");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const deliveryFee = items.length > 0 ? 3000 : 0;
   const subtotal = getSubtotal();
@@ -49,12 +45,117 @@ export default function CheckoutPage() {
     resolver: zodResolver(checkoutSchema),
   });
 
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session ? { Authorization: `Bearer ${session.access_token}` } : {};
+  };
+
+  const readErrorMessage = async (response: Response, fallback: string) => {
+    try {
+      const result = await response.json();
+      return result.error ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const uploadPaymentProof = async (file: File, headers: Record<string, string>) => {
+    const uploadResponse = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ folder: "payments", contentType: file.type, fileName: file.name }),
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(await readErrorMessage(uploadResponse, "Payment proof upload could not be started. Please try again."));
+    }
+
+    const uploadResult = await uploadResponse.json();
+    const { uploadUrl, objectKey, imageUrl } = uploadResult.data ?? {};
+
+    if (!uploadUrl || !objectKey || !imageUrl) {
+      throw new Error("Payment proof upload could not be prepared. Please try again.");
+    }
+
+    const putResponse = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+    if (!putResponse.ok) {
+      throw new Error("Payment proof upload failed. Please check your image and try again.");
+    }
+
+    return { objectKey, imageUrl };
+  };
+
   const onSubmit = async (data: CheckoutFormData) => {
+    setSubmitError(null);
+
+    if (items.length === 0) {
+      setSubmitError("Validation error: your cart is empty. Please add items before checkout.");
+      return;
+    }
+
+    if (!paymentProof) {
+      setSubmitError("Validation error: please upload your payment proof screenshot before placing the order.");
+      return;
+    }
+
     setIsSubmitting(true);
-    // Simulate order creation
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    clearCart();
-    router.push("/order-success");
+
+    try {
+      const authHeaders = await getAuthHeaders();
+      const orderResponse = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            product_id: item.product_id,
+            variant_id: item.variant_id ?? null,
+            quantity: item.quantity,
+          })),
+          full_name: data.full_name,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          township: data.township,
+          city: data.city,
+          state: data.state,
+          zip: data.zip,
+          notes: data.notes,
+        }),
+      });
+
+      if (!orderResponse.ok) {
+        throw new Error(`Order creation failed: ${await readErrorMessage(orderResponse, "Unable to create your order. Please try again.")}`);
+      }
+
+      const orderResult = await orderResponse.json();
+      const order = orderResult.data;
+      if (!order?.id) {
+        throw new Error("Order creation failed: the server did not return an order ID.");
+      }
+
+      const uploadedProof = await uploadPaymentProof(paymentProof, authHeaders);
+      const paymentResponse = await fetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({
+          order_id: order.id,
+          method: paymentMethod,
+          payment_image: uploadedProof.imageUrl,
+          payment_object_key: uploadedProof.objectKey,
+        }),
+      });
+
+      if (!paymentResponse.ok) {
+        throw new Error(`Payment creation failed: ${await readErrorMessage(paymentResponse, "Unable to save your payment proof. Please contact support.")}`);
+      }
+
+      clearCart();
+      router.push("/order-success");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0) {
@@ -157,11 +258,24 @@ export default function CheckoutPage() {
                       <ol className="list-decimal list-inside space-y-1">
                         <li>Transfer the total amount to the selected account</li>
                         <li>Take a screenshot of the payment confirmation</li>
-                        <li>Upload the screenshot on the next page</li>
+                        <li>Upload the screenshot below before placing your order</li>
                         <li>Admin will verify and confirm your order</li>
                       </ol>
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <Label htmlFor="payment_proof">Payment Proof Screenshot *</Label>
+                  <Input
+                    id="payment_proof"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => setPaymentProof(event.target.files?.[0] ?? null)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload a clear image of your transfer confirmation.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -227,6 +341,12 @@ export default function CheckoutPage() {
                     </>
                   )}
                 </Button>
+
+                {submitError && (
+                  <p className="mt-4 text-sm text-destructive" role="alert">
+                    {submitError}
+                  </p>
+                )}
 
                 <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
                   <ShieldCheck className="h-4 w-4" />
