@@ -10,12 +10,26 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { order_id, method } = body;
+    const { order_id, method, transaction_id, payment_image, payment_object_key } = body;
 
-    if (!order_id || !method) {
+    if (!order_id || !method || !payment_image || !payment_object_key) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
+      );
+    }
+
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from("orders")
+      .select("id, user_id, total")
+      .eq("id", order_id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (orderError || !order) {
+      return NextResponse.json(
+        { success: false, error: "Order not found" },
+        { status: 404 }
       );
     }
 
@@ -23,9 +37,11 @@ export async function POST(req: Request) {
       .from("payments")
       .insert({
         order_id,
-        user_id: user.id,
         method,
-        amount: 0, // will be updated with order total
+        transaction_id: transaction_id || null,
+        payment_image,
+        payment_object_key,
+        amount: order.total,
         status: "pending",
       })
       .select()

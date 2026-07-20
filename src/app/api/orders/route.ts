@@ -140,8 +140,9 @@ export async function POST(req: Request) {
       };
     });
 
-    const delivery_fee = subtotal >= 100000 ? 0 : 5000;
+    const delivery_fee = subtotal >= 100000 ? 0 : 3000;
     const total = subtotal + delivery_fee;
+    const order_number = `WSC-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
     let order;
     let lastOrderError;
