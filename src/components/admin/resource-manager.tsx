@@ -14,7 +14,7 @@ type JsonObject = Record<string, any>;
 export type ResourceField = {
   key: string;
   label: string;
-  type?: "text" | "number" | "date" | "datetime-local" | "textarea" | "boolean" | "select" | "image";
+  type?: "text" | "number" | "date" | "datetime-local" | "textarea" | "boolean" | "select" | "image" | "images";
   required?: boolean;
   options?: string[];
   folder?: string;
@@ -72,6 +72,7 @@ export function ResourceManager({ title, resource, fields }: { title: string; re
       const values: JsonObject = Object.fromEntries(fields.map((field) => [field.key, field.type === "boolean" ? form.get(field.key) === "on" : form.get(field.key) || null]));
       const session = await getSession();
 
+      // Handle single image uploads
       for (const field of fields.filter((item) => item.type === "image")) {
         const file = form.get(`${field.key}_file`);
         if (!(file instanceof File) || file.size === 0) continue;
@@ -90,6 +91,36 @@ export function ResourceManager({ title, resource, fields }: { title: string; re
 
         values[field.key] = imageUrl;
         if (field.objectKeyField) values[field.objectKeyField] = objectKey;
+      }
+      
+      // Handle multiple image uploads
+      for (const field of fields.filter((item) => item.type === "images")) {
+        const files = form.getAll(`${field.key}_files`) as File[];
+        if (!files || files.length === 0) continue;
+        
+        const imageUrls = [];
+        const objectKeys = [];
+        
+        for (const file of files) {
+          if (!(file instanceof File) || file.size === 0) continue;
+          
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+            body: JSON.stringify({ folder: field.folder ?? resource, contentType: file.type, fileName: file.name }),
+          });
+          const uploadResult = await readJson(uploadResponse);
+          if (!uploadResponse.ok) throw new Error(uploadResult.error ?? "Unable to prepare image upload");
+
+          const { uploadUrl, objectKey, imageUrl } = uploadResult.data;
+          const putResponse = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+          if (!putResponse.ok) throw new Error("Unable to upload image to Cloudflare R2. Check the R2 bucket CORS settings for PUT requests.");
+
+          imageUrls.push(imageUrl);
+          objectKeys.push(objectKey);
+        }
+        
+        values[field.key] = imageUrls;
       }
 
       const response = await fetch(`/api/admin/resources/${resource}`, {

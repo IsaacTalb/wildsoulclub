@@ -1,3 +1,18 @@
 import { ResourceManager } from "@/components/admin/resource-manager";
-const fields = [{ key: "name", label: "Name", required: true }, { key: "slug", label: "Slug", required: true }, { key: "description", label: "Description", type: "textarea" as const, required: true }, { key: "price", label: "Price (MMK)", type: "number" as const, required: true }, { key: "sale_price", label: "Sale price", type: "number" as const }, { key: "stock", label: "Stock", type: "number" as const }, { key: "sku", label: "SKU" }, { key: "thumbnail_url", label: "Thumbnail image", type: "image" as const, folder: "products", objectKeyField: "thumbnail_key" }, { key: "is_active", label: "Active", type: "boolean" as const }, { key: "is_featured", label: "Featured", type: "boolean" as const }];
-export default function Page() { return <ResourceManager title="Products" resource="products" fields={fields} />; }
+const fields = [
+  { key: "name", label: "Name", required: true },
+  { key: "slug", label: "Slug", required: true },
+  { key: "description", label: "Description", type: "textarea" as const, required: true },
+  { key: "price", label: "Price (MMK)", type: "number" as const, required: true },
+  { key: "sale_price", label: "Sale price", type: "number" as const },
+  { key: "stock", label: "Stock", type: "number" as const },
+  { key: "sku", label: "SKU" },
+  { key: "thumbnail_url", label: "Thumbnail image", type: "image" as const, folder: "products", objectKeyField: "thumbnail_key" },
+  { key: "is_active", label: "Active", type: "boolean" as const },
+  { key: "is_featured", label: "Featured", type: "boolean" as const },
+  { key: "images", label: "Product images", type: "images" as const, folder: "products" }
+];
+
+export default function Page() {
+  return <ResourceManager title="Products" resource="products" fields={fields} />;
+}
