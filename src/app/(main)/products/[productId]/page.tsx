@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Minus, Plus, ShoppingCart, Heart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
-import { supabase } from "@/lib/supabase";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -23,53 +21,52 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
-  useEffect(() => {
-    fetchProduct();
-  }, [params.productId]);
-
-  async function fetchProduct() {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      // Fetch product data
-      const { data: productData, error: productError } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", params.productId)
-        .single();
+      const response = await fetch(`/api/public/products/${params.productId}`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "Failed to load product");
 
-      if (productError) throw productError;
+      const productData = result.data;
+      const imageUrls = [
+        productData.thumbnail_url,
+        ...(productData.product_images ?? []).map((image: { url?: string; image_url?: string }) => image.url || image.image_url),
+      ].filter(Boolean);
 
-      // Fetch product images
-      const { data: imagesData, error: imagesError } = await supabase
-        .from("product_images")
-        .select("*")
-        .eq("product_id", params.productId)
-        .order("sort_order");
-
-      if (imagesError) throw imagesError;
-
-      // Combine product data with images
-      const productWithImages = {
+      setProduct({
         ...productData,
-        images: imagesData.map(img => img.image_url),
+        images: Array.from(new Set(imageUrls)),
         sizes: productData.sizes || [],
         colors: productData.colors || [],
-      };
-
-      setProduct(productWithImages);
+        variants: productData.product_variants || [],
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load product");
     } finally {
       setLoading(false);
     }
-  }
+  }, [params.productId]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
+
+  const selectedVariant = useMemo(() => {
+    if (!product?.variants?.length) return null;
+    return product.variants.find((variant: { size?: string; color?: string }) => (!selectedSize || variant.size === selectedSize) && (!selectedColor || variant.color === selectedColor)) ?? null;
+  }, [product, selectedColor, selectedSize]);
+
+  const effectiveStock = selectedVariant ? Number(selectedVariant.stock ?? 0) : Number(product?.stock ?? 0);
+  const requiresSize = Boolean(product?.sizes?.length);
+  const requiresColor = Boolean(product?.colors?.length);
 
   const handleAddToCart = () => {
-    if (!selectedSize) return;
-    if (!selectedColor) return;
-    if (!product) return;
+    if (requiresSize && !selectedSize) return;
+    if (requiresColor && !selectedColor) return;
+    if (!product || effectiveStock <= 0) return;
 
     addItem(
       {
@@ -83,12 +80,12 @@ export default function ProductDetailPage() {
         updated_at: "",
       },
       quantity,
-      selectedSize,
-      selectedColor
+      selectedSize || selectedVariant?.size || "",
+      selectedColor || selectedVariant?.color || ""
     );
   };
 
-  if (loading) return <div className="container mx-auto px-4 py-8">Loading...</div>;
+  if (loading) return <div className="container mx-auto px-4 py-8">Loading product...</div>;
   if (error) return <div className="container mx-auto px-4 py-8">Error: {error}</div>;
   if (!product) return <div className="container mx-auto px-4 py-8">Product not found</div>;
 
@@ -144,17 +141,17 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div>
           <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
-            {product.category || "Uncategorized"}
+            {product.categories?.name || product.category || "Uncategorized"}
           </p>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
             {product.name}
           </h1>
 
           <div className="flex items-center gap-3 mb-6">
-            {product.sale_price ? (
+            {(selectedVariant?.price || product.sale_price) ? (
               <>
                 <span className="text-3xl font-bold text-red-500">
-                  {formatPrice(product.sale_price)}
+                  {formatPrice(Number(selectedVariant?.price || product.sale_price))}
                 </span>
                 <span className="text-xl text-muted-foreground line-through">
                   {formatPrice(product.price)}
@@ -229,15 +226,13 @@ export default function ProductDetailPage() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => setQuantity(Math.min(effectiveStock || quantity + 1, quantity + 1))}
               >
                 <Plus className="h-4 w-4" />
               </Button>
-              {product.stock && (
-                <span className="text-sm text-muted-foreground ml-2">
-                  {product.stock} in stock
-                </span>
-              )}
+              <span className="text-sm text-muted-foreground ml-2">
+                {effectiveStock > 0 ? `${effectiveStock} in stock` : "Out of stock"}
+              </span>
             </div>
           </div>
 
@@ -247,7 +242,7 @@ export default function ProductDetailPage() {
               size="lg"
               className="flex-1 text-base"
               onClick={handleAddToCart}
-              disabled={!selectedSize || !selectedColor}
+              disabled={(requiresSize && !selectedSize) || (requiresColor && !selectedColor) || effectiveStock <= 0}
             >
               <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
             </Button>

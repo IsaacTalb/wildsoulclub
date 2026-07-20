@@ -16,14 +16,7 @@ import {
 import { formatPrice } from "@/lib/utils";
 import { Product } from "@/types/product";
 
-const categories = [
-  { id: "all", name: "All Products" },
-  { id: "1", name: "T-Shirts" },
-  { id: "2", name: "Hoodies" },
-  { id: "3", name: "Accessories" },
-  { id: "4", name: "Outerwear" },
-  { id: "5", name: "Bottoms" },
-];
+type CategoryOption = { id: string; name: string };
 
 const floatLayouts = [
   { x: "0px", y: "24px", rotate: "-2.5deg" },
@@ -40,6 +33,7 @@ export default function ProductsPage() {
   const [category, setCategory] = useState<string>("all");
   const [sort, setSort] = useState<string>("newest");
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([{ id: "all", name: "All Products" }]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +59,16 @@ export default function ProductsPage() {
 
     fetchProducts();
   }, [search, category, sort]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const res = await fetch("/api/public/categories");
+      if (!res.ok) return;
+      const data = await res.json();
+      setCategories([{ id: "all", name: "All Products" }, ...(data.data || [])]);
+    };
+    fetchCategories();
+  }, []);
 
   if (loading) {
     return (
@@ -162,7 +166,7 @@ export default function ProductsPage() {
           <div className="grid grid-cols-1 gap-x-5 gap-y-14 pb-20 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product, index) => {
               const float = floatLayouts[index % floatLayouts.length];
-              const imageUrl = product.product_images?.[0]?.url || product.product_images?.[0]?.object_key;
+              const imageUrl = product.thumbnail_url || product.product_images?.[0]?.url || product.product_images?.[0]?.image_url || product.product_images?.[0]?.object_key;
 
               return (
                 <Link
@@ -192,7 +196,7 @@ export default function ProductsPage() {
                         {product.sale_price ? (
                           <Badge className="rounded-full bg-red-500">SALE</Badge>
                         ) : <span />}
-                        {product.is_new && (
+                        {product.is_new_drop && (
                           <Badge className="rounded-full" variant="secondary">NEW</Badge>
                         )}
                       </div>
@@ -200,7 +204,7 @@ export default function ProductsPage() {
                     <div className="flex items-start justify-between gap-3 px-2 py-4">
                       <div>
                         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                          {product.category || "Wild Soul"}
+                          {product.categories?.name || product.category || "Wild Soul"}
                         </p>
                         <h3 className="mt-1 text-lg font-black tracking-tight group-hover:text-primary">
                           {product.name}
