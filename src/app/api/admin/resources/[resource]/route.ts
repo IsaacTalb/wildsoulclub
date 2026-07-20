@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const resources = {
-  products: { table: "products", orderBy: "created_at", fields: ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "stock", "sku", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description", "images"] },
+  products: { table: "products", orderBy: "created_at", fields: ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"] },
   categories: { table: "categories", orderBy: "created_at", fields: ["name", "slug", "description", "image_url", "object_key", "sort_order", "is_active"] },
   collections: { table: "collections", orderBy: "created_at", fields: ["name", "slug", "description", "image_url", "object_key", "is_active", "start_date", "end_date"] },
   coupons: { table: "coupons", orderBy: "created_at", fields: ["code", "description", "discount_type", "discount_value", "min_order_amount", "max_discount", "usage_limit", "is_active", "expires_at"] },
@@ -23,7 +23,48 @@ function config(resource: string) {
 function payload(resource: ResourceName, value: Record<string, unknown>) {
   return Object.fromEntries(resources[resource].fields
     .filter((field) => field in value)
-    .map((field) => [field, value[field]]));
+    .map((field) => [field, normalizeValue(field, value[field])]));
+}
+
+function normalizeValue(field: string, value: unknown) {
+  if (value === "") return null;
+  if (["sizes", "colors"].includes(field) && typeof value === "string") {
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+  return value;
+}
+
+type UploadedProductImage = {
+  image_url?: string;
+  object_key?: string;
+  file_size?: number;
+  mime_type?: string;
+};
+
+async function appendProductImages(productId: string, images: unknown) {
+  if (!Array.isArray(images) || images.length === 0) return;
+
+  const { count } = await supabaseAdmin
+    .from("product_images")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", productId);
+
+  const startingOrder = count ?? 0;
+  const rows = (images as UploadedProductImage[])
+    .filter((image) => image.image_url && image.object_key)
+    .map((image, index) => ({
+      product_id: productId,
+      image_url: image.image_url!,
+      object_key: image.object_key!,
+      file_size: image.file_size ?? null,
+      mime_type: image.mime_type ?? null,
+      is_thumbnail: startingOrder === 0 && index === 0,
+      sort_order: startingOrder + index,
+    }));
+
+  if (rows.length === 0) return;
+  const { error } = await supabaseAdmin.from("product_images").insert(rows);
+  if (error) throw error;
 }
 
 async function getResource(params: Promise<{ resource: string }>) {
@@ -38,8 +79,8 @@ type ResourceContext = { params: Promise<{ resource: string }> };
 export async function GET(_request: Request, { params }: ResourceContext) {
   try {
     await requireAdmin();
-    const { resourceConfig } = await getResource(params);
-    let query = supabaseAdmin.from(resourceConfig.table).select("*");
+    const { resource, resourceConfig } = await getResource(params);
+    let query = supabaseAdmin.from(resourceConfig.table).select(resource === "products" ? "*, product_images(*)" : "*");
     if ("orderBy" in resourceConfig) query = query.order(resourceConfig.orderBy, { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
@@ -53,9 +94,11 @@ export async function POST(request: Request, { params }: ResourceContext) {
   try {
     await requireAdmin();
     const { resource, resourceConfig } = await getResource(params);
-    const body = payload(resource, await request.json());
+    const json = await request.json();
+    const body = payload(resource, json);
     const { data, error } = await supabaseAdmin.from(resourceConfig.table).insert(body).select().single();
     if (error) throw error;
+    if (resource === "products") await appendProductImages(data.id, json.images);
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Unable to create resource" }, { status: 400 });
@@ -70,6 +113,7 @@ export async function PATCH(request: Request, { params }: ResourceContext) {
     if (!id) return NextResponse.json({ success: false, error: "Record id is required" }, { status: 400 });
     const { data, error } = await supabaseAdmin.from(resourceConfig.table).update(payload(resource, values)).eq("id", id).select().single();
     if (error) throw error;
+    if (resource === "products") await appendProductImages(id, values.images);
     return NextResponse.json({ success: true, data });
   } catch {
     return NextResponse.json({ success: false, error: "Unable to update resource" }, { status: 400 });

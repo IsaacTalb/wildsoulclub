@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Minus, Plus, ShoppingCart, Heart, Share2 } from "lucide-react";
@@ -23,11 +23,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
-  useEffect(() => {
-    fetchProduct();
-  }, [params.productId]);
-
-  async function fetchProduct() {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -64,7 +60,11 @@ export default function ProductDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [params.productId]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
 
   const handleAddToCart = () => {
     if (!selectedSize) return;
