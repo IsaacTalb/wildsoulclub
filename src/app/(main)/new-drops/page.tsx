@@ -89,7 +89,7 @@ export default function NewDropsPage() {
                   <div className="aspect-square bg-muted relative flex items-center justify-center">
                     {item.product_images?.[0] ? (
                       <img
-                        src={`${process.env.R2_PUBLIC_BASE_URL}/${item.product_images[0].object_key}`}
+                        src={item.thumbnail_url || item.product_images[0].url || item.product_images[0].image_url || item.product_images[0].object_key}
                         alt={item.name}
                         className="object-contain w-full h-full"
                       />
@@ -107,7 +107,7 @@ export default function NewDropsPage() {
                   </div>
                   <div className="p-4">
                     <p className="text-xs text-muted-foreground mb-1">
-                      {item.category || "Uncategorized"}
+                      {item.categories?.name || item.category || "Uncategorized"}
                     </p>
                     <h3 className="font-semibold group-hover:text-primary transition-colors">
                       {item.name}

@@ -1,0 +1,243 @@
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+
+type Option = { id: string; name: string };
+type ProductImage = { id: string; image_url: string; object_key: string; is_thumbnail: boolean; sort_order: number };
+type ProductVariant = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sku?: string; _delete?: boolean };
+type ProductRow = Record<string, any> & { product_images?: ProductImage[]; product_variants?: ProductVariant[]; categories?: Option | null; collections?: Option | null };
+
+const blankProduct: ProductRow = {
+  name: "",
+  slug: "",
+  description: "",
+  price: "",
+  sale_price: "",
+  discount_percent: 0,
+  category_id: "",
+  collection_id: "",
+  stock: 0,
+  sku: "",
+  barcode: "",
+  sizes: [],
+  colors: [],
+  thumbnail_url: "",
+  thumbnail_key: "",
+  is_active: true,
+  is_archived: false,
+  is_featured: false,
+  is_new_drop: false,
+  is_archive_sale: false,
+  new_drop_start_date: "",
+  new_drop_end_date: "",
+  meta_title: "",
+  meta_description: "",
+  product_images: [],
+  product_variants: [],
+};
+
+async function readJson(response: Response) {
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
+}
+
+async function getSession() {
+  const { data: { session } } = await (await import("@/lib/supabase")).supabase.auth.getSession();
+  return session;
+}
+
+function formatInputDate(value?: string | null) {
+  if (!value) return "";
+  return value.slice(0, 16);
+}
+
+function listToText(value: unknown) {
+  return Array.isArray(value) ? value.join(", ") : String(value ?? "");
+}
+
+export function ProductManager() {
+  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [categories, setCategories] = useState<Option[]>([]);
+  const [collections, setCollections] = useState<Option[]>([]);
+  const [record, setRecord] = useState<ProductRow>(blankProduct);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const sortedImages = useMemo(() => [...(record.product_images ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)), [record.product_images]);
+
+  async function authHeaders(): Promise<Record<string, string>> {
+    const session = await getSession();
+    return session ? { Authorization: `Bearer ${session.access_token}` } : {};
+  }
+
+  async function load() {
+    setLoading(true);
+    setError("");
+    try {
+      const headers = await authHeaders();
+      const [productsResponse, categoriesResponse, collectionsResponse] = await Promise.all([
+        fetch("/api/admin/products", { headers }),
+        fetch("/api/public/categories"),
+        fetch("/api/public/collections"),
+      ]);
+      const productsJson = await readJson(productsResponse);
+      const categoriesJson = await readJson(categoriesResponse);
+      const collectionsJson = await readJson(collectionsResponse);
+      if (!productsResponse.ok) throw new Error(productsJson.error ?? "Unable to load products");
+      setProducts(productsJson.data ?? []);
+      setCategories(categoriesJson.data ?? []);
+      setCollections(collectionsJson.data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load products");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  function openCreate() {
+    setRecord({ ...blankProduct, product_images: [], product_variants: [] });
+    setVariants([{ size: "", color: "", stock: 0, price: "", sku: "" }]);
+    setError("");
+    setOpen(true);
+  }
+
+  function openEdit(product: ProductRow) {
+    setRecord(product);
+    setVariants(product.product_variants?.length ? product.product_variants : [{ size: "", color: "", stock: 0, price: "", sku: "" }]);
+    setError("");
+    setOpen(true);
+  }
+
+  async function uploadImages(files: FileList | null) {
+    if (!files?.length) return [];
+    const headers = await authHeaders();
+    const uploadedImages = [];
+    for (const file of Array.from(files)) {
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ folder: "products", contentType: file.type, fileName: file.name }),
+      });
+      const uploadResult = await readJson(uploadResponse);
+      if (!uploadResponse.ok) throw new Error(uploadResult.error ?? "Unable to prepare image upload");
+      const { uploadUrl, objectKey, imageUrl } = uploadResult.data;
+      const putResponse = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+      if (!putResponse.ok) throw new Error("Unable to upload image to Cloudflare R2. Check R2 CORS for PUT requests.");
+      uploadedImages.push({ image_url: imageUrl, object_key: objectKey, file_size: file.size, mime_type: file.type });
+    }
+    return uploadedImages;
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const form = new FormData(event.currentTarget);
+      const images = await uploadImages(form.get("product_images") instanceof File ? (event.currentTarget.elements.namedItem("product_images") as HTMLInputElement).files : null);
+      const payload = {
+        id: record.id,
+        name: form.get("name"),
+        slug: form.get("slug"),
+        description: form.get("description"),
+        price: form.get("price"),
+        sale_price: form.get("sale_price"),
+        discount_percent: form.get("discount_percent"),
+        category_id: form.get("category_id"),
+        collection_id: form.get("collection_id"),
+        stock: form.get("stock"),
+        sku: form.get("sku"),
+        barcode: form.get("barcode"),
+        sizes: form.get("sizes"),
+        colors: form.get("colors"),
+        is_active: form.get("is_active") === "on",
+        is_archived: form.get("is_archived") === "on",
+        is_featured: form.get("is_featured") === "on",
+        is_new_drop: form.get("is_new_drop") === "on",
+        is_archive_sale: form.get("is_archive_sale") === "on",
+        new_drop_start_date: form.get("new_drop_start_date"),
+        new_drop_end_date: form.get("new_drop_end_date"),
+        meta_title: form.get("meta_title"),
+        meta_description: form.get("meta_description"),
+        images,
+        variants,
+      };
+      const headers = await authHeaders();
+      const response = await fetch("/api/admin/products", {
+        method: record.id ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify(payload),
+      });
+      const result = await readJson(response);
+      if (!response.ok) throw new Error(result.error ?? "Unable to save product");
+      setOpen(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save product");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function productAction(body: Record<string, unknown>) {
+    const headers = await authHeaders();
+    const response = await fetch("/api/admin/products", { method: "PATCH", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
+    const result = await readJson(response);
+    if (!response.ok) throw new Error(result.error ?? "Unable to update product image");
+    setRecord(result.data);
+    await load();
+  }
+
+  async function deleteProduct(id: string) {
+    if (!window.confirm("Delete this product? This cannot be undone.")) return;
+    const headers = await authHeaders();
+    const response = await fetch("/api/admin/products", { method: "DELETE", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ id }) });
+    if (!response.ok) {
+      const result = await readJson(response);
+      setError(result.error ?? "Unable to delete product");
+      return;
+    }
+    await load();
+  }
+
+  function updateVariant(index: number, key: keyof ProductVariant, value: string) {
+    setVariants((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item));
+  }
+
+  function removeVariant(index: number) {
+    setVariants((items) => items.map((item, itemIndex) => itemIndex === index && item.id ? { ...item, _delete: true } : item).filter((item, itemIndex) => itemIndex !== index || item.id));
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4"><div><h1 className="text-2xl font-bold">Products</h1><p className="text-sm text-muted-foreground">Manage schema-aligned products, images, thumbnails, and variants.</p></div><Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add product</Button></div>
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      <Card><CardContent className="p-0 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="px-4 py-3 font-medium">Name</th><th className="px-4 py-3 font-medium">Category</th><th className="px-4 py-3 font-medium">Collection</th><th className="px-4 py-3 font-medium">Stock</th><th className="px-4 py-3 font-medium">Flags</th><th className="px-4 py-3" /></tr></thead><tbody>{loading ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>Loading products…</td></tr> : products.length === 0 ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>No products yet.</td></tr> : products.map((product) => <tr key={product.id} className="border-b last:border-0"><td className="px-4 py-3 font-medium">{product.name}</td><td className="px-4 py-3">{product.categories?.name ?? "—"}</td><td className="px-4 py-3">{product.collections?.name ?? "—"}</td><td className="px-4 py-3">{product.stock ?? 0}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{product.is_featured && <Badge>Featured</Badge>}{product.is_new_drop && <Badge variant="secondary">New</Badge>}{product.is_archive_sale && <Badge variant="destructive">Sale</Badge>}</div></td><td className="px-4 py-3 text-right whitespace-nowrap"><Button variant="ghost" size="icon" onClick={() => openEdit(product)}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button></td></tr>)}</tbody></table></CardContent></Card>
+
+      <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{record.id ? "Edit product" : "Add product"}</DialogTitle></DialogHeader><form onSubmit={submit} className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2"><div className="space-y-1.5"><Label>Name</Label><Input name="name" defaultValue={record.name ?? ""} required /></div><div className="space-y-1.5"><Label>Slug</Label><Input name="slug" defaultValue={record.slug ?? ""} required /></div><div className="space-y-1.5 md:col-span-2"><Label>Description</Label><Textarea name="description" defaultValue={record.description ?? ""} required /></div><div className="space-y-1.5"><Label>Price (MMK)</Label><Input name="price" type="number" defaultValue={record.price ?? ""} required /></div><div className="space-y-1.5"><Label>Sale price</Label><Input name="sale_price" type="number" defaultValue={record.sale_price ?? ""} /></div><div className="space-y-1.5"><Label>Discount percent</Label><Input name="discount_percent" type="number" defaultValue={record.discount_percent ?? 0} /></div><div className="space-y-1.5"><Label>Stock</Label><Input name="stock" type="number" defaultValue={record.stock ?? 0} /></div><div className="space-y-1.5"><Label>Category</Label><select name="category_id" defaultValue={record.category_id ?? ""} className="h-10 w-full rounded-md border bg-background px-3"><option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div><div className="space-y-1.5"><Label>Collection</Label><select name="collection_id" defaultValue={record.collection_id ?? ""} className="h-10 w-full rounded-md border bg-background px-3"><option value="">No collection</option>{collections.map((collection) => <option key={collection.id} value={collection.id}>{collection.name}</option>)}</select></div><div className="space-y-1.5"><Label>SKU</Label><Input name="sku" defaultValue={record.sku ?? ""} /></div><div className="space-y-1.5"><Label>Barcode</Label><Input name="barcode" defaultValue={record.barcode ?? ""} /></div><div className="space-y-1.5"><Label>Sizes</Label><Input name="sizes" defaultValue={listToText(record.sizes)} placeholder="S, M, L" /></div><div className="space-y-1.5"><Label>Colors</Label><Input name="colors" defaultValue={listToText(record.colors)} placeholder="Black, Cream" /></div><div className="space-y-1.5"><Label>New drop start</Label><Input name="new_drop_start_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_start_date)} /></div><div className="space-y-1.5"><Label>New drop end</Label><Input name="new_drop_end_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_end_date)} /></div><div className="space-y-1.5"><Label>Meta title</Label><Input name="meta_title" defaultValue={record.meta_title ?? ""} /></div><div className="space-y-1.5 md:col-span-2"><Label>Meta description</Label><Textarea name="meta_description" defaultValue={record.meta_description ?? ""} /></div></div>
+
+        <div className="grid gap-3 sm:grid-cols-5"><label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked={Boolean(record.is_active)} />Active</label><label className="flex items-center gap-2 text-sm"><input name="is_archived" type="checkbox" defaultChecked={Boolean(record.is_archived)} />Archived</label><label className="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox" defaultChecked={Boolean(record.is_featured)} />Featured</label><label className="flex items-center gap-2 text-sm"><input name="is_new_drop" type="checkbox" defaultChecked={Boolean(record.is_new_drop)} />New drop</label><label className="flex items-center gap-2 text-sm"><input name="is_archive_sale" type="checkbox" defaultChecked={Boolean(record.is_archive_sale)} />Archive sale</label></div>
+
+        <div className="space-y-3"><div><Label>Product images</Label><Input name="product_images" type="file" accept="image/*" multiple className="mt-1" /></div>{record.id && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{sortedImages.length === 0 ? <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><ImageIcon className="mx-auto mb-2 h-6 w-6" />No images yet</div> : sortedImages.map((image, index) => <div key={image.id} className="overflow-hidden rounded-lg border bg-card"><div className="relative aspect-square bg-muted"><img src={image.image_url} alt="Product" className="h-full w-full object-contain p-2" />{image.is_thumbnail && <Badge className="absolute left-2 top-2"><Star className="mr-1 h-3 w-3" />Thumbnail</Badge>}</div><div className="grid grid-cols-4 gap-1 p-2"><Button type="button" variant="outline" size="icon" disabled={index === 0} onClick={() => productAction({ id: record.id, imageAction: "reorder", imageOrder: sortedImages.map((item) => item.id).map((item, itemIndex, items) => itemIndex === index - 1 ? items[index] : itemIndex === index ? items[index - 1] : item) })}><ArrowUp className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" disabled={index === sortedImages.length - 1} onClick={() => productAction({ id: record.id, imageAction: "reorder", imageOrder: sortedImages.map((item) => item.id).map((item, itemIndex, items) => itemIndex === index ? items[index + 1] : itemIndex === index + 1 ? items[index] : item) })}><ArrowDown className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" onClick={() => productAction({ id: record.id, imageAction: "thumbnail", imageId: image.id })}><Star className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" className="text-destructive" onClick={() => productAction({ id: record.id, imageAction: "delete", imageId: image.id })}><Trash2 className="h-3 w-3" /></Button></div></div>)}</div>}</div>
+
+        <div className="space-y-3"><div className="flex items-center justify-between"><Label>Product variants</Label><Button type="button" variant="outline" size="sm" onClick={() => setVariants((items) => [...items, { size: "", color: "", stock: 0, price: "", sku: "" }])}><Plus className="mr-2 h-3 w-3" />Add variant</Button></div><div className="space-y-2">{variants.filter((variant) => !variant._delete).map((variant, index) => <div key={variant.id ?? index} className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]"><Input placeholder="Size" value={variant.size ?? ""} onChange={(event) => updateVariant(index, "size", event.target.value)} /><Input placeholder="Color" value={variant.color ?? ""} onChange={(event) => updateVariant(index, "color", event.target.value)} /><Input placeholder="Stock" type="number" value={variant.stock ?? 0} onChange={(event) => updateVariant(index, "stock", event.target.value)} /><Input placeholder="Price override" type="number" value={variant.price ?? ""} onChange={(event) => updateVariant(index, "price", event.target.value)} /><Input placeholder="SKU" value={variant.sku ?? ""} onChange={(event) => updateVariant(index, "sku", event.target.value)} /><Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeVariant(index)}><Trash2 className="h-4 w-4" /></Button></div>)}</div></div>
+
+        <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save product"}</Button></DialogFooter>
+      </form></DialogContent></Dialog>
+    </div>
+  );
+}

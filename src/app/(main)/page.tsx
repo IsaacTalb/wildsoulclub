@@ -27,7 +27,19 @@ type HomeCollection = {
   name: string;
   slug: string;
   image_url?: string | null;
+  object_key?: string | null;
 };
+
+function getImageUrl(imageUrl?: string | null, objectKey?: string | null) {
+  return imageUrl || objectKey || "";
+}
+
+function preloadImages(urls: string[]) {
+  urls.filter(Boolean).slice(0, 10).forEach((url) => {
+    const image = new window.Image();
+    image.src = url;
+  });
+}
 
 function getProductImage(product: HomeProduct) {
   return (
@@ -43,6 +55,7 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [featuredProducts, setFeaturedProducts] = useState<HomeProduct[]>([]);
   const [collections, setCollections] = useState<HomeCollection[]>([]);
+  const [loadingHomeData, setLoadingHomeData] = useState(true);
 
   const heroSlides = featuredProducts
     .filter((product) => product.is_new_drop || product.is_featured)
@@ -56,6 +69,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchHomeData = async () => {
+      setLoadingHomeData(true);
       const [productsResponse, collectionsResponse] = await Promise.all([
         fetch("/api/public/products?sort=newest"),
         fetch("/api/public/collections"),
@@ -64,16 +78,21 @@ export default function HomePage() {
       if (productsResponse.ok) {
         const productsJson = await productsResponse.json();
         const products = (productsJson.data || []) as HomeProduct[];
-        setFeaturedProducts(products.filter((product) => product.is_featured).slice(0, 4));
+        const featured = products.filter((product) => product.is_featured).slice(0, 4);
+        setFeaturedProducts(featured);
+        preloadImages(featured.map(getProductImage));
       }
 
       if (collectionsResponse.ok) {
         const collectionsJson = await collectionsResponse.json();
-        setCollections(((collectionsJson.data || []) as HomeCollection[]).slice(0, 4));
+        const homeCollections = ((collectionsJson.data || []) as HomeCollection[]).slice(0, 4);
+        setCollections(homeCollections);
+        preloadImages(homeCollections.map((collection) => getImageUrl(collection.image_url, collection.object_key)));
       }
+      setLoadingHomeData(false);
     };
 
-    fetchHomeData();
+    fetchHomeData().catch(() => setLoadingHomeData(false));
   }, []);
 
   useEffect(() => {
@@ -189,6 +208,9 @@ export default function HomePage() {
               <Link key={collection.slug} href={`/collections/${collection.slug}`}>
                 <Card className="group overflow-hidden border-0">
                   <CardContent className="p-0 relative aspect-[3/4] bg-muted">
+                    {getImageUrl(collection.image_url, collection.object_key) ? (
+                      <Image src={getImageUrl(collection.image_url, collection.object_key)} alt={collection.name} fill unoptimized sizes="(min-width: 768px) 25vw, 50vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                    ) : null}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-4">
                       <h3 className="text-white font-semibold text-lg">
@@ -218,7 +240,9 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {featuredProducts.length === 0 ? (
+              {loadingHomeData ? (
+              <Card className="col-span-full border-dashed"><CardContent className="p-8 text-center text-muted-foreground">Preloading products and images…</CardContent></Card>
+            ) : featuredProducts.length === 0 ? (
               <Card className="col-span-full border-dashed"><CardContent className="p-8 text-center text-muted-foreground">No featured products found in the database yet.</CardContent></Card>
             ) : featuredProducts.map((product, index) => (
                 <Link key={product.id} href={`/products/${product.id}`} className="relative block">
@@ -239,6 +263,7 @@ export default function HomePage() {
                         src={getProductImage(product) || "/images/placeholder.svg"}
                         alt={product.name}
                         fill
+                        unoptimized
                         className="object-contain"
                       />
                     </div>
