@@ -162,11 +162,15 @@ CREATE TABLE product_variants (
   color TEXT,
   stock INT DEFAULT 0,
   price DECIMAL(10, 2),
+  sale_price DECIMAL(10, 2),
   sku TEXT,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_variants_product ON product_variants(product_id);
+CREATE UNIQUE INDEX idx_variants_product_sku_unique ON product_variants(product_id, lower(sku)) WHERE sku IS NOT NULL;
+CREATE UNIQUE INDEX idx_variants_product_options_unique ON product_variants(product_id, lower(size), lower(color)) WHERE sku IS NULL AND (size IS NOT NULL OR color IS NOT NULL);
 
 -- ==========================================
 -- ORDERS

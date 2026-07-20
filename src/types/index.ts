@@ -68,7 +68,9 @@ export interface ProductVariant {
   color: string;
   stock: number;
   price?: number;
+  sale_price?: number;
   sku: string;
+  is_active: boolean;
   created_at: string;
 }
 
