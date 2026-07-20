@@ -1,22 +1,61 @@
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
 
-type OrderRequestItem = {
-  product_id?: string;
-  variant_id?: string | null;
-  quantity?: number;
+const orderItemSchema = z.object({
+  product_id: z.uuid(),
+  variant_id: z.uuid().nullable().optional(),
+  quantity: z.number().int().positive(),
+  size: z.string().trim().optional().nullable(),
+  color: z.string().trim().optional().nullable(),
+});
+
+const createOrderSchema = z.object({
+  full_name: z.string().trim().min(1),
+  email: z.email(),
+  phone: z.string().trim().min(1),
+  address: z.string().trim().min(1),
+  township: z.string().trim().min(1),
+  city: z.string().trim().min(1),
+  state: z.string().trim().min(1),
+  zip: z.string().trim().optional().nullable(),
+  notes: z.string().trim().optional().nullable(),
+  items: z.array(orderItemSchema).min(1),
+});
+
+type ProductRow = {
+  id: string;
+  price: number | string;
+  sale_price: number | string | null;
+  stock: number | null;
+  is_active: boolean | null;
 };
 
-type PreparedOrderItem = {
+type VariantRow = {
+  id: string;
   product_id: string;
-  variant_id: string | null;
-  quantity: number;
+  price: number | string | null;
+  stock: number | null;
   size: string | null;
   color: string | null;
-  price: number;
 };
+
+function normalizeMoney(value: number | string | null | undefined) {
+  if (value == null) return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function generateOrderNumber() {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = crypto.randomUUID().slice(0, 8).toUpperCase();
+  return `WSC-${timestamp}-${random}`;
+}
+
+function validationError(message: string) {
+  return NextResponse.json({ success: false, error: message }, { status: 400 });
+}
 
 export async function POST(req: Request) {
   try {
@@ -25,123 +64,142 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { items, full_name, email, phone, address, township, city, state, zip, notes } = body;
-
-    if (!items?.length || !full_name || !email || !phone || !address || !township || !city || !state) {
-      return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      );
+    let json: unknown;
+    try {
+      json = await req.json();
+    } catch {
+      return validationError("Invalid JSON body");
     }
 
-    const normalizedItems = (items as OrderRequestItem[]).map((item) => ({
-      product_id: item.product_id,
-      variant_id: item.variant_id ?? null,
-      quantity: Number(item.quantity),
-    }));
-
-    if (normalizedItems.some((item) => !item.product_id || !Number.isInteger(item.quantity) || item.quantity < 1)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid cart items" },
-        { status: 400 }
-      );
+    const parsed = createOrderSchema.safeParse(json);
+    if (!parsed.success) {
+      return validationError("Invalid order request");
     }
 
-    const productIds = [...new Set(normalizedItems.map((item) => item.product_id as string))];
-    const variantIds = [...new Set(normalizedItems.map((item) => item.variant_id).filter(Boolean) as string[])];
+    const orderInput = parsed.data;
+    const productIds = [...new Set(orderInput.items.map((item) => item.product_id))];
+    const variantIds = [...new Set(orderInput.items.map((item) => item.variant_id).filter((id): id is string => Boolean(id)))];
 
     const { data: products, error: productsError } = await supabaseAdmin
       .from("products")
-      .select("id, price, sale_price, is_active, stock")
+      .select("id, price, sale_price, stock, is_active")
       .in("id", productIds);
 
     if (productsError) throw productsError;
 
-    const variants = variantIds.length
-      ? await supabaseAdmin
-          .from("product_variants")
-          .select("id, product_id, price, size, color, stock")
-          .in("id", variantIds)
-      : { data: [], error: null };
+    const productsById = new Map((products as ProductRow[] | null ?? []).map((product) => [product.id, product]));
+    if (productsById.size !== productIds.length) {
+      return validationError("One or more products are invalid");
+    }
 
-    if (variants.error) throw variants.error;
+    let variantsById = new Map<string, VariantRow>();
+    if (variantIds.length > 0) {
+      const { data: variants, error: variantsError } = await supabaseAdmin
+        .from("product_variants")
+        .select("id, product_id, price, stock, size, color")
+        .in("id", variantIds);
 
-    const productsById = new Map((products ?? []).map((product) => [product.id, product]));
-    const variantsById = new Map((variants.data ?? []).map((variant) => [variant.id, variant]));
+      if (variantsError) throw variantsError;
+      variantsById = new Map((variants as VariantRow[] | null ?? []).map((variant) => [variant.id, variant]));
+      if (variantsById.size !== variantIds.length) {
+        return validationError("One or more product variants are invalid");
+      }
+    }
 
-    // Calculate totals
     let subtotal = 0;
-    const orderItems: PreparedOrderItem[] = [];
-
-    for (const item of normalizedItems) {
-      const productId = item.product_id as string;
-      const product = productsById.get(productId);
-      if (!product || !product.is_active) {
-        return NextResponse.json({ success: false, error: "A cart item is no longer available" }, { status: 400 });
+    const orderItems = orderInput.items.map((item) => {
+      const product = productsById.get(item.product_id)!;
+      if (!product.is_active) {
+        throw new Error("Inactive product");
       }
 
       const variant = item.variant_id ? variantsById.get(item.variant_id) : null;
-      if (item.variant_id && (!variant || variant.product_id !== productId)) {
-        return NextResponse.json({ success: false, error: "A selected product variant is invalid" }, { status: 400 });
+      if (variant && variant.product_id !== item.product_id) {
+        throw new Error("Variant does not belong to product");
       }
 
-      const stock = variant?.stock ?? product.stock;
-      if (stock < item.quantity) {
-        return NextResponse.json({ success: false, error: "A cart item does not have enough stock" }, { status: 400 });
+      const availableStock = variant ? variant.stock : product.stock;
+      if (availableStock != null && availableStock < item.quantity) {
+        throw new Error("Insufficient stock");
       }
 
-      const price = Number(variant?.price ?? product.sale_price ?? product.price);
+      const price = normalizeMoney(variant?.price) ?? normalizeMoney(product.sale_price) ?? normalizeMoney(product.price);
+      if (price == null) {
+        throw new Error("Invalid product price");
+      }
+
       subtotal += price * item.quantity;
-      orderItems.push({
-        product_id: productId,
-        variant_id: item.variant_id,
+
+      return {
+        product_id: item.product_id,
+        variant_id: item.variant_id ?? null,
         quantity: item.quantity,
-        size: variant?.size ?? null,
-        color: variant?.color ?? null,
+        size: item.size ?? variant?.size ?? null,
+        color: item.color ?? variant?.color ?? null,
         price,
-      });
-    }
+      };
+    });
 
     const delivery_fee = subtotal >= 100000 ? 0 : 3000;
     const total = subtotal + delivery_fee;
     const order_number = `WSC-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
 
-    // Create order
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
-      .insert({
-        order_number,
-        user_id: user.id,
-        full_name,
-        email,
-        phone,
-        address,
-        township,
-        city,
-        state,
-        zip: zip || null,
-        notes: notes || null,
-        subtotal,
-        delivery_fee,
-        total,
-        status: "pending",
-        payment_status: "pending",
-      })
-      .select()
-      .single();
+    let order;
+    let lastOrderError;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const order_number = generateOrderNumber();
+      const { data, error } = await supabaseAdmin
+        .from("orders")
+        .insert({
+          order_number,
+          user_id: user.id,
+          full_name: orderInput.full_name,
+          email: orderInput.email,
+          phone: orderInput.phone,
+          address: orderInput.address,
+          township: orderInput.township,
+          city: orderInput.city,
+          state: orderInput.state,
+          zip: orderInput.zip || null,
+          notes: orderInput.notes || null,
+          subtotal,
+          delivery_fee,
+          total,
+          status: "pending",
+          payment_status: "pending",
+        })
+        .select()
+        .single();
 
-    if (orderError) throw orderError;
+      if (!error) {
+        order = data;
+        break;
+      }
 
-    // Create order items
+      lastOrderError = error;
+      if (error.code !== "23505") break;
+    }
+
+    if (!order) throw lastOrderError;
+
     const { error: itemsError } = await supabaseAdmin
       .from("order_items")
       .insert(orderItems.map((item) => ({ ...item, order_id: order.id })));
 
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      throw itemsError;
+    }
 
-    return NextResponse.json({ success: true, data: order }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: { ...order, id: order.id, order_number: order.order_number } },
+      { status: 201 }
+    );
   } catch (error) {
+    if (error instanceof Error && ["Inactive product", "Variant does not belong to product", "Insufficient stock", "Invalid product price"].includes(error.message)) {
+      return validationError(error.message);
+    }
+
     return NextResponse.json(
       { success: false, error: "Failed to create order" },
       { status: 500 }
@@ -165,7 +223,7 @@ export async function GET() {
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: "Failed to fetch orders" },
       { status: 500 }
