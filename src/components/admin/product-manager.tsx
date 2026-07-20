@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 
 type Option = { id: string; name: string };
 type ProductImage = { id: string; image_url: string; object_key: string; is_thumbnail: boolean; sort_order: number };
-type ProductVariant = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sku?: string; _delete?: boolean };
+type ProductVariant = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sale_price?: number | string | null; sku?: string; is_active?: boolean; _delete?: boolean };
 type ProductRow = Record<string, any> & { product_images?: ProductImage[]; product_variants?: ProductVariant[]; categories?: Option | null; collections?: Option | null };
 
 const blankProduct: ProductRow = {
@@ -73,6 +73,8 @@ export function ProductManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [bulkSizes, setBulkSizes] = useState("");
+  const [bulkColors, setBulkColors] = useState("");
 
   const sortedImages = useMemo(() => [...(record.product_images ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)), [record.product_images]);
 
@@ -109,14 +111,18 @@ export function ProductManager() {
 
   function openCreate() {
     setRecord({ ...blankProduct, product_images: [], product_variants: [] });
-    setVariants([{ size: "", color: "", stock: 0, price: "", sku: "" }]);
+    setVariants([{ size: "", color: "", stock: 0, price: "", sale_price: "", sku: "", is_active: true }]);
+    setBulkSizes("");
+    setBulkColors("");
     setError("");
     setOpen(true);
   }
 
   function openEdit(product: ProductRow) {
     setRecord(product);
-    setVariants(product.product_variants?.length ? product.product_variants : [{ size: "", color: "", stock: 0, price: "", sku: "" }]);
+    setVariants(product.product_variants?.length ? product.product_variants.map((variant) => ({ is_active: true, ...variant })) : [{ size: "", color: "", stock: 0, price: "", sale_price: "", sku: "", is_active: true }]);
+    setBulkSizes(listToText(product.sizes));
+    setBulkColors(listToText(product.colors));
     setError("");
     setOpen(true);
   }
@@ -213,12 +219,38 @@ export function ProductManager() {
     await load();
   }
 
-  function updateVariant(index: number, key: keyof ProductVariant, value: string) {
+  function updateVariant(index: number, key: keyof ProductVariant, value: string | boolean) {
     setVariants((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item));
   }
 
   function removeVariant(index: number) {
     setVariants((items) => items.map((item, itemIndex) => itemIndex === index && item.id ? { ...item, _delete: true } : item).filter((item, itemIndex) => itemIndex !== index || item.id));
+  }
+
+  function duplicateVariant(index: number) {
+    setVariants((items) => {
+      const source = items[index];
+      if (!source) return items;
+      const copy = { ...source, id: undefined, sku: source.sku ? `${source.sku}-copy` : "", _delete: false };
+      return [...items.slice(0, index + 1), copy, ...items.slice(index + 1)];
+    });
+  }
+
+  function splitCsv(value: string) {
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+
+  function generateBulkVariants() {
+    const sizes = splitCsv(bulkSizes);
+    const colors = splitCsv(bulkColors);
+    if (sizes.length === 0 || colors.length === 0) {
+      setError("Enter at least one size and one color to bulk-generate variants.");
+      return;
+    }
+    const existingKeys = new Set(variants.filter((variant) => !variant._delete).map((variant) => `${(variant.color ?? "").trim().toLowerCase()}:${(variant.size ?? "").trim().toLowerCase()}`));
+    const generated = colors.flatMap((color) => sizes.map((size) => ({ size, color, stock: 0, price: "", sale_price: "", sku: `${color}-${size}`, is_active: true }))).filter((variant) => !existingKeys.has(`${variant.color.toLowerCase()}:${variant.size.toLowerCase()}`));
+    setVariants((items) => [...items, ...generated]);
+    setError("");
   }
 
   return (
@@ -234,7 +266,7 @@ export function ProductManager() {
 
         <div className="space-y-3"><div><Label>Product images</Label><Input name="product_images" type="file" accept="image/*" multiple className="mt-1" /></div>{record.id && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{sortedImages.length === 0 ? <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><ImageIcon className="mx-auto mb-2 h-6 w-6" />No images yet</div> : sortedImages.map((image, index) => <div key={image.id} className="overflow-hidden rounded-lg border bg-card"><div className="relative aspect-square bg-muted"><img src={image.image_url} alt="Product" className="h-full w-full object-contain p-2" />{image.is_thumbnail && <Badge className="absolute left-2 top-2"><Star className="mr-1 h-3 w-3" />Thumbnail</Badge>}</div><div className="grid grid-cols-4 gap-1 p-2"><Button type="button" variant="outline" size="icon" disabled={index === 0} onClick={() => productAction({ id: record.id, imageAction: "reorder", imageOrder: sortedImages.map((item) => item.id).map((item, itemIndex, items) => itemIndex === index - 1 ? items[index] : itemIndex === index ? items[index - 1] : item) })}><ArrowUp className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" disabled={index === sortedImages.length - 1} onClick={() => productAction({ id: record.id, imageAction: "reorder", imageOrder: sortedImages.map((item) => item.id).map((item, itemIndex, items) => itemIndex === index ? items[index + 1] : itemIndex === index + 1 ? items[index] : item) })}><ArrowDown className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" onClick={() => productAction({ id: record.id, imageAction: "thumbnail", imageId: image.id })}><Star className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" className="text-destructive" onClick={() => productAction({ id: record.id, imageAction: "delete", imageId: image.id })}><Trash2 className="h-3 w-3" /></Button></div></div>)}</div>}</div>
 
-        <div className="space-y-3"><div className="flex items-center justify-between"><Label>Product variants</Label><Button type="button" variant="outline" size="sm" onClick={() => setVariants((items) => [...items, { size: "", color: "", stock: 0, price: "", sku: "" }])}><Plus className="mr-2 h-3 w-3" />Add variant</Button></div><div className="space-y-2">{variants.filter((variant) => !variant._delete).map((variant, index) => <div key={variant.id ?? index} className="grid gap-2 rounded-lg border p-3 md:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]"><Input placeholder="Size" value={variant.size ?? ""} onChange={(event) => updateVariant(index, "size", event.target.value)} /><Input placeholder="Color" value={variant.color ?? ""} onChange={(event) => updateVariant(index, "color", event.target.value)} /><Input placeholder="Stock" type="number" value={variant.stock ?? 0} onChange={(event) => updateVariant(index, "stock", event.target.value)} /><Input placeholder="Price override" type="number" value={variant.price ?? ""} onChange={(event) => updateVariant(index, "price", event.target.value)} /><Input placeholder="SKU" value={variant.sku ?? ""} onChange={(event) => updateVariant(index, "sku", event.target.value)} /><Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeVariant(index)}><Trash2 className="h-4 w-4" /></Button></div>)}</div></div>
+        <div className="space-y-3"><div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"><div><Label>Product variants</Label><p className="text-xs text-muted-foreground">Bulk generation creates color-size SKUs like Black-S, Black-M, White-S, White-M.</p></div><div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]"><Input placeholder="Sizes: S, M" value={bulkSizes} onChange={(event) => setBulkSizes(event.target.value)} /><Input placeholder="Colors: Black, White" value={bulkColors} onChange={(event) => setBulkColors(event.target.value)} /><Button type="button" variant="outline" size="sm" onClick={generateBulkVariants}>Generate</Button><Button type="button" variant="outline" size="sm" onClick={() => setVariants((items) => [...items, { size: "", color: "", stock: 0, price: "", sale_price: "", sku: "", is_active: true }])}><Plus className="mr-2 h-3 w-3" />Add variant</Button></div></div><div className="overflow-x-auto rounded-lg border"><table className="w-full min-w-[920px] text-sm"><thead><tr className="border-b text-left"><th className="px-3 py-2 font-medium">Size</th><th className="px-3 py-2 font-medium">Color</th><th className="px-3 py-2 font-medium">SKU</th><th className="px-3 py-2 font-medium">Price Override</th><th className="px-3 py-2 font-medium">Sale Price Override</th><th className="px-3 py-2 font-medium">Stock</th><th className="px-3 py-2 font-medium">Active</th><th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>{variants.map((variant, index) => variant._delete ? null : <tr key={variant.id ?? index} className="border-b last:border-0"><td className="px-3 py-2"><Input placeholder="Size" value={variant.size ?? ""} onChange={(event) => updateVariant(index, "size", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Color" value={variant.color ?? ""} onChange={(event) => updateVariant(index, "color", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="SKU" value={variant.sku ?? ""} onChange={(event) => updateVariant(index, "sku", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Price" type="number" min="0" value={variant.price ?? ""} onChange={(event) => updateVariant(index, "price", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Sale price" type="number" min="0" value={variant.sale_price ?? ""} onChange={(event) => updateVariant(index, "sale_price", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Stock" type="number" min="0" step="1" value={variant.stock ?? 0} onChange={(event) => updateVariant(index, "stock", event.target.value)} /></td><td className="px-3 py-2"><input type="checkbox" checked={variant.is_active ?? true} onChange={(event) => updateVariant(index, "is_active", event.target.checked)} /></td><td className="px-3 py-2"><div className="flex gap-1"><Button type="button" variant="ghost" size="icon" onClick={() => duplicateVariant(index)}><Copy className="h-4 w-4" /></Button><Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeVariant(index)}><Trash2 className="h-4 w-4" /></Button></div></td></tr>)}</tbody></table></div></div>
 
         <DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save product"}</Button></DialogFooter>
       </form></DialogContent></Dialog>
