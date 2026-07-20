@@ -101,7 +101,7 @@ export interface CartItem {
   id: string;
   product_id: string;
   product?: Product;
-  variant_id?: string;
+  variant_id?: string | null;
   variant?: ProductVariant;
   quantity: number;
   size: string;

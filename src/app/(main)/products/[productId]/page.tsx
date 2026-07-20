@@ -81,7 +81,8 @@ export default function ProductDetailPage() {
       },
       quantity,
       selectedSize || selectedVariant?.size || "",
-      selectedColor || selectedVariant?.color || ""
+      selectedColor || selectedVariant?.color || "",
+      selectedVariant?.id
     );
   };
 
