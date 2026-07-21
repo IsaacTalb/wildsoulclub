@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Minus, Plus, ShoppingCart, Heart, Share2 } from "lucide-react";
@@ -9,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
+
+const PRODUCT_IMAGE_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -104,10 +108,15 @@ export default function ProductDetailPage() {
         <div>
           <div className="relative aspect-square rounded-lg overflow-hidden bg-muted mb-4">
             {product.images && product.images.length > 0 ? (
-              <img 
+              <Image
                 src={product.images[activeImage]}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(min-width: 768px) 50vw, 100vw"
+                placeholder="blur"
+                blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
+                preload
+                className="object-cover"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
@@ -126,12 +135,16 @@ export default function ProductDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
-                  className={`aspect-square rounded-md overflow-hidden bg-muted border-2 transition-colors ${i === activeImage ? "border-primary" : "border-transparent"}`}
+                  className={`relative aspect-square rounded-md overflow-hidden bg-muted border-2 transition-colors ${i === activeImage ? "border-primary" : "border-transparent"}`}
                 >
-                  <img 
+                  <Image
                     src={img}
                     alt={`Product thumbnail ${i + 1}`}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="25vw"
+                    placeholder="blur"
+                    blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
+                    className="object-cover"
                   />
                 </button>
               ))}
