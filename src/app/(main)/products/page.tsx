@@ -22,6 +22,8 @@ const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 25'%3E%3Crect width='20' height='25' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='12.5' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
 const skeletonCards = Array.from({ length: 8 }, (_, index) => index);
 
+const VISIBLE_PRODUCT_PREFETCH_LIMIT = skeletonCards.length;
+
 const floatLayouts = [
   { x: "0px", y: "24px", rotate: "-2.5deg" },
   { x: "18px", y: "-10px", rotate: "1.8deg" },
@@ -31,11 +33,18 @@ const floatLayouts = [
   { x: "24px", y: "34px", rotate: "-2deg" },
 ];
 
-
-function ProductGridSkeleton() {
+function ProductGridSkeleton({
+  count = skeletonCards.length,
+  className = "pb-20",
+}: {
+  count?: number;
+  className?: string;
+}) {
   return (
-    <div className="grid grid-cols-1 gap-x-5 gap-y-14 pb-20 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {skeletonCards.map((item) => {
+    <div
+      className={`grid grid-cols-1 gap-x-5 gap-y-14 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${className}`}
+    >
+      {skeletonCards.slice(0, count).map((item) => {
         const float = floatLayouts[item % floatLayouts.length];
 
         return (
@@ -67,6 +76,7 @@ function ProductGridSkeleton() {
 
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [sort, setSort] = useState<string>("newest");
   const [products, setProducts] = useState<Product[]>([]);
@@ -75,27 +85,46 @@ export default function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
     const fetchProducts = async () => {
       try {
         setLoading(true);
         const params = new URLSearchParams();
-        if (search) params.append("search", search);
+        if (debouncedSearch) params.append("search", debouncedSearch);
         if (category !== "all") params.append("category", category);
         if (sort) params.append("sort", sort);
 
-        const res = await fetch(`/api/public/products?${params.toString()}`);
+        const queryString = params.toString();
+        const res = await fetch(`/api/public/products${queryString ? `?${queryString}` : ""}`, {
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error("Failed to fetch products");
         const data = await res.json();
         setProducts(data.data || []);
+        setError(null);
       } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to fetch products");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProducts();
-  }, [search, category, sort]);
+
+    return () => controller.abort();
+  }, [debouncedSearch, category, sort]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -107,7 +136,10 @@ export default function ProductsPage() {
     fetchCategories();
   }, []);
 
-  if (error) {
+  const isInitialLoading = loading && products.length === 0;
+  const isRefreshing = loading && products.length > 0;
+
+  if (error && products.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-16">
@@ -142,7 +174,7 @@ export default function ProductsPage() {
             </div>
             <div className="liquid-pill flex items-center gap-2 self-start px-4 py-3 text-sm text-muted-foreground lg:self-end">
               <SlidersHorizontal className="h-4 w-4" />
-              {products.length} pieces loaded
+              {loading ? "Updating" : products.length} pieces loaded
             </div>
           </div>
         </div>
@@ -183,7 +215,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Products Showcase */}
-        {loading ? (
+        {isInitialLoading ? (
           <ProductGridSkeleton />
         ) : products.length === 0 ? (
           <div className="liquid-glass mx-auto max-w-md rounded-[2rem] px-6 py-16 text-center">
@@ -192,76 +224,99 @@ export default function ProductsPage() {
             <p className="text-muted-foreground">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-x-5 gap-y-14 pb-20 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product, index) => {
-              const float = floatLayouts[index % floatLayouts.length];
-              const imageUrl = product.thumbnail_url || product.product_images?.[0]?.url || product.product_images?.[0]?.image_url || product.product_images?.[0]?.object_key;
+          <div className="space-y-8">
+            {error && (
+              <div className="liquid-glass rounded-[1.5rem] px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            {isRefreshing && (
+              <div aria-live="polite" aria-label="Refreshing products">
+                <ProductGridSkeleton count={Math.min(products.length, 4)} className="pb-0" />
+              </div>
+            )}
+            <div
+              className={`grid grid-cols-1 gap-x-5 gap-y-14 pb-20 transition-opacity sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${
+                isRefreshing ? "opacity-60" : "opacity-100"
+              }`}
+            >
+              {products.map((product, index) => {
+                const float = floatLayouts[index % floatLayouts.length];
+                const imageUrl =
+                  product.thumbnail_url ||
+                  product.product_images?.[0]?.url ||
+                  product.product_images?.[0]?.image_url ||
+                  product.product_images?.[0]?.object_key;
 
-              return (
-                <Link
-                  key={product.id}
-                  href={`/products/${product.id}`}
-                  className="floating-product-card group block"
-                  style={{
-                    "--float-x": float.x,
-                    "--float-y": float.y,
-                    "--float-rotate": float.rotate,
-                  } as React.CSSProperties}
-                >
-                  <article className="liquid-glass overflow-hidden rounded-[2rem] p-3">
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-white/35 dark:bg-white/10">
-                      {imageUrl ? (
-                        <Image
-                          src={imageUrl}
-                          alt={product.name}
-                          fill
-                          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                          placeholder="blur"
-                          blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
-                          preload={index === 0}
-                          className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-muted-foreground/50">
-                          Product Image
-                        </div>
-                      )}
-                      <div className="absolute inset-x-3 top-3 flex items-center justify-between">
-                        {product.sale_price ? (
-                          <Badge className="rounded-full bg-red-500">SALE</Badge>
-                        ) : <span />}
-                        {product.is_new_drop && (
-                          <Badge className="rounded-full" variant="secondary">NEW</Badge>
+                return (
+                  <Link
+                    key={product.id}
+                    href={`/products/${product.id}`}
+                    className="floating-product-card group block"
+                    prefetch={index < VISIBLE_PRODUCT_PREFETCH_LIMIT ? null : false}
+                    style={{
+                      "--float-x": float.x,
+                      "--float-y": float.y,
+                      "--float-rotate": float.rotate,
+                    } as React.CSSProperties}
+                  >
+                    <article className="liquid-glass overflow-hidden rounded-[2rem] p-3">
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-white/35 dark:bg-white/10">
+                        {imageUrl ? (
+                          <Image
+                            src={imageUrl}
+                            alt={product.name}
+                            fill
+                            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                            placeholder="blur"
+                            blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
+                            preload={index === 0}
+                            className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-muted-foreground/50">
+                            Product Image
+                          </div>
                         )}
-                      </div>
-                    </div>
-                    <div className="flex items-start justify-between gap-3 px-2 py-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                          {product.categories?.name || product.category || "Wild Soul"}
-                        </p>
-                        <h3 className="mt-1 text-lg font-black tracking-tight group-hover:text-primary">
-                          {product.name}
-                        </h3>
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="absolute inset-x-3 top-3 flex items-center justify-between">
                           {product.sale_price ? (
-                            <>
-                              <span className="font-semibold">{formatPrice(product.sale_price)}</span>
-                              <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
-                            </>
-                          ) : (
-                            <span className="font-semibold">{formatPrice(product.price)}</span>
+                            <Badge className="rounded-full bg-red-500">SALE</Badge>
+                          ) : <span />}
+                          {product.is_new_drop && (
+                            <Badge className="rounded-full" variant="secondary">NEW</Badge>
                           )}
                         </div>
                       </div>
-                      <span className="liquid-pill inline-flex h-10 w-10 shrink-0 items-center justify-center">
-                        <ArrowUpRight className="h-4 w-4" />
-                      </span>
-                    </div>
-                  </article>
-                </Link>
-              );
-            })}
+                      <div className="flex items-start justify-between gap-3 px-2 py-4">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                            {product.categories?.name || product.category || "Wild Soul"}
+                          </p>
+                          <h3 className="mt-1 text-lg font-black tracking-tight group-hover:text-primary">
+                            {product.name}
+                          </h3>
+                          <div className="mt-2 flex items-center gap-2">
+                            {product.sale_price ? (
+                              <>
+                                <span className="font-semibold">{formatPrice(product.sale_price)}</span>
+                                <span className="text-sm text-muted-foreground line-through">
+                                  {formatPrice(product.price)}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="font-semibold">{formatPrice(product.price)}</span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="liquid-pill inline-flex h-10 w-10 shrink-0 items-center justify-center">
+                          <ArrowUpRight className="h-4 w-4" />
+                        </span>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         )}
       </section>
