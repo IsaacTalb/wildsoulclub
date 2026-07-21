@@ -87,7 +87,3 @@ npm run dev
 npm run build
 npm run lint
 ```
-
-### Auth notes
-
-Clerk has been removed from the app code path. Sign in, sign up, profile updates, admin checks, and API user synchronization now use Supabase Auth and the `admins` table.
