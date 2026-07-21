@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/auth";
+import { writeAuditLog } from "@/lib/operational-history";
 
 const allowedStatuses = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
 type OrderStatus = (typeof allowedStatuses)[number];
@@ -35,7 +36,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   try {
-    await requireAdmin();
+    const adminUserId = await requireAdmin();
 
     const body = await req.json();
     const { orderId, status, courier, tracking_number } = body;
@@ -56,7 +57,7 @@ export async function PATCH(req: Request) {
 
     const { data: existingOrder, error: fetchError } = await supabaseAdmin
       .from("orders")
-      .select("status")
+      .select("*")
       .eq("id", orderId)
       .single();
 
@@ -95,6 +96,8 @@ export async function PATCH(req: Request) {
       .single();
 
     if (error) throw error;
+
+    await writeAuditLog({ actorUserId: adminUserId, entityType: "order", entityId: orderId, action: "update", before: existingOrder, after: data });
 
     return NextResponse.json({ success: true, data });
   } catch {

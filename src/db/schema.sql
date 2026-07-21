@@ -174,6 +174,41 @@ CREATE INDEX idx_variants_product ON product_variants(product_id);
 CREATE UNIQUE INDEX idx_variants_product_sku_unique ON product_variants(product_id, lower(sku)) WHERE sku IS NOT NULL;
 CREATE UNIQUE INDEX idx_variants_product_options_unique ON product_variants(product_id, lower(size), lower(color)) WHERE sku IS NULL AND (size IS NOT NULL OR color IS NOT NULL);
 
+
+-- ==========================================
+-- OPERATIONAL HISTORY
+-- ==========================================
+CREATE TABLE audit_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  actor_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  entity_type TEXT NOT NULL,
+  entity_id UUID NOT NULL,
+  action TEXT NOT NULL,
+  before JSONB,
+  after JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_type, entity_id, created_at DESC);
+CREATE INDEX idx_audit_logs_actor ON audit_logs(actor_user_id, created_at DESC);
+CREATE INDEX idx_audit_logs_created ON audit_logs(created_at DESC);
+
+CREATE TABLE inventory_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
+  quantity_delta INT NOT NULL,
+  reason TEXT NOT NULL,
+  reference_type TEXT,
+  reference_id UUID,
+  actor_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_inventory_transactions_product ON inventory_transactions(product_id, created_at DESC);
+CREATE INDEX idx_inventory_transactions_variant ON inventory_transactions(variant_id, created_at DESC) WHERE variant_id IS NOT NULL;
+CREATE INDEX idx_inventory_transactions_reference ON inventory_transactions(reference_type, reference_id);
+
 -- ==========================================
 -- ORDERS
 -- ==========================================

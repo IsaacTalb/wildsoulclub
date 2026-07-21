@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/auth";
 import { deleteFiles } from "@/lib/upload";
+import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
 
 type UploadedImage = { image_url?: string; object_key?: string; file_size?: number; mime_type?: string };
 type VariantInput = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sale_price?: number | string | null; sku?: string; is_active?: boolean; _delete?: boolean };
@@ -99,7 +100,7 @@ function variantIdentityKey(variant: { size: string | null; color: string | null
   return `option:${variant.size?.toLowerCase() ?? ""}:${variant.color?.toLowerCase() ?? ""}`;
 }
 
-async function syncVariants(productId: string, variants: unknown) {
+async function syncVariants(productId: string, variants: unknown, actorUserId?: string | null) {
   if (!Array.isArray(variants)) return;
   const rows = [];
   const identityKeys = new Set<string>();
@@ -147,13 +148,18 @@ async function syncVariants(productId: string, variants: unknown) {
     if (row.id) {
       const updateRow = { ...row };
       delete updateRow.id;
+      const { data: beforeVariant, error: beforeError } = await supabaseAdmin.from("product_variants").select("id, stock").eq("id", row.id).eq("product_id", productId).single();
+      if (beforeError) throw beforeError;
       const { error } = await supabaseAdmin.from("product_variants").update(updateRow).eq("id", row.id).eq("product_id", productId);
       if (error) throw error;
+      const quantityDelta = row.stock - Number(beforeVariant.stock ?? 0);
+      await writeInventoryTransaction({ productId, variantId: row.id, quantityDelta, reason: "manual_adjustment", referenceType: "product_variant", referenceId: row.id, actorUserId });
     } else {
       const insertRow = { ...row };
       delete insertRow.id;
-      const { error } = await supabaseAdmin.from("product_variants").insert(insertRow);
+      const { data: newVariant, error } = await supabaseAdmin.from("product_variants").insert(insertRow).select("id").single();
       if (error) throw error;
+      await writeInventoryTransaction({ productId, variantId: newVariant.id, quantityDelta: row.stock, reason: "manual_adjustment", referenceType: "product_variant", referenceId: newVariant.id, actorUserId });
     }
   }
 }
@@ -196,14 +202,16 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin();
+    const adminUserId = await requireAdmin();
     const body = await req.json();
     if (!body.name || !body.price) return NextResponse.json({ success: false, error: "Name and price are required" }, { status: 400 });
     const slug = body.slug || body.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const { data: product, error } = await supabaseAdmin.from("products").insert({ ...productPayload(body), slug }).select().single();
     if (error) throw error;
     await appendProductImages(product.id, body.images);
-    await syncVariants(product.id, body.variants);
+    await syncVariants(product.id, body.variants, adminUserId);
+    await writeInventoryTransaction({ productId: product.id, quantityDelta: Number(product.stock ?? 0), reason: "manual_adjustment", referenceType: "product", referenceId: product.id, actorUserId: adminUserId });
+    await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: product.id, action: "create", after: product });
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
     if (error instanceof VariantValidationError) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -213,10 +221,13 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    await requireAdmin();
+    const adminUserId = await requireAdmin();
     const body = await req.json();
     const { id, imageAction, imageId, imageOrder } = body;
     if (!id) return NextResponse.json({ success: false, error: "Product id is required" }, { status: 400 });
+
+    const { data: beforeProduct, error: beforeError } = await supabaseAdmin.from("products").select("*, product_variants(*)").eq("id", id).single();
+    if (beforeError) throw beforeError;
 
     if (body.action === "restore") {
       const { error } = await supabaseAdmin.from("products").update({ deleted_at: null, is_active: true, is_archived: false, updated_at: new Date().toISOString() }).eq("id", id);
@@ -231,11 +242,15 @@ export async function PATCH(req: Request) {
       const { error } = await supabaseAdmin.from("products").update({ ...productPayload(body), updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
       await appendProductImages(id, body.images);
-      await syncVariants(id, body.variants);
+      await syncVariants(id, body.variants, adminUserId);
     }
 
     const { data, error: fetchError } = await supabaseAdmin.from("products").select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name)").eq("id", id).single();
     if (fetchError) throw fetchError;
+    const stockBefore = Number(beforeProduct?.stock ?? 0);
+    const stockAfter = Number(data?.stock ?? 0);
+    await writeInventoryTransaction({ productId: id, quantityDelta: stockAfter - stockBefore, reason: "manual_adjustment", referenceType: "product", referenceId: id, actorUserId: adminUserId });
+    await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: id, action: body.action === "restore" ? "restore" : imageAction ? `image_${imageAction}` : "update", before: beforeProduct, after: data });
     return NextResponse.json({ success: true, data });
   } catch (error) {
     if (error instanceof VariantValidationError) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -246,11 +261,14 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    await requireAdmin();
+    const adminUserId = await requireAdmin();
     const { id } = await req.json();
     if (!id) return NextResponse.json({ success: false, error: "Product id is required" }, { status: 400 });
+    const { data: beforeProduct, error: beforeError } = await supabaseAdmin.from("products").select("*").eq("id", id).single();
+    if (beforeError) throw beforeError;
     const { error } = await supabaseAdmin.from("products").update({ deleted_at: new Date().toISOString(), is_active: false, is_archived: true, updated_at: new Date().toISOString() }).eq("id", id);
     if (error) throw error;
+    await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: id, action: "archive", before: beforeProduct, after: { ...beforeProduct, is_active: false, is_archived: true } });
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof ImageCleanupError) return NextResponse.json({ success: false, warning: error.message }, { status: 409 });

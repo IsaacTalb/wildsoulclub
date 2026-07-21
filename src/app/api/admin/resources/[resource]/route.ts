@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
 
 const resources = {
   products: { table: "products", orderBy: "created_at", fields: ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"] },
@@ -95,13 +96,17 @@ export async function GET(request: Request, { params }: ResourceContext) {
 
 export async function POST(request: Request, { params }: ResourceContext) {
   try {
-    await requireAdmin();
+    const adminUserId = await requireAdmin();
     const { resource, resourceConfig } = await getResource(params);
     const json = await request.json();
     const body = payload(resource, json);
     const { data, error } = await supabaseAdmin.from(resourceConfig.table).insert(body).select().single();
     if (error) throw error;
-    if (resource === "products") await appendProductImages(data.id, json.images);
+    if (resource === "products") {
+      await appendProductImages(data.id, json.images);
+      await writeInventoryTransaction({ productId: data.id, quantityDelta: Number(data.stock ?? 0), reason: "manual_adjustment", referenceType: "product", referenceId: data.id, actorUserId: adminUserId });
+      await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: data.id, action: "create", after: data });
+    }
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Unable to create resource" }, { status: 400 });
@@ -110,13 +115,21 @@ export async function POST(request: Request, { params }: ResourceContext) {
 
 export async function PATCH(request: Request, { params }: ResourceContext) {
   try {
-    await requireAdmin();
+    const adminUserId = await requireAdmin();
     const { resource, resourceConfig } = await getResource(params);
     const { id, ...values } = await request.json();
     if (!id) return NextResponse.json({ success: false, error: "Record id is required" }, { status: 400 });
+    const { data: before, error: beforeError } = resource === "products"
+      ? await supabaseAdmin.from(resourceConfig.table).select("*").eq("id", id).single()
+      : { data: null, error: null };
+    if (beforeError) throw beforeError;
     const { data, error } = await supabaseAdmin.from(resourceConfig.table).update(payload(resource, values)).eq("id", id).select().single();
     if (error) throw error;
-    if (resource === "products") await appendProductImages(id, values.images);
+    if (resource === "products") {
+      await appendProductImages(id, values.images);
+      await writeInventoryTransaction({ productId: id, quantityDelta: Number(data.stock ?? 0) - Number(before?.stock ?? 0), reason: "manual_adjustment", referenceType: "product", referenceId: id, actorUserId: adminUserId });
+      await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: id, action: "update", before, after: data });
+    }
     return NextResponse.json({ success: true, data });
   } catch {
     return NextResponse.json({ success: false, error: "Unable to update resource" }, { status: 400 });

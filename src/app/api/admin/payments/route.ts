@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/auth";
+import { writeAuditLog } from "@/lib/operational-history";
 
 type ReviewPaymentResult = {
   success: boolean;
@@ -46,6 +47,9 @@ export async function PATCH(req: Request) {
       );
     }
 
+    const { data: beforePayment, error: beforeError } = await supabaseAdmin.from("payments").select("*").eq("id", paymentId).single();
+    if (beforeError) throw beforeError;
+
     const { data: result, error: reviewError } = await supabaseAdmin
       .rpc("review_payment", {
         p_payment_id: paymentId,
@@ -65,6 +69,8 @@ export async function PATCH(req: Request) {
         { status: 409 }
       );
     }
+
+    await writeAuditLog({ actorUserId: adminUserId, entityType: "payment", entityId: paymentId, action: "review", before: beforePayment, after: reviewResult.payment });
 
     return NextResponse.json({ success: true, data: reviewResult.payment });
   } catch {
