@@ -90,6 +90,18 @@ export async function deleteFile(objectKey: string): Promise<void> {
   );
 }
 
+export async function deleteFiles(objectKeys: Array<string | null | undefined>): Promise<void> {
+  const keys = [...new Set(objectKeys.filter((key): key is string => Boolean(key)))];
+
+  for (const objectKey of keys) {
+    await deleteFile(objectKey);
+  }
+}
+
+export async function deletePaymentProofFile(payment: { payment_object_key?: string | null }): Promise<void> {
+  await deleteFiles([payment.payment_object_key]);
+}
+
 export async function getSignedUploadUrl(
   folder: UploadFolder,
   contentType: string,

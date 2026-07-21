@@ -1,13 +1,41 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/auth";
+import { deleteFiles } from "@/lib/upload";
 
 type UploadedImage = { image_url?: string; object_key?: string; file_size?: number; mime_type?: string };
 type VariantInput = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sale_price?: number | string | null; sku?: string; is_active?: boolean; _delete?: boolean };
 
 class VariantValidationError extends Error {}
+class ImageCleanupError extends Error {}
 
 const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"];
+
+
+async function cleanupProductImageObjects(objectKeys: Array<string | null | undefined>, context: string) {
+  try {
+    await deleteFiles(objectKeys);
+  } catch (error) {
+    console.warn(`Recoverable R2 cleanup failure during ${context}`, error);
+    throw new ImageCleanupError("Image cleanup failed. No database records were deleted; please retry.");
+  }
+}
+
+async function deleteProductImage(productId: string, imageId: string) {
+  const { data: image, error: fetchError } = await supabaseAdmin
+    .from("product_images")
+    .select("object_key")
+    .eq("id", imageId)
+    .eq("product_id", productId)
+    .single();
+
+  if (fetchError) throw fetchError;
+
+  await cleanupProductImageObjects([image.object_key], `product image delete (${imageId})`);
+
+  const { error } = await supabaseAdmin.from("product_images").delete().eq("id", imageId).eq("product_id", productId);
+  if (error) throw error;
+}
 
 function normalizeValue(field: string, value: unknown) {
   if (value === "") return null;
@@ -188,8 +216,7 @@ export async function PATCH(req: Request) {
     if (!id) return NextResponse.json({ success: false, error: "Product id is required" }, { status: 400 });
 
     if (imageAction === "delete" && imageId) {
-      const { error } = await supabaseAdmin.from("product_images").delete().eq("id", imageId).eq("product_id", id);
-      if (error) throw error;
+      await deleteProductImage(id, imageId);
     } else if (imageAction === "thumbnail" && imageId) {
       await setThumbnail(id, imageId);
     } else if (imageAction === "reorder") {
@@ -206,6 +233,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true, data });
   } catch (error) {
     if (error instanceof VariantValidationError) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    if (error instanceof ImageCleanupError) return NextResponse.json({ success: false, warning: error.message }, { status: 409 });
     return NextResponse.json({ success: false, error: "Failed to update product" }, { status: 500 });
   }
 }
@@ -215,10 +243,19 @@ export async function DELETE(req: Request) {
     await requireAdmin();
     const { id } = await req.json();
     if (!id) return NextResponse.json({ success: false, error: "Product id is required" }, { status: 400 });
+    const { data: images, error: imageFetchError } = await supabaseAdmin
+      .from("product_images")
+      .select("object_key")
+      .eq("product_id", id);
+    if (imageFetchError) throw imageFetchError;
+
+    await cleanupProductImageObjects((images ?? []).map((image) => image.object_key), `product delete (${id})`);
+
     const { error } = await supabaseAdmin.from("products").delete().eq("id", id);
     if (error) throw error;
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof ImageCleanupError) return NextResponse.json({ success: false, warning: error.message }, { status: 409 });
     return NextResponse.json({ success: false, error: "Failed to delete product" }, { status: 500 });
   }
 }
