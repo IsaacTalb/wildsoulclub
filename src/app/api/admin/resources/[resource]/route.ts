@@ -4,9 +4,10 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
 
 const resources = {
-  products: { table: "products", orderBy: "created_at", fields: ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"] },
+  products: { table: "products", orderBy: "created_at", fields: ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"] },
   categories: { table: "categories", orderBy: "created_at", fields: ["name", "slug", "description", "image_url", "object_key", "sort_order", "is_active"] },
   collections: { table: "collections", orderBy: "created_at", fields: ["name", "slug", "description", "image_url", "object_key", "is_active", "start_date", "end_date"] },
+  drops: { table: "drops", orderBy: "release_date", fields: ["collection_id", "name", "slug", "description", "release_date", "status", "banner_image_url", "banner_object_key"] },
   coupons: { table: "coupons", orderBy: "created_at", fields: ["code", "description", "discount_type", "discount_value", "min_order_amount", "max_discount", "usage_limit", "is_active", "expires_at"] },
   delivery_regions: { table: "delivery_regions", orderBy: "created_at", fields: ["township", "city", "state", "delivery_fee", "min_order_free_delivery", "is_active"] },
   banners: { table: "banners", orderBy: "created_at", fields: ["title", "subtitle", "image_url", "object_key", "link_url", "is_active", "position", "product_id", "collection_id"] },

@@ -97,6 +97,27 @@ CREATE TABLE collections (
 CREATE INDEX idx_collections_slug ON collections(slug);
 
 -- ==========================================
+-- DROPS
+-- ==========================================
+CREATE TABLE drops (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  collection_id UUID REFERENCES collections(id) ON DELETE SET NULL,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  release_date TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'active', 'archived')),
+  banner_image_url TEXT,
+  banner_object_key TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_drops_slug ON drops(slug);
+CREATE INDEX idx_drops_status ON drops(status);
+CREATE INDEX idx_drops_release_date ON drops(release_date DESC);
+
+-- ==========================================
 -- PRODUCTS
 -- ==========================================
 CREATE TABLE products (
@@ -109,6 +130,7 @@ CREATE TABLE products (
   discount_percent INT DEFAULT 0,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
   collection_id UUID REFERENCES collections(id) ON DELETE SET NULL,
+  drop_id UUID REFERENCES drops(id) ON DELETE SET NULL,
   stock INT DEFAULT 0,
   sku TEXT,
   barcode TEXT,
@@ -133,6 +155,7 @@ CREATE TABLE products (
 CREATE INDEX idx_products_slug ON products(slug);
 CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_products_collection ON products(collection_id);
+CREATE INDEX idx_products_drop ON products(drop_id);
 CREATE INDEX idx_products_active ON products(is_active);
 CREATE INDEX idx_products_active_visible ON products(created_at DESC) WHERE is_active = true AND deleted_at IS NULL;
 CREATE INDEX idx_products_featured ON products(is_featured) WHERE is_featured = true AND deleted_at IS NULL;

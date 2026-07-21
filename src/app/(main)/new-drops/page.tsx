@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
-import { ArchiveSaleProduct } from "@/types/product";
+import { Drop } from "@/types/product";
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
 const skeletonCards = Array.from({ length: 4 }, (_, index) => index);
 
 export default function NewDropsPage() {
-  const [newDrops, setNewDrops] = useState<ArchiveSaleProduct[]>([]);
+  const [newDrops, setNewDrops] = useState<Drop[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +63,7 @@ export default function NewDropsPage() {
         </div>
         <h1 className="text-4xl md:text-5xl font-bold mb-3">New Drops</h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Be the first to rock our latest styles — fresh drops every month.
+          Be the first to rock our latest styles — fresh drops, curated as proper releases.
         </p>
       </div>
 
@@ -84,7 +84,7 @@ export default function NewDropsPage() {
               </CardContent>
             </Card>
           ))
-        ) : newDrops.map((item) => (
+        ) : newDrops.flatMap((drop) => (drop.products?.length ? drop.products : []).map((item) => ({ ...item, drop }))).map(({ drop, ...item }) => (
           <div
             key={item.id}
           >
@@ -140,14 +140,14 @@ export default function NewDropsPage() {
                     </div>
                     <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {item.new_drop_start_date ? (
-                        new Date(item.new_drop_start_date).toLocaleDateString("en-US", {
+                      {drop.release_date ? (
+                        new Date(drop.release_date).toLocaleDateString("en-US", {
                           month: "long",
                           day: "numeric",
                           year: "numeric",
                         })
                       ) : (
-                        "Available now"
+                        drop.name
                       )}
                     </div>
                   </div>
