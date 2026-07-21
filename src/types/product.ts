@@ -18,6 +18,7 @@ export interface Product {
   category?: string;
   categories?: { id: string; name: string; slug?: string };
   collections?: { id: string; name: string; slug?: string };
+  drops?: { id: string; name: string; slug?: string; release_date?: string; status?: string };
   is_active: boolean;
   is_new: boolean;
   is_new_drop?: boolean;
@@ -33,4 +34,19 @@ export interface Product {
 export interface ArchiveSaleProduct extends Product {
   sale_price: number;
   discount?: number;
+}
+
+export interface Drop {
+  id: string;
+  collection_id?: string;
+  name: string;
+  slug: string;
+  description?: string;
+  release_date?: string;
+  status: "draft" | "scheduled" | "active" | "archived";
+  banner_image_url?: string;
+  banner_object_key?: string;
+  products?: Product[];
+  created_at: string;
+  updated_at: string;
 }

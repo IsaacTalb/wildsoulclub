@@ -10,7 +10,7 @@ type VariantInput = { id?: string; size?: string; color?: string; stock?: number
 class VariantValidationError extends Error {}
 class ImageCleanupError extends Error {}
 
-const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"];
+const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"];
 
 
 async function cleanupProductImageObjects(objectKeys: Array<string | null | undefined>, context: string) {
@@ -190,7 +190,7 @@ export async function GET(req: Request) {
     const includeDeleted = searchParams.get("includeDeleted") === "true";
     let query = supabaseAdmin
       .from("products")
-      .select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name)");
+      .select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name), drops(id, name, slug)");
     if (!includeDeleted) query = query.is("deleted_at", null);
     const { data, error } = await query.order("created_at", { ascending: false });
     if (error) throw error;
@@ -245,7 +245,7 @@ export async function PATCH(req: Request) {
       await syncVariants(id, body.variants, adminUserId);
     }
 
-    const { data, error: fetchError } = await supabaseAdmin.from("products").select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name)").eq("id", id).single();
+    const { data, error: fetchError } = await supabaseAdmin.from("products").select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name), drops(id, name, slug)").eq("id", id).single();
     if (fetchError) throw fetchError;
     const stockBefore = Number(beforeProduct?.stock ?? 0);
     const stockAfter = Number(data?.stock ?? 0);
