@@ -76,11 +76,14 @@ async function getResource(params: Promise<{ resource: string }>) {
 
 type ResourceContext = { params: Promise<{ resource: string }> };
 
-export async function GET(_request: Request, { params }: ResourceContext) {
+export async function GET(request: Request, { params }: ResourceContext) {
   try {
     await requireAdmin();
     const { resource, resourceConfig } = await getResource(params);
+    const { searchParams } = new URL(request.url);
+    const includeDeleted = searchParams.get("includeDeleted") === "true";
     let query = supabaseAdmin.from(resourceConfig.table).select(resource === "products" ? "*, product_images(*)" : "*");
+    if (resource === "products" && !includeDeleted) query = query.is("deleted_at", null);
     if ("orderBy" in resourceConfig) query = query.order(resourceConfig.orderBy, { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
@@ -123,10 +126,13 @@ export async function PATCH(request: Request, { params }: ResourceContext) {
 export async function DELETE(request: Request, { params }: ResourceContext) {
   try {
     await requireAdmin();
-    const { resourceConfig } = await getResource(params);
+    const { resource, resourceConfig } = await getResource(params);
     const { id } = await request.json();
     if (!id) return NextResponse.json({ success: false, error: "Record id is required" }, { status: 400 });
-    const { error } = await supabaseAdmin.from(resourceConfig.table).delete().eq("id", id);
+    const deletePayload = resource === "products" ? { deleted_at: new Date().toISOString(), is_active: false, is_archived: true } : null;
+    const { error } = deletePayload
+      ? await supabaseAdmin.from(resourceConfig.table).update(deletePayload).eq("id", id)
+      : await supabaseAdmin.from(resourceConfig.table).delete().eq("id", id);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch {

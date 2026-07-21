@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Copy, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { ArchiveRestore, ArrowDown, ArrowUp, Copy, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -75,6 +75,7 @@ export function ProductManager() {
   const [error, setError] = useState("");
   const [bulkSizes, setBulkSizes] = useState("");
   const [bulkColors, setBulkColors] = useState("");
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const sortedImages = useMemo(() => [...(record.product_images ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)), [record.product_images]);
 
@@ -89,7 +90,7 @@ export function ProductManager() {
     try {
       const headers = await authHeaders();
       const [productsResponse, categoriesResponse, collectionsResponse] = await Promise.all([
-        fetch("/api/admin/products", { headers }),
+        fetch(`/api/admin/products${showDeleted ? "?includeDeleted=true" : ""}`, { headers }),
         fetch("/api/public/categories"),
         fetch("/api/public/collections"),
       ]);
@@ -107,7 +108,7 @@ export function ProductManager() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [showDeleted]);
 
   function openCreate() {
     setRecord({ ...blankProduct, product_images: [], product_variants: [] });
@@ -208,12 +209,23 @@ export function ProductManager() {
   }
 
   async function deleteProduct(id: string) {
-    if (!window.confirm("Delete this product? This cannot be undone.")) return;
+    if (!window.confirm("Archive/delete product? This hides the product from customers but keeps its images and data for restore.")) return;
     const headers = await authHeaders();
     const response = await fetch("/api/admin/products", { method: "DELETE", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ id }) });
     if (!response.ok) {
       const result = await readJson(response);
-      setError(result.error ?? "Unable to delete product");
+      setError(result.error ?? "Unable to archive product");
+      return;
+    }
+    await load();
+  }
+
+  async function restoreProduct(id: string) {
+    const headers = await authHeaders();
+    const response = await fetch("/api/admin/products", { method: "PATCH", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify({ id, action: "restore" }) });
+    const result = await readJson(response);
+    if (!response.ok) {
+      setError(result.error ?? "Unable to restore product");
       return;
     }
     await load();
@@ -255,9 +267,9 @@ export function ProductManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4"><div><h1 className="text-2xl font-bold">Products</h1><p className="text-sm text-muted-foreground">Manage schema-aligned products, images, thumbnails, and variants.</p></div><Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add product</Button></div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="text-2xl font-bold">Products</h1><p className="text-sm text-muted-foreground">Manage schema-aligned products, images, thumbnails, and variants.</p></div><div className="flex items-center gap-3"><label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={showDeleted} onChange={(event) => setShowDeleted(event.target.checked)} />Show archived</label><Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add product</Button></div></div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-      <Card><CardContent className="p-0 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="px-4 py-3 font-medium">Name</th><th className="px-4 py-3 font-medium">Category</th><th className="px-4 py-3 font-medium">Collection</th><th className="px-4 py-3 font-medium">Stock</th><th className="px-4 py-3 font-medium">Flags</th><th className="px-4 py-3" /></tr></thead><tbody>{loading ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>Loading products…</td></tr> : products.length === 0 ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>No products yet.</td></tr> : products.map((product) => <tr key={product.id} className="border-b last:border-0"><td className="px-4 py-3 font-medium">{product.name}</td><td className="px-4 py-3">{product.categories?.name ?? "—"}</td><td className="px-4 py-3">{product.collections?.name ?? "—"}</td><td className="px-4 py-3">{product.stock ?? 0}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{product.is_featured && <Badge>Featured</Badge>}{product.is_new_drop && <Badge variant="secondary">New</Badge>}{product.is_archive_sale && <Badge variant="destructive">Sale</Badge>}</div></td><td className="px-4 py-3 text-right whitespace-nowrap"><Button variant="ghost" size="icon" onClick={() => openEdit(product)}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button></td></tr>)}</tbody></table></CardContent></Card>
+      <Card><CardContent className="p-0 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="px-4 py-3 font-medium">Name</th><th className="px-4 py-3 font-medium">Category</th><th className="px-4 py-3 font-medium">Collection</th><th className="px-4 py-3 font-medium">Stock</th><th className="px-4 py-3 font-medium">Flags</th><th className="px-4 py-3" /></tr></thead><tbody>{loading ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>Loading products…</td></tr> : products.length === 0 ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>No products yet.</td></tr> : products.map((product) => { const isDeleted = Boolean(product.deleted_at); return <tr key={product.id} className="border-b last:border-0"><td className="px-4 py-3 font-medium">{product.name}{isDeleted && <span className="ml-2 text-xs text-muted-foreground">Archived</span>}</td><td className="px-4 py-3">{product.categories?.name ?? "—"}</td><td className="px-4 py-3">{product.collections?.name ?? "—"}</td><td className="px-4 py-3">{product.stock ?? 0}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{product.is_featured && <Badge>Featured</Badge>}{product.is_new_drop && <Badge variant="secondary">New</Badge>}{product.is_archive_sale && <Badge variant="destructive">Sale</Badge>}{isDeleted && <Badge variant="outline">Archived</Badge>}</div></td><td className="px-4 py-3 text-right whitespace-nowrap"><Button variant="ghost" size="icon" onClick={() => openEdit(product)}><Pencil className="h-4 w-4" /></Button>{isDeleted ? <Button variant="ghost" size="icon" onClick={() => restoreProduct(product.id)}><ArchiveRestore className="h-4 w-4" /></Button> : <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button>}</td></tr>; })}</tbody></table></CardContent></Card>
 
       <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{record.id ? "Edit product" : "Add product"}</DialogTitle></DialogHeader><form onSubmit={submit} className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2"><div className="space-y-1.5"><Label>Name</Label><Input name="name" defaultValue={record.name ?? ""} required /></div><div className="space-y-1.5"><Label>Slug</Label><Input name="slug" defaultValue={record.slug ?? ""} required /></div><div className="space-y-1.5 md:col-span-2"><Label>Description</Label><Textarea name="description" defaultValue={record.description ?? ""} required /></div><div className="space-y-1.5"><Label>Price (MMK)</Label><Input name="price" type="number" defaultValue={record.price ?? ""} required /></div><div className="space-y-1.5"><Label>Sale price</Label><Input name="sale_price" type="number" defaultValue={record.sale_price ?? ""} /></div><div className="space-y-1.5"><Label>Discount percent</Label><Input name="discount_percent" type="number" defaultValue={record.discount_percent ?? 0} /></div><div className="space-y-1.5"><Label>Stock</Label><Input name="stock" type="number" defaultValue={record.stock ?? 0} /></div><div className="space-y-1.5"><Label>Category</Label><select name="category_id" defaultValue={record.category_id ?? ""} className="h-10 w-full rounded-md border bg-background px-3"><option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div><div className="space-y-1.5"><Label>Collection</Label><select name="collection_id" defaultValue={record.collection_id ?? ""} className="h-10 w-full rounded-md border bg-background px-3"><option value="">No collection</option>{collections.map((collection) => <option key={collection.id} value={collection.id}>{collection.name}</option>)}</select></div><div className="space-y-1.5"><Label>SKU</Label><Input name="sku" defaultValue={record.sku ?? ""} /></div><div className="space-y-1.5"><Label>Barcode</Label><Input name="barcode" defaultValue={record.barcode ?? ""} /></div><div className="space-y-1.5"><Label>Sizes</Label><Input name="sizes" defaultValue={listToText(record.sizes)} placeholder="S, M, L" /></div><div className="space-y-1.5"><Label>Colors</Label><Input name="colors" defaultValue={listToText(record.colors)} placeholder="Black, Cream" /></div><div className="space-y-1.5"><Label>New drop start</Label><Input name="new_drop_start_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_start_date)} /></div><div className="space-y-1.5"><Label>New drop end</Label><Input name="new_drop_end_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_end_date)} /></div><div className="space-y-1.5"><Label>Meta title</Label><Input name="meta_title" defaultValue={record.meta_title ?? ""} /></div><div className="space-y-1.5 md:col-span-2"><Label>Meta description</Label><Textarea name="meta_description" defaultValue={record.meta_description ?? ""} /></div></div>

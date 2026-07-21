@@ -14,6 +14,7 @@ export async function GET() {
       .select("*, product_images(*), product_variants(*), categories(id, name, slug)")
       .eq("is_new_drop", true)
       .eq("is_active", true)
+      .is("deleted_at", null)
       .or(`new_drop_start_date.is.null,new_drop_start_date.lte.${now}`)
       .or(`new_drop_end_date.is.null,new_drop_end_date.gte.${now}`)
       .order("new_drop_start_date", { ascending: false });

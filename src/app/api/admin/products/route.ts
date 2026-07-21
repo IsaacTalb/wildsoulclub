@@ -177,13 +177,16 @@ async function reorderImages(productId: string, imageOrder: unknown) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await requireAdmin();
-    const { data, error } = await supabaseAdmin
+    const { searchParams } = new URL(req.url);
+    const includeDeleted = searchParams.get("includeDeleted") === "true";
+    let query = supabaseAdmin
       .from("products")
-      .select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name)")
-      .order("created_at", { ascending: false });
+      .select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name)");
+    if (!includeDeleted) query = query.is("deleted_at", null);
+    const { data, error } = await query.order("created_at", { ascending: false });
     if (error) throw error;
     return NextResponse.json({ success: true, data: data ?? [] });
   } catch {
@@ -215,7 +218,10 @@ export async function PATCH(req: Request) {
     const { id, imageAction, imageId, imageOrder } = body;
     if (!id) return NextResponse.json({ success: false, error: "Product id is required" }, { status: 400 });
 
-    if (imageAction === "delete" && imageId) {
+    if (body.action === "restore") {
+      const { error } = await supabaseAdmin.from("products").update({ deleted_at: null, is_active: true, is_archived: false, updated_at: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
+    } else if (imageAction === "delete" && imageId) {
       await deleteProductImage(id, imageId);
     } else if (imageAction === "thumbnail" && imageId) {
       await setThumbnail(id, imageId);
@@ -243,19 +249,11 @@ export async function DELETE(req: Request) {
     await requireAdmin();
     const { id } = await req.json();
     if (!id) return NextResponse.json({ success: false, error: "Product id is required" }, { status: 400 });
-    const { data: images, error: imageFetchError } = await supabaseAdmin
-      .from("product_images")
-      .select("object_key")
-      .eq("product_id", id);
-    if (imageFetchError) throw imageFetchError;
-
-    await cleanupProductImageObjects((images ?? []).map((image) => image.object_key), `product delete (${id})`);
-
-    const { error } = await supabaseAdmin.from("products").delete().eq("id", id);
+    const { error } = await supabaseAdmin.from("products").update({ deleted_at: new Date().toISOString(), is_active: false, is_archived: true, updated_at: new Date().toISOString() }).eq("id", id);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof ImageCleanupError) return NextResponse.json({ success: false, warning: error.message }, { status: 409 });
-    return NextResponse.json({ success: false, error: "Failed to delete product" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to archive product" }, { status: 500 });
   }
 }

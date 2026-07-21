@@ -24,7 +24,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ product
     let query = supabaseAdmin
       .from("products")
       .select("*, product_images(*), product_variants(*), categories(id, name, slug), collections(id, name, slug)")
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .is("deleted_at", null);
     query = isUuid ? query.eq("id", productId) : query.eq("slug", productId);
     const { data, error } = await query.maybeSingle();
     if (error) throw error;

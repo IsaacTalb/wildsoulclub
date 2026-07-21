@@ -28,7 +28,8 @@ export async function GET(req: Request) {
     let query = supabaseAdmin
       .from("products")
       .select("*, product_images(*), product_variants(*), categories(id, name, slug), collections(id, name, slug)")
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .is("deleted_at", null);
 
     if (category) query = query.eq("category_id", category);
     if (collection) query = query.eq("collection_id", collection);
