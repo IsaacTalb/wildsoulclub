@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Search, SlidersHorizontal, ShoppingCart, Loader2, ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, SlidersHorizontal, ShoppingCart, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +18,10 @@ import { Product } from "@/types/product";
 
 type CategoryOption = { id: string; name: string };
 
+const PRODUCT_IMAGE_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 25'%3E%3Crect width='20' height='25' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='12.5' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
+const skeletonCards = Array.from({ length: 8 }, (_, index) => index);
+
 const floatLayouts = [
   { x: "0px", y: "24px", rotate: "-2.5deg" },
   { x: "18px", y: "-10px", rotate: "1.8deg" },
@@ -27,6 +31,39 @@ const floatLayouts = [
   { x: "24px", y: "34px", rotate: "-2deg" },
 ];
 
+
+function ProductGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-x-5 gap-y-14 pb-20 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {skeletonCards.map((item) => {
+        const float = floatLayouts[item % floatLayouts.length];
+
+        return (
+          <div
+            key={item}
+            className="floating-product-card block"
+            style={{
+              "--float-x": float.x,
+              "--float-y": float.y,
+              "--float-rotate": float.rotate,
+            } as React.CSSProperties}
+          >
+            <article className="liquid-glass overflow-hidden rounded-[2rem] p-3">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-white/35 dark:bg-white/10">
+                <div className="absolute inset-5 animate-pulse rounded-[1rem] bg-white/50 dark:bg-white/10" />
+              </div>
+              <div className="space-y-3 px-2 py-4">
+                <div className="h-3 w-24 animate-pulse rounded-full bg-muted" />
+                <div className="h-5 w-3/4 animate-pulse rounded-full bg-muted" />
+                <div className="h-4 w-20 animate-pulse rounded-full bg-muted" />
+              </div>
+            </article>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
@@ -69,16 +106,6 @@ export default function ProductsPage() {
     };
     fetchCategories();
   }, []);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -156,7 +183,9 @@ export default function ProductsPage() {
         </div>
 
         {/* Products Showcase */}
-        {products.length === 0 ? (
+        {loading ? (
+          <ProductGridSkeleton />
+        ) : products.length === 0 ? (
           <div className="liquid-glass mx-auto max-w-md rounded-[2rem] px-6 py-16 text-center">
             <ShoppingCart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
             <h3 className="text-lg font-medium">No products found</h3>
@@ -182,10 +211,15 @@ export default function ProductsPage() {
                   <article className="liquid-glass overflow-hidden rounded-[2rem] p-3">
                     <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-white/35 dark:bg-white/10">
                       {imageUrl ? (
-                        <img
+                        <Image
                           src={imageUrl}
                           alt={product.name}
-                          className="h-full w-full object-contain p-5 transition-transform duration-300 group-hover:scale-105"
+                          fill
+                          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          placeholder="blur"
+                          blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
+                          preload={index === 0}
+                          className="object-contain p-5 transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-muted-foreground/50">
