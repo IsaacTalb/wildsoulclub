@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
+import { writeInventoryTransaction } from "@/lib/operational-history";
 
 const orderItemSchema = z.object({
   product_id: z.uuid(),
@@ -188,6 +189,29 @@ export async function POST(req: Request) {
     if (itemsError) {
       await supabaseAdmin.from("orders").delete().eq("id", order.id);
       throw itemsError;
+    }
+
+    for (const item of orderItems) {
+      const table = item.variant_id ? "product_variants" : "products";
+      const stockId = item.variant_id ?? item.product_id;
+      const { data: stockRow, error: stockFetchError } = await supabaseAdmin.from(table).select("stock").eq("id", stockId).single();
+      if (stockFetchError) throw stockFetchError;
+
+      const nextStock = Number(stockRow.stock ?? 0) - item.quantity;
+      if (nextStock < 0) throw new Error("Insufficient stock");
+
+      const { error: stockUpdateError } = await supabaseAdmin.from(table).update({ stock: nextStock }).eq("id", stockId);
+      if (stockUpdateError) throw stockUpdateError;
+
+      await writeInventoryTransaction({
+        productId: item.product_id,
+        variantId: item.variant_id,
+        quantityDelta: -item.quantity,
+        reason: "order_created",
+        referenceType: "order",
+        referenceId: order.id,
+        actorUserId: user.id,
+      });
     }
 
     return NextResponse.json(
