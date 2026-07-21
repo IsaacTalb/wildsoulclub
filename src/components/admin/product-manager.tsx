@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArchiveRestore, ArrowDown, ArrowUp, Copy, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { ArchiveRestore, ArrowDown, ArrowUp, ChevronsUpDown, Copy, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 type Option = { id: string; name: string };
 type ProductImage = { id: string; image_url: string; object_key: string; is_thumbnail: boolean; sort_order: number };
@@ -63,6 +66,92 @@ function listToText(value: unknown) {
   return Array.isArray(value) ? value.join(", ") : String(value ?? "");
 }
 
+function SearchableSelect({
+  name,
+  value,
+  options,
+  placeholder,
+  searchPlaceholder,
+  loading,
+  loadingText,
+  emptyText,
+  required,
+  error,
+  onChange,
+}: {
+  name: string;
+  value?: string | null;
+  options: Option[];
+  placeholder: string;
+  searchPlaceholder: string;
+  loading: boolean;
+  loadingText: string;
+  emptyText: string;
+  required?: boolean;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedOption = options.find((option) => option.id === value);
+
+  return (
+    <div className="space-y-1">
+      <input name={name} type="hidden" value={value ?? ""} />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          type="button"
+          aria-expanded={open}
+          aria-invalid={Boolean(error)}
+          className={cn(
+            "flex h-10 w-full items-center justify-between rounded-md border bg-background px-3 text-sm outline-none transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+            !selectedOption && "text-muted-foreground",
+            error && "border-destructive focus-visible:ring-destructive/20"
+          )}
+        >
+          <span>{selectedOption?.name ?? (loading ? loadingText : placeholder)}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-(--anchor-width) p-0">
+          <Command>
+            <CommandInput placeholder={searchPlaceholder} />
+            <CommandList>
+              <CommandEmpty>{loading ? loadingText : emptyText}</CommandEmpty>
+              <CommandGroup>
+                {!required && (
+                  <CommandItem
+                    value="__none__"
+                    data-checked={!value}
+                    onSelect={() => {
+                      onChange("");
+                      setOpen(false);
+                    }}
+                  >
+                    None
+                  </CommandItem>
+                )}
+                {options.map((option) => (
+                  <CommandItem
+                    key={option.id}
+                    value={option.name}
+                    data-checked={option.id === value}
+                    onSelect={() => {
+                      onChange(option.id);
+                      setOpen(false);
+                    }}
+                  >
+                    {option.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export function ProductManager() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -71,8 +160,10 @@ export function ProductManager() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [optionsLoading, setOptionsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [bulkSizes, setBulkSizes] = useState("");
   const [bulkColors, setBulkColors] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
@@ -87,6 +178,7 @@ export function ProductManager() {
   async function load() {
     setLoading(true);
     setError("");
+    setOptionsLoading(true);
     try {
       const headers = await authHeaders();
       const [productsResponse, categoriesResponse, collectionsResponse] = await Promise.all([
@@ -98,6 +190,8 @@ export function ProductManager() {
       const categoriesJson = await readJson(categoriesResponse);
       const collectionsJson = await readJson(collectionsResponse);
       if (!productsResponse.ok) throw new Error(productsJson.error ?? "Unable to load products");
+      if (!categoriesResponse.ok) throw new Error(categoriesJson.error ?? "Unable to load categories");
+      if (!collectionsResponse.ok) throw new Error(collectionsJson.error ?? "Unable to load collections");
       setProducts(productsJson.data ?? []);
       setCategories(categoriesJson.data ?? []);
       setCollections(collectionsJson.data ?? []);
@@ -105,6 +199,7 @@ export function ProductManager() {
       setError(err instanceof Error ? err.message : "Unable to load products");
     } finally {
       setLoading(false);
+      setOptionsLoading(false);
     }
   }
 
@@ -116,6 +211,7 @@ export function ProductManager() {
     setBulkSizes("");
     setBulkColors("");
     setError("");
+    setFieldErrors({});
     setOpen(true);
   }
 
@@ -125,6 +221,7 @@ export function ProductManager() {
     setBulkSizes(listToText(product.sizes));
     setBulkColors(listToText(product.colors));
     setError("");
+    setFieldErrors({});
     setOpen(true);
   }
 
@@ -152,8 +249,14 @@ export function ProductManager() {
     event.preventDefault();
     setSaving(true);
     setError("");
+    setFieldErrors({});
     try {
       const form = new FormData(event.currentTarget);
+      if (!form.get("category_id")) {
+        setFieldErrors({ category_id: "Category is required" });
+        setSaving(false);
+        return;
+      }
       const images = await uploadImages(form.get("product_images") instanceof File ? (event.currentTarget.elements.namedItem("product_images") as HTMLInputElement).files : null);
       const payload = {
         id: record.id,
@@ -272,7 +375,7 @@ export function ProductManager() {
       <Card><CardContent className="p-0 overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="px-4 py-3 font-medium">Name</th><th className="px-4 py-3 font-medium">Category</th><th className="px-4 py-3 font-medium">Collection</th><th className="px-4 py-3 font-medium">Stock</th><th className="px-4 py-3 font-medium">Flags</th><th className="px-4 py-3" /></tr></thead><tbody>{loading ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>Loading products…</td></tr> : products.length === 0 ? <tr><td className="px-4 py-8 text-muted-foreground" colSpan={6}>No products yet.</td></tr> : products.map((product) => { const isDeleted = Boolean(product.deleted_at); return <tr key={product.id} className="border-b last:border-0"><td className="px-4 py-3 font-medium">{product.name}{isDeleted && <span className="ml-2 text-xs text-muted-foreground">Archived</span>}</td><td className="px-4 py-3">{product.categories?.name ?? "—"}</td><td className="px-4 py-3">{product.collections?.name ?? "—"}</td><td className="px-4 py-3">{product.stock ?? 0}</td><td className="px-4 py-3"><div className="flex flex-wrap gap-1">{product.is_featured && <Badge>Featured</Badge>}{product.is_new_drop && <Badge variant="secondary">New</Badge>}{product.is_archive_sale && <Badge variant="destructive">Sale</Badge>}{isDeleted && <Badge variant="outline">Archived</Badge>}</div></td><td className="px-4 py-3 text-right whitespace-nowrap"><Button variant="ghost" size="icon" onClick={() => openEdit(product)}><Pencil className="h-4 w-4" /></Button>{isDeleted ? <Button variant="ghost" size="icon" onClick={() => restoreProduct(product.id)}><ArchiveRestore className="h-4 w-4" /></Button> : <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteProduct(product.id)}><Trash2 className="h-4 w-4" /></Button>}</td></tr>; })}</tbody></table></CardContent></Card>
 
       <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{record.id ? "Edit product" : "Add product"}</DialogTitle></DialogHeader><form onSubmit={submit} className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2"><div className="space-y-1.5"><Label>Name</Label><Input name="name" defaultValue={record.name ?? ""} required /></div><div className="space-y-1.5"><Label>Slug</Label><Input name="slug" defaultValue={record.slug ?? ""} required /></div><div className="space-y-1.5 md:col-span-2"><Label>Description</Label><Textarea name="description" defaultValue={record.description ?? ""} required /></div><div className="space-y-1.5"><Label>Price (MMK)</Label><Input name="price" type="number" defaultValue={record.price ?? ""} required /></div><div className="space-y-1.5"><Label>Sale price</Label><Input name="sale_price" type="number" defaultValue={record.sale_price ?? ""} /></div><div className="space-y-1.5"><Label>Discount percent</Label><Input name="discount_percent" type="number" defaultValue={record.discount_percent ?? 0} /></div><div className="space-y-1.5"><Label>Stock</Label><Input name="stock" type="number" defaultValue={record.stock ?? 0} /></div><div className="space-y-1.5"><Label>Category</Label><select name="category_id" defaultValue={record.category_id ?? ""} className="h-10 w-full rounded-md border bg-background px-3"><option value="">No category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></div><div className="space-y-1.5"><Label>Collection</Label><select name="collection_id" defaultValue={record.collection_id ?? ""} className="h-10 w-full rounded-md border bg-background px-3"><option value="">No collection</option>{collections.map((collection) => <option key={collection.id} value={collection.id}>{collection.name}</option>)}</select></div><div className="space-y-1.5"><Label>SKU</Label><Input name="sku" defaultValue={record.sku ?? ""} /></div><div className="space-y-1.5"><Label>Barcode</Label><Input name="barcode" defaultValue={record.barcode ?? ""} /></div><div className="space-y-1.5"><Label>Sizes</Label><Input name="sizes" defaultValue={listToText(record.sizes)} placeholder="S, M, L" /></div><div className="space-y-1.5"><Label>Colors</Label><Input name="colors" defaultValue={listToText(record.colors)} placeholder="Black, Cream" /></div><div className="space-y-1.5"><Label>New drop start</Label><Input name="new_drop_start_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_start_date)} /></div><div className="space-y-1.5"><Label>New drop end</Label><Input name="new_drop_end_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_end_date)} /></div><div className="space-y-1.5"><Label>Meta title</Label><Input name="meta_title" defaultValue={record.meta_title ?? ""} /></div><div className="space-y-1.5 md:col-span-2"><Label>Meta description</Label><Textarea name="meta_description" defaultValue={record.meta_description ?? ""} /></div></div>
+        <div className="grid gap-4 md:grid-cols-2"><div className="space-y-1.5"><Label>Name</Label><Input name="name" defaultValue={record.name ?? ""} required /></div><div className="space-y-1.5"><Label>Slug</Label><Input name="slug" defaultValue={record.slug ?? ""} required /></div><div className="space-y-1.5 md:col-span-2"><Label>Description</Label><Textarea name="description" defaultValue={record.description ?? ""} required /></div><div className="space-y-1.5"><Label>Price (MMK)</Label><Input name="price" type="number" defaultValue={record.price ?? ""} required /></div><div className="space-y-1.5"><Label>Sale price</Label><Input name="sale_price" type="number" defaultValue={record.sale_price ?? ""} /></div><div className="space-y-1.5"><Label>Discount percent</Label><Input name="discount_percent" type="number" defaultValue={record.discount_percent ?? 0} /></div><div className="space-y-1.5"><Label>Stock</Label><Input name="stock" type="number" defaultValue={record.stock ?? 0} /></div><div className="space-y-1.5"><Label>Category</Label><SearchableSelect name="category_id" value={record.category_id ?? ""} options={categories} placeholder="Select category" searchPlaceholder="Search categories..." loading={optionsLoading} loadingText="Loading categories..." emptyText="No categories found" required error={fieldErrors.category_id} onChange={(value) => { setRecord((current) => ({ ...current, category_id: value })); setFieldErrors((current) => ({ ...current, category_id: "" })); }} /></div><div className="space-y-1.5"><Label>Collection</Label><SearchableSelect name="collection_id" value={record.collection_id ?? ""} options={collections} placeholder="No collection" searchPlaceholder="Search collections..." loading={optionsLoading} loadingText="Loading collections..." emptyText="No collections found" onChange={(value) => setRecord((current) => ({ ...current, collection_id: value }))} /></div><div className="space-y-1.5"><Label>SKU</Label><Input name="sku" defaultValue={record.sku ?? ""} /></div><div className="space-y-1.5"><Label>Barcode</Label><Input name="barcode" defaultValue={record.barcode ?? ""} /></div><div className="space-y-1.5"><Label>Sizes</Label><Input name="sizes" defaultValue={listToText(record.sizes)} placeholder="S, M, L" /></div><div className="space-y-1.5"><Label>Colors</Label><Input name="colors" defaultValue={listToText(record.colors)} placeholder="Black, Cream" /></div><div className="space-y-1.5"><Label>New drop start</Label><Input name="new_drop_start_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_start_date)} /></div><div className="space-y-1.5"><Label>New drop end</Label><Input name="new_drop_end_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_end_date)} /></div><div className="space-y-1.5"><Label>Meta title</Label><Input name="meta_title" defaultValue={record.meta_title ?? ""} /></div><div className="space-y-1.5 md:col-span-2"><Label>Meta description</Label><Textarea name="meta_description" defaultValue={record.meta_description ?? ""} /></div></div>
 
         <div className="grid gap-3 sm:grid-cols-5"><label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked={Boolean(record.is_active)} />Active</label><label className="flex items-center gap-2 text-sm"><input name="is_archived" type="checkbox" defaultChecked={Boolean(record.is_archived)} />Archived</label><label className="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox" defaultChecked={Boolean(record.is_featured)} />Featured</label><label className="flex items-center gap-2 text-sm"><input name="is_new_drop" type="checkbox" defaultChecked={Boolean(record.is_new_drop)} />New drop</label><label className="flex items-center gap-2 text-sm"><input name="is_archive_sale" type="checkbox" defaultChecked={Boolean(record.is_archive_sale)} />Archive sale</label></div>
 
