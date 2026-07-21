@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { DragEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { ArchiveRestore, ArrowDown, ArrowUp, ChevronsUpDown, Copy, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -162,6 +162,10 @@ export function ProductManager() {
   const [loading, setLoading] = useState(true);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageSaving, setImageSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [draggedImageId, setDraggedImageId] = useState<string | null>(null);
+  const [dragOverImageId, setDragOverImageId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [bulkSizes, setBulkSizes] = useState("");
@@ -222,14 +226,49 @@ export function ProductManager() {
     setBulkColors(listToText(product.colors));
     setError("");
     setFieldErrors({});
+    setUploadProgress(null);
+    setDraggedImageId(null);
+    setDragOverImageId(null);
     setOpen(true);
+  }
+
+  function imageOrderAfterMove(fromIndex: number, toIndex: number) {
+    const ids = sortedImages.map((image) => image.id);
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= ids.length || toIndex >= ids.length) return ids;
+    const [moved] = ids.splice(fromIndex, 1);
+    ids.splice(toIndex, 0, moved);
+    return ids;
+  }
+
+  async function reorderImage(fromIndex: number, toIndex: number) {
+    if (!record.id || fromIndex === toIndex) return;
+    await productAction({ id: record.id, imageAction: "reorder", imageOrder: imageOrderAfterMove(fromIndex, toIndex) });
+  }
+
+  async function handleImageDrop(event: DragEvent<HTMLDivElement>, targetImageId: string) {
+    event.preventDefault();
+    const sourceImageId = draggedImageId ?? event.dataTransfer.getData("text/plain");
+    setDraggedImageId(null);
+    setDragOverImageId(null);
+    if (!sourceImageId || sourceImageId === targetImageId) return;
+    const fromIndex = sortedImages.findIndex((image) => image.id === sourceImageId);
+    const toIndex = sortedImages.findIndex((image) => image.id === targetImageId);
+    await reorderImage(fromIndex, toIndex);
+  }
+
+  async function deleteImage(imageId: string) {
+    if (!record.id) return;
+    if (!window.confirm("Delete this product image? This removes it from the product and cannot be undone.")) return;
+    await productAction({ id: record.id, imageAction: "delete", imageId });
   }
 
   async function uploadImages(files: FileList | null) {
     if (!files?.length) return [];
     const headers = await authHeaders();
     const uploadedImages = [];
-    for (const file of Array.from(files)) {
+    const fileList = Array.from(files);
+    setUploadProgress({ current: 0, total: fileList.length });
+    for (const [index, file] of fileList.entries()) {
       const uploadResponse = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
@@ -241,6 +280,7 @@ export function ProductManager() {
       const putResponse = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
       if (!putResponse.ok) throw new Error("Unable to upload image to Cloudflare R2. Check R2 CORS for PUT requests.");
       uploadedImages.push({ image_url: imageUrl, object_key: objectKey, file_size: file.size, mime_type: file.type });
+      setUploadProgress({ current: index + 1, total: fileList.length });
     }
     return uploadedImages;
   }
@@ -299,16 +339,25 @@ export function ProductManager() {
       setError(err instanceof Error ? err.message : "Unable to save product");
     } finally {
       setSaving(false);
+      setUploadProgress(null);
     }
   }
 
   async function productAction(body: Record<string, unknown>) {
-    const headers = await authHeaders();
-    const response = await fetch("/api/admin/products", { method: "PATCH", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
-    const result = await readJson(response);
-    if (!response.ok) throw new Error(result.error ?? "Unable to update product image");
-    setRecord(result.data);
-    await load();
+    setImageSaving(true);
+    setError("");
+    try {
+      const headers = await authHeaders();
+      const response = await fetch("/api/admin/products", { method: "PATCH", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
+      const result = await readJson(response);
+      if (!response.ok) throw new Error(result.error ?? "Unable to update product image");
+      setRecord(result.data);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update product image");
+    } finally {
+      setImageSaving(false);
+    }
   }
 
   async function deleteProduct(id: string) {
@@ -379,7 +428,7 @@ export function ProductManager() {
 
         <div className="grid gap-3 sm:grid-cols-5"><label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked={Boolean(record.is_active)} />Active</label><label className="flex items-center gap-2 text-sm"><input name="is_archived" type="checkbox" defaultChecked={Boolean(record.is_archived)} />Archived</label><label className="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox" defaultChecked={Boolean(record.is_featured)} />Featured</label><label className="flex items-center gap-2 text-sm"><input name="is_new_drop" type="checkbox" defaultChecked={Boolean(record.is_new_drop)} />New drop</label><label className="flex items-center gap-2 text-sm"><input name="is_archive_sale" type="checkbox" defaultChecked={Boolean(record.is_archive_sale)} />Archive sale</label></div>
 
-        <div className="space-y-3"><div><Label>Product images</Label><Input name="product_images" type="file" accept="image/*" multiple className="mt-1" /></div>{record.id && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{sortedImages.length === 0 ? <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><ImageIcon className="mx-auto mb-2 h-6 w-6" />No images yet</div> : sortedImages.map((image, index) => <div key={image.id} className="overflow-hidden rounded-lg border bg-card"><div className="relative aspect-square bg-muted"><img src={image.image_url} alt="Product" className="h-full w-full object-contain p-2" />{image.is_thumbnail && <Badge className="absolute left-2 top-2"><Star className="mr-1 h-3 w-3" />Thumbnail</Badge>}</div><div className="grid grid-cols-4 gap-1 p-2"><Button type="button" variant="outline" size="icon" disabled={index === 0} onClick={() => productAction({ id: record.id, imageAction: "reorder", imageOrder: sortedImages.map((item) => item.id).map((item, itemIndex, items) => itemIndex === index - 1 ? items[index] : itemIndex === index ? items[index - 1] : item) })}><ArrowUp className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" disabled={index === sortedImages.length - 1} onClick={() => productAction({ id: record.id, imageAction: "reorder", imageOrder: sortedImages.map((item) => item.id).map((item, itemIndex, items) => itemIndex === index ? items[index + 1] : itemIndex === index + 1 ? items[index] : item) })}><ArrowDown className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" onClick={() => productAction({ id: record.id, imageAction: "thumbnail", imageId: image.id })}><Star className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" className="text-destructive" onClick={() => productAction({ id: record.id, imageAction: "delete", imageId: image.id })}><Trash2 className="h-3 w-3" /></Button></div></div>)}</div>}</div>
+        <div className="space-y-3"><div><Label>Product images</Label><Input name="product_images" type="file" accept="image/*" multiple className="mt-1" disabled={saving} /><p className="mt-1 text-xs text-muted-foreground">New uploads append to the existing product images.</p>{uploadProgress && <p role="status" className="mt-1 text-xs text-muted-foreground">Uploading image {uploadProgress.current} of {uploadProgress.total} to R2…</p>}{imageSaving && <p role="status" className="mt-1 text-xs text-muted-foreground">Saving image changes…</p>}</div>{record.id && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Product image order">{sortedImages.length === 0 ? <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"><ImageIcon className="mx-auto mb-2 h-6 w-6" />No images yet</div> : sortedImages.map((image, index) => <div key={image.id} draggable onDragStart={(event) => { setDraggedImageId(image.id); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", image.id); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDragOverImageId(image.id); }} onDragLeave={() => setDragOverImageId((current) => current === image.id ? null : current)} onDrop={(event) => handleImageDrop(event, image.id)} onDragEnd={() => { setDraggedImageId(null); setDragOverImageId(null); }} className={cn("overflow-hidden rounded-lg border bg-card transition", draggedImageId === image.id && "opacity-60", dragOverImageId === image.id && "border-primary ring-2 ring-primary/30")} aria-label={`Product image ${index + 1}. Drag to reorder.`}><div className="relative aspect-square bg-muted"><img src={image.image_url} alt="Product" className="h-full w-full object-contain p-2" />{image.is_thumbnail && <Badge className="absolute left-2 top-2"><Star className="mr-1 h-3 w-3" />Thumbnail</Badge>}</div><div className="grid grid-cols-4 gap-1 p-2"><Button type="button" variant="outline" size="icon" aria-label="Move image earlier" disabled={index === 0 || imageSaving} onClick={() => reorderImage(index, index - 1)}><ArrowUp className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" aria-label="Move image later" disabled={index === sortedImages.length - 1 || imageSaving} onClick={() => reorderImage(index, index + 1)}><ArrowDown className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" aria-label="Set as primary thumbnail" disabled={imageSaving} onClick={() => productAction({ id: record.id, imageAction: "thumbnail", imageId: image.id })}><Star className="h-3 w-3" /></Button><Button type="button" variant="outline" size="icon" aria-label="Delete image" disabled={imageSaving} className="text-destructive" onClick={() => deleteImage(image.id)}><Trash2 className="h-3 w-3" /></Button></div></div>)}</div>}</div>
 
         <div className="space-y-3"><div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"><div><Label>Product variants</Label><p className="text-xs text-muted-foreground">Bulk generation creates color-size SKUs like Black-S, Black-M, White-S, White-M.</p></div><div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]"><Input placeholder="Sizes: S, M" value={bulkSizes} onChange={(event) => setBulkSizes(event.target.value)} /><Input placeholder="Colors: Black, White" value={bulkColors} onChange={(event) => setBulkColors(event.target.value)} /><Button type="button" variant="outline" size="sm" onClick={generateBulkVariants}>Generate</Button><Button type="button" variant="outline" size="sm" onClick={() => setVariants((items) => [...items, { size: "", color: "", stock: 0, price: "", sale_price: "", sku: "", is_active: true }])}><Plus className="mr-2 h-3 w-3" />Add variant</Button></div></div><div className="overflow-x-auto rounded-lg border"><table className="w-full min-w-[920px] text-sm"><thead><tr className="border-b text-left"><th className="px-3 py-2 font-medium">Size</th><th className="px-3 py-2 font-medium">Color</th><th className="px-3 py-2 font-medium">SKU</th><th className="px-3 py-2 font-medium">Price Override</th><th className="px-3 py-2 font-medium">Sale Price Override</th><th className="px-3 py-2 font-medium">Stock</th><th className="px-3 py-2 font-medium">Active</th><th className="px-3 py-2 font-medium">Actions</th></tr></thead><tbody>{variants.map((variant, index) => variant._delete ? null : <tr key={variant.id ?? index} className="border-b last:border-0"><td className="px-3 py-2"><Input placeholder="Size" value={variant.size ?? ""} onChange={(event) => updateVariant(index, "size", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Color" value={variant.color ?? ""} onChange={(event) => updateVariant(index, "color", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="SKU" value={variant.sku ?? ""} onChange={(event) => updateVariant(index, "sku", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Price" type="number" min="0" value={variant.price ?? ""} onChange={(event) => updateVariant(index, "price", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Sale price" type="number" min="0" value={variant.sale_price ?? ""} onChange={(event) => updateVariant(index, "sale_price", event.target.value)} /></td><td className="px-3 py-2"><Input placeholder="Stock" type="number" min="0" step="1" value={variant.stock ?? 0} onChange={(event) => updateVariant(index, "stock", event.target.value)} /></td><td className="px-3 py-2"><input type="checkbox" checked={variant.is_active ?? true} onChange={(event) => updateVariant(index, "is_active", event.target.checked)} /></td><td className="px-3 py-2"><div className="flex gap-1"><Button type="button" variant="ghost" size="icon" onClick={() => duplicateVariant(index)}><Copy className="h-4 w-4" /></Button><Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeVariant(index)}><Trash2 className="h-4 w-4" /></Button></div></td></tr>)}</tbody></table></div></div>
 
