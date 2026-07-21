@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/auth";
 
+type ReviewPaymentResult = {
+  success: boolean;
+  error: string | null;
+  payment: unknown;
+};
+
 export async function GET() {
   try {
     await requireAdmin();
@@ -21,7 +27,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   try {
-    await requireAdmin();
+    const adminUserId = await requireAdmin();
 
     const body = await req.json();
     const { paymentId, status, admin_notes } = body;
@@ -40,27 +46,27 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { data: payment, error: paymentError } = await supabaseAdmin
-      .from("payments")
-      .update({ status, admin_notes: admin_notes ?? null, updated_at: new Date().toISOString() })
-      .eq("id", paymentId)
-      .select()
+    const { data: result, error: reviewError } = await supabaseAdmin
+      .rpc("review_payment", {
+        p_payment_id: paymentId,
+        p_status: status,
+        p_admin_notes: admin_notes ?? null,
+        p_reviewed_by: adminUserId,
+      })
       .single();
 
-    if (paymentError) throw paymentError;
+    if (reviewError) throw reviewError;
 
-    const nextOrderValues = status === "approved"
-      ? { status: "paid", payment_status: "approved", updated_at: new Date().toISOString() }
-      : { payment_status: status, updated_at: new Date().toISOString() };
+    const reviewResult = result as ReviewPaymentResult | null;
 
-    const { error: orderError } = await supabaseAdmin
-      .from("orders")
-      .update(nextOrderValues)
-      .eq("id", payment.order_id);
+    if (!reviewResult?.success) {
+      return NextResponse.json(
+        { success: false, error: reviewResult?.error ?? "Unable to update payment" },
+        { status: 409 }
+      );
+    }
 
-    if (orderError) throw orderError;
-
-    return NextResponse.json({ success: true, data: payment });
+    return NextResponse.json({ success: true, data: reviewResult.payment });
   } catch {
     return NextResponse.json(
       { success: false, error: "Failed to update payment" },
