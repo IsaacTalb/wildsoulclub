@@ -83,7 +83,8 @@ export async function POST(req: Request) {
     const { data: products, error: productsError } = await supabaseAdmin
       .from("products")
       .select("id, price, sale_price, stock, is_active")
-      .in("id", productIds);
+      .in("id", productIds)
+      .is("deleted_at", null);
 
     if (productsError) throw productsError;
 

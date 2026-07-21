@@ -118,6 +118,7 @@ CREATE TABLE products (
   thumbnail_key TEXT,
   is_active BOOLEAN DEFAULT true,
   is_archived BOOLEAN DEFAULT false,
+  deleted_at TIMESTAMPTZ,
   is_featured BOOLEAN DEFAULT false,
   is_new_drop BOOLEAN DEFAULT false,
   is_archive_sale BOOLEAN DEFAULT false,
@@ -133,7 +134,8 @@ CREATE INDEX idx_products_slug ON products(slug);
 CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_products_collection ON products(collection_id);
 CREATE INDEX idx_products_active ON products(is_active);
-CREATE INDEX idx_products_featured ON products(is_featured) WHERE is_featured = true;
+CREATE INDEX idx_products_active_visible ON products(created_at DESC) WHERE is_active = true AND deleted_at IS NULL;
+CREATE INDEX idx_products_featured ON products(is_featured) WHERE is_featured = true AND deleted_at IS NULL;
 
 -- ==========================================
 -- PRODUCT IMAGES

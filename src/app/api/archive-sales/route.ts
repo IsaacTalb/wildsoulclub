@@ -13,6 +13,7 @@ export async function GET() {
       .select("*, product_images(*), product_variants(*), categories(id, name, slug)")
       .eq("is_archive_sale", true)
       .eq("is_active", true)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return NextResponse.json({ success: true, data: (data ?? []).map((product) => normalizeProduct(product as ProductRow)) });
