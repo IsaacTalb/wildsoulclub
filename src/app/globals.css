@@ -178,3 +178,50 @@
     transform: translate3d(var(--float-x, 0), calc(var(--float-y, 0) - 12px), 0) rotate(0deg) scale(1.025);
   }
 }
+
+@keyframes product-float {
+  0%,
+  100% {
+    transform:
+      translate3d(0, 0, 0)
+      rotate(var(--product-rotation, 0deg));
+  }
+
+  25% {
+    transform:
+      translate3d(5px, -10px, 0)
+      rotate(calc(var(--product-rotation, 0deg) + 1deg));
+  }
+
+  50% {
+    transform:
+      translate3d(-4px, -18px, 0)
+      rotate(calc(var(--product-rotation, 0deg) - 1deg));
+  }
+
+  75% {
+    transform:
+      translate3d(4px, -7px, 0)
+      rotate(calc(var(--product-rotation, 0deg) + 0.5deg));
+  }
+}
+
+.floating-product-item {
+  animation-name: product-float;
+  animation-duration: var(--float-duration, 8s);
+  animation-delay: var(--float-delay, 0s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  will-change: transform;
+}
+
+.floating-product-item:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-product-item {
+    animation: none;
+  }
+}
