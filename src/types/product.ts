@@ -46,6 +46,7 @@ export interface Drop {
   status: "draft" | "scheduled" | "active" | "archived";
   banner_image_url?: string;
   banner_object_key?: string;
+  collections?: { id: string; name: string; slug?: string } | null;
   products?: Product[];
   created_at: string;
   updated_at: string;

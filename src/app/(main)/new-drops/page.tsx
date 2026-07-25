@@ -7,10 +7,9 @@ import { Sparkles, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/utils";
 import { Drop } from "@/types/product";
 
-const PRODUCT_IMAGE_PLACEHOLDER =
+const DROP_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
 const skeletonCards = Array.from({ length: 4 }, (_, index) => index);
 
@@ -68,12 +67,12 @@ export default function NewDropsPage() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {loading ? (
           skeletonCards.map((item) => (
             <Card key={item} className="overflow-hidden border-0 shadow-sm">
               <CardContent className="p-0">
-                <div className="aspect-square bg-muted p-6">
+                <div className="aspect-[16/9] bg-muted p-6">
                   <div className="h-full w-full animate-pulse rounded-lg bg-background/60" />
                 </div>
                 <div className="space-y-3 p-4">
@@ -84,22 +83,20 @@ export default function NewDropsPage() {
               </CardContent>
             </Card>
           ))
-        ) : newDrops.flatMap((drop) => (drop.products?.length ? drop.products : []).map((item) => ({ ...item, drop }))).map(({ drop, ...item }) => (
-          <div
-            key={item.id}
-          >
-            <Link href={`/products/${item.id}`}>
+        ) : newDrops.map((drop) => (
+          <div key={drop.id}>
+            <Link href={`/new-drops/${drop.slug}`}>
               <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-0">
-                  <div className="aspect-square bg-muted relative flex items-center justify-center">
-                    {item.product_images?.[0] ? (
+                  <div className="aspect-[16/9] bg-muted relative flex items-center justify-center">
+                    {drop.banner_image_url ? (
                       <Image
-                        src={item.thumbnail_url || item.product_images[0].url || item.product_images[0].image_url || item.product_images[0].object_key}
-                        alt={item.name}
+                        src={drop.banner_image_url}
+                        alt={drop.name}
                         fill
                         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                         placeholder="blur"
-                        blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
+                        blurDataURL={DROP_IMAGE_PLACEHOLDER}
                         preload={false}
                         className="object-contain"
                       />
@@ -109,35 +106,15 @@ export default function NewDropsPage() {
                     <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground">
                       New Drop
                     </Badge>
-                    {item.sale_price && (
-                      <Badge variant="destructive" className="absolute top-3 right-3">
-                        Sale
-                      </Badge>
-                    )}
                   </div>
                   <div className="p-4">
                     <p className="text-xs text-muted-foreground mb-1">
-                      {item.categories?.name || item.category || "Uncategorized"}
+                      {drop.collections?.name || "Latest collection"}
                     </p>
                     <h3 className="font-semibold group-hover:text-primary transition-colors">
-                      {item.name}
+                      {drop.name}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      {item.sale_price ? (
-                        <>
-                          <span className="text-sm font-bold text-primary">
-                            {formatPrice(item.sale_price)}
-                          </span>
-                          <span className="text-xs text-muted-foreground line-through">
-                            {formatPrice(item.price)}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-sm font-bold">
-                          {formatPrice(item.price)}
-                        </span>
-                      )}
-                    </div>
+                    {drop.description && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{drop.description}</p>}
                     <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       {drop.release_date ? (
@@ -147,7 +124,7 @@ export default function NewDropsPage() {
                           year: "numeric",
                         })
                       ) : (
-                        drop.name
+                        "Release date coming soon"
                       )}
                     </div>
                   </div>
