@@ -49,6 +49,11 @@ const sidebarLinks = [
     icon: Package,
   },
   {
+    title: "New Drops",
+    href: "/admin/new-drops",
+    icon: Package,
+  },
+  {
     title: "Collections",
     href: "/admin/collections",
     icon: Layers,
