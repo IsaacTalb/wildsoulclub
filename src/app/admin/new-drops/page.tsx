@@ -11,8 +11,8 @@ export default function Page() {
         { key: "status", label: "Status", type: "select", required: true, options: ["draft", "scheduled", "active", "archived"], defaultValue: "draft" },
         { key: "release_date", label: "Release date", type: "datetime-local" },
         { key: "description", label: "Description", type: "textarea" },
-        { key: "collection_id", label: "Collection ID" },
-        { key: "banner_image_url", label: "Banner image", type: "image", folder: "drops", objectKeyField: "banner_object_key" },
+        { key: "collection_id", label: "Collection", type: "select", optionResource: "collections" },
+        { key: "banner_image_url", label: "Banner image", type: "image", folder: "new-drops", objectKeyField: "banner_object_key" },
       ]}
     />
   );
