@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { CartHydration } from "@/components/cart-hydration";
 
 export default function MainLayout({
   children,
@@ -10,6 +11,7 @@ export default function MainLayout({
 }) {
   return (
     <>
+      <CartHydration />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

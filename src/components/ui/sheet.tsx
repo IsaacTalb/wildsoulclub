@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -91,7 +92,7 @@ function SheetClose({
 }
 
 function SheetPortal({ children }: React.PropsWithChildren) {
-  return <>{children}</>
+  return createPortal(children, document.body)
 }
 
 function SheetOverlay({ className, ...props }: React.ComponentProps<"div">) {

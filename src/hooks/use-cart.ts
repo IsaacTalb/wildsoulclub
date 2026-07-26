@@ -6,6 +6,8 @@ import type { CartItem, Product, ProductVariant } from "@/types";
 
 interface CartStore {
   items: CartItem[];
+  hasHydrated: boolean;
+  setHasHydrated: (hasHydrated: boolean) => void;
   addItem: (product: Product, quantity: number, size: string, color: string, variantId?: string) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -28,6 +30,8 @@ export const useCart = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      hasHydrated: false,
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
 
       addItem: (product, quantity, size, color, variantId) => {
         set((state) => {
@@ -92,6 +96,8 @@ export const useCart = create<CartStore>()(
     {
       name: "wildsoul-cart",
       skipHydration: true,
+      partialize: (state) => ({ items: state.items }),
+      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
     }
   )
 );
