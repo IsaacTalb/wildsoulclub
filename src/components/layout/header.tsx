@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { SignInButton, UserButton } from "@/components/authButtons";
-import { Menu, X, ShoppingCart, Search, User, Store, Sparkles, Percent, Sun, Moon, LogOut, UserCircle } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { ChevronDown, Menu, ShoppingCart, Search, User, Sun, Moon, LogOut, UserCircle } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +15,11 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useCart } from "@/hooks/use-cart";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import type { Drop } from "@/types/product";
 
 const leftLinks = [
-  { href: "/products", label: "Shop", icon: Store },
-  { href: "/new-drops", label: "New Drop", icon: Sparkles },
-  { href: "/archive-sales", label: "Archive Sale", icon: Percent },
+  { href: "/products", label: "Shop" },
+  { href: "/archive-sales", label: "Archive Sale" },
   { href: "/about", label: "About Us" },
 ];
 
@@ -30,6 +30,91 @@ const mobileLinks = [
   { href: "/about", label: "About Us" },
   { href: "/collections", label: "Collections" },
 ];
+
+type DropsState =
+  | { status: "loading"; drops: Drop[] }
+  | { status: "success"; drops: Drop[] }
+  | { status: "failure"; drops: Drop[] };
+
+function useNewDrops() {
+  const [state, setState] = useState<DropsState>({ status: "loading", drops: [] });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/new-drops", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to fetch drops");
+        const payload: unknown = await response.json();
+        const drops =
+          typeof payload === "object" && payload !== null && "data" in payload && Array.isArray(payload.data)
+            ? (payload.data as Drop[])
+            : [];
+        setState({ status: "success", drops });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setState({ status: "failure", drops: [] });
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  return state;
+}
+
+function DropLinks({
+  state,
+  onSelect,
+  mobile = false,
+}: {
+  state: DropsState;
+  onSelect?: () => void;
+  mobile?: boolean;
+}) {
+  const linkClassName = mobile
+    ? "flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    : "w-full cursor-pointer px-3 py-2";
+
+  if (state.status === "loading") {
+    const message = <span role="status">Loading drops…</span>;
+    return mobile ? (
+      <p className="px-3 py-3 text-sm text-muted-foreground">{message}</p>
+    ) : (
+      <DropdownMenuItem disabled className="px-3 py-2 text-muted-foreground">{message}</DropdownMenuItem>
+    );
+  }
+  if (state.status === "failure") {
+    const message = <span role="alert">Drops couldn&apos;t be loaded.</span>;
+    return mobile ? (
+      <p className="px-3 py-3 text-sm text-destructive">{message}</p>
+    ) : (
+      <DropdownMenuItem disabled className="px-3 py-2 text-destructive">{message}</DropdownMenuItem>
+    );
+  }
+
+  return (
+    <>
+      {state.drops.length === 0 && (
+        mobile ? (
+          <p className="px-3 py-3 text-sm text-muted-foreground">No active or scheduled drops.</p>
+        ) : (
+          <DropdownMenuItem disabled className="px-3 py-2 text-muted-foreground">
+            No active or scheduled drops.
+          </DropdownMenuItem>
+        )
+      )}
+      {state.drops.map((drop) => mobile ? (
+        <Link key={drop.id} href={`/new-drops/${drop.slug}`} className={linkClassName} onClick={onSelect}>
+          {drop.name}
+        </Link>
+      ) : (
+        <DropdownMenuItem key={drop.id} render={<Link href={`/new-drops/${drop.slug}`} />} className={linkClassName}>
+          {drop.name}
+        </DropdownMenuItem>
+      ))}
+    </>
+  );
+}
 
 export function Header() {
   const pathname = usePathname();
@@ -48,15 +133,13 @@ export function Header() {
   }, []);
 
   const { setTheme, theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileDropsOpen, setMobileDropsOpen] = useState(false);
+  const [desktopDropsOpen, setDesktopDropsOpen] = useState(false);
+  const dropsState = useNewDrops();
   const { getItemCount } = useCart();
   const cartCount = getItemCount();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/20 backdrop-blur-lg supports-[backdrop-filter]:bg-background/10">
@@ -71,7 +154,31 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] sm:w-[320px]">
               <div className="flex flex-col gap-1 mt-8">
-                {mobileLinks.map((link) => (
+                {mobileLinks.map((link) => link.href === "/new-drops" ? (
+                  <div key={link.href}>
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base font-medium transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        pathname.startsWith("/new-drops") ? "bg-muted text-foreground" : "text-muted-foreground"
+                      )}
+                      aria-expanded={mobileDropsOpen}
+                      aria-controls="mobile-new-drops-menu"
+                      onClick={() => setMobileDropsOpen((open) => !open)}
+                    >
+                      New Drop
+                      <ChevronDown className={cn("h-4 w-4 transition-transform", mobileDropsOpen && "rotate-180")} />
+                    </button>
+                    {mobileDropsOpen && (
+                      <div id="mobile-new-drops-menu" role="region" aria-label="New drops" className="ml-3 max-h-64 overflow-y-auto border-l pl-2">
+                        <DropLinks state={dropsState} mobile onSelect={() => setIsOpen(false)} />
+                        <Link href="/new-drops" className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setIsOpen(false)}>
+                          View all drops
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                ) : (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -112,7 +219,7 @@ export function Header() {
 
         {/* Left: Desktop nav links */}
         <nav className="hidden md:flex items-center gap-1">
-          {leftLinks.map((link) => (
+          {leftLinks.slice(0, 1).map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -121,6 +228,40 @@ export function Header() {
                 pathname === link.href
                   ? "text-foreground bg-muted"
                   : "text-muted-foreground"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <DropdownMenu open={desktopDropsOpen} onOpenChange={setDesktopDropsOpen} modal={false}>
+            <DropdownMenuTrigger
+              openOnHover
+              closeDelay={150}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                pathname.startsWith("/new-drops") ? "bg-muted text-foreground" : "text-muted-foreground"
+              )}
+              aria-expanded={desktopDropsOpen}
+              aria-label="New Drop menu"
+            >
+              New Drop
+              <ChevronDown className={cn("h-4 w-4 transition-transform", desktopDropsOpen && "rotate-180")} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent aria-label="New drops" className="max-h-80 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto">
+              <DropLinks state={dropsState} />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/new-drops" />} className="w-full cursor-pointer px-3 py-2 font-medium">
+                View all drops
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {leftLinks.slice(1).map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:text-primary hover:bg-muted",
+                pathname === link.href ? "text-foreground bg-muted" : "text-muted-foreground"
               )}
             >
               {link.label}
