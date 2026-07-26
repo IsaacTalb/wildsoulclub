@@ -10,14 +10,28 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
+import type { Product, ProductVariant } from "@/types";
+import type { PublicProductVariant } from "@/types/product";
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
 
+type PublicProductResponse = Omit<Product, "images" | "variants"> & {
+  thumbnail_url?: string;
+  categories?: { id?: string | null; name?: string | null; slug?: string | null } | null;
+  product_images: Array<{ url?: string; image_url?: string }>;
+  product_variants: PublicProductVariant[];
+};
+
+type DisplayProduct = PublicProductResponse & {
+  images: string[];
+  variants: PublicProductVariant[];
+};
+
 export default function ProductDetailPage() {
   const params = useParams();
   const { addItem } = useCart();
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<DisplayProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -31,14 +45,18 @@ export default function ProductDetailPage() {
       setError("");
 
       const response = await fetch(`/api/public/products/${params.productId}`);
-      const result = await response.json();
+      const result = (await response.json()) as {
+        data?: PublicProductResponse;
+        error?: string;
+      };
       if (!response.ok) throw new Error(result.error ?? "Failed to load product");
 
       const productData = result.data;
+      if (!productData) throw new Error("Product response did not include a product");
       const imageUrls = [
         productData.thumbnail_url,
         ...(productData.product_images ?? []).map((image: { url?: string; image_url?: string }) => image.url || image.image_url),
-      ].filter(Boolean);
+      ].filter((url): url is string => Boolean(url));
 
       setProduct({
         ...productData,
@@ -60,7 +78,7 @@ export default function ProductDetailPage() {
 
   const selectedVariant = useMemo(() => {
     if (!product?.variants?.length) return null;
-    return product.variants.find((variant: { size?: string; color?: string }) => (!selectedSize || variant.size === selectedSize) && (!selectedColor || variant.color === selectedColor)) ?? null;
+    return product.variants.find((variant) => (!selectedSize || variant.size === selectedSize) && (!selectedColor || variant.color === selectedColor)) ?? null;
   }, [product, selectedColor, selectedSize]);
 
   const effectiveStock = selectedVariant ? Number(selectedVariant.stock ?? 0) : Number(product?.stock ?? 0);
@@ -75,6 +93,20 @@ export default function ProductDetailPage() {
     addItem(
       {
         ...product,
+        images: [],
+        variants: product.variants.map(
+          (variant): ProductVariant => ({
+            ...variant,
+            price: variant.price ?? undefined,
+            sale_price: variant.sale_price ?? undefined,
+            id: variant.id,
+            product_id: product.id,
+            size: variant.size ?? "",
+            color: variant.color ?? "",
+            sku: "",
+            created_at: "",
+          }),
+        ),
         category_id: product.category_id || "",
         sku: product.sku || "",
         is_active: true,
@@ -155,7 +187,11 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div>
           <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
-            {product.categories?.name || product.category || "Uncategorized"}
+            {product.categories?.name ||
+              (typeof product.category === "string"
+                ? product.category
+                : product.category?.name) ||
+              "Uncategorized"}
           </p>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
             {product.name}

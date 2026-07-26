@@ -13,6 +13,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  stock: number;
   sale_price?: number;
   category_id: string;
   category?: string;
@@ -29,6 +30,17 @@ export interface Product {
   created_at: string;
   updated_at: string;
   product_images: ProductImage[];
+  product_variants?: PublicProductVariant[];
+}
+
+export interface PublicProductVariant {
+  id: string;
+  size?: string | null;
+  color?: string | null;
+  stock: number;
+  price?: number | null;
+  sale_price?: number | null;
+  is_active: true;
 }
 
 export interface ArchiveSaleProduct extends Product {
