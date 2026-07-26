@@ -364,7 +364,7 @@ export default function ProductDetailPage() {
                 {product.sizes.map((size: string) => {
                   const unavailable = hasVariants && !isSizeAvailable(size);
                   return (
-                    <button
+                    <Button
                       key={size}
                       onClick={() => {
                         setSelectedSize(size);
@@ -372,10 +372,12 @@ export default function ProductDetailPage() {
                       }}
                       disabled={unavailable}
                       aria-label={`${size}${unavailable ? " (out of stock)" : ""}`}
-                      className={`px-4 py-2 rounded-md border text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${selectedSize === size ? "border-primary bg-primary text-primary-foreground" : "border-input hover:border-primary hover:text-primary"}`}
+                      variant={selectedSize === size ? "liquid-primary" : "liquid"}
+                      size="touch"
+                      aria-pressed={selectedSize === size}
                     >
                       {size}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -395,7 +397,7 @@ export default function ProductDetailPage() {
                 {product.colors.map((color: string) => {
                   const unavailable = hasVariants && !isColorAvailable(color);
                   return (
-                    <button
+                    <Button
                       key={color}
                       onClick={() => {
                         setSelectedColor(color);
@@ -403,10 +405,12 @@ export default function ProductDetailPage() {
                       }}
                       disabled={unavailable}
                       aria-label={`${color}${unavailable ? " (out of stock)" : ""}`}
-                      className={`px-4 py-2 rounded-md border text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${selectedColor === color ? "border-primary bg-primary text-primary-foreground" : "border-input hover:border-primary hover:text-primary"}`}
+                      variant={selectedColor === color ? "liquid-primary" : "liquid"}
+                      size="touch"
+                      aria-pressed={selectedColor === color}
                     >
                       {color}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -416,10 +420,10 @@ export default function ProductDetailPage() {
           {/* Quantity */}
           <div className="mb-6">
             <h3 className="font-medium mb-3">Quantity</h3>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
-                variant="outline"
-                size="icon"
+                variant="liquid"
+                size="icon-touch"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 disabled={quantity <= 1}
                 aria-label="Decrease quantity"
@@ -430,8 +434,8 @@ export default function ProductDetailPage() {
                 {quantity}
               </span>
               <Button
-                variant="outline"
-                size="icon"
+                variant="liquid"
+                size="icon-touch"
                 onClick={() =>
                   effectiveStock !== null &&
                   setQuantity(Math.min(effectiveStock, quantity + 1))
@@ -446,7 +450,7 @@ export default function ProductDetailPage() {
                 <Plus className="h-4 w-4" />
               </Button>
               <span
-                className="text-sm text-muted-foreground ml-2"
+                className="min-w-0 basis-full text-sm text-muted-foreground sm:ml-2 sm:basis-auto"
                 role="status"
                 aria-live="polite"
               >
@@ -460,10 +464,11 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="mb-3 flex min-w-0 flex-col gap-3 sm:flex-row">
             <Button
-              size="lg"
-              className="flex-1 text-base"
+              variant="liquid-primary"
+              size="touch"
+              className="w-full min-w-0 flex-1 text-base"
               onClick={handleAddToCart}
               disabled={
                 !optionsComplete ||
@@ -473,12 +478,12 @@ export default function ProductDetailPage() {
             >
               <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
             </Button>
-            <Button variant="outline" size="lg">
+            <Button variant="liquid" size="touch" className="w-full sm:w-auto">
               <Heart className="mr-2 h-5 w-5" /> Wishlist
             </Button>
           </div>
 
-          <Button variant="outline" className="w-full">
+          <Button variant="liquid" size="touch" className="w-full">
             <Share2 className="mr-2 h-4 w-4" /> Share
           </Button>
         </div>
