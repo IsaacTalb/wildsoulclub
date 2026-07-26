@@ -106,8 +106,6 @@ const glassCardClassName = `
 export default function ContactPage() {
   return (
     <div className="min-h-screen overflow-hidden bg-background">
-      <Header />
-
       <main>
         {/* ------------------------------------------------------------------ */}
         {/*                              Hero                                  */}
@@ -469,8 +467,6 @@ export default function ContactPage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }
