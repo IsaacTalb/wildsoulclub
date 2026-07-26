@@ -15,7 +15,7 @@ export function Footer() {
               Myanmar streetwear brand inspired by the wild spirit. 
               Express your soul through our unique designs.
             </p>
-            <div className="flex gap-3 mt-4">
+            {/* <div className="flex gap-3 mt-4">
               <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
                 <Globe className="h-5 w-5" />
               </Link>
@@ -28,7 +28,7 @@ export function Footer() {
               <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
                 <Send className="h-5 w-5" />
               </Link>
-            </div>
+            </div> */}
           </div>
 
           {/* Quick Links */}
@@ -57,17 +57,17 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-3">Contact Us</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>hello@wildsoulclub.com</li>
-              <li>09-123456789</li>
-              <li>Yangon, Myanmar</li>
+              <li>wildsoulclubonline@gmail.com</li>
+              <li>09767676114</li>
+              <li>Pannita Street, Hlaing Township, Yangon</li>
             </ul>
             <div className="mt-4">
               <p className="text-sm font-medium mb-2">Payment Methods</p>
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="px-2 py-1 bg-muted rounded">KBZPay</span>
-                <span className="px-2 py-1 bg-muted rounded">Wave</span>
+                {/* <span className="px-2 py-1 bg-muted rounded">Wave</span>
                 <span className="px-2 py-1 bg-muted rounded">AYA Pay</span>
-                <span className="px-2 py-1 bg-muted rounded">CB Pay</span>
+                <span className="px-2 py-1 bg-muted rounded">CB Pay</span> */}
               </div>
             </div>
           </div>
@@ -78,7 +78,7 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Wild Soul Club. All rights reserved.
           </p>
           <p className="flex items-center gap-1">
-            Made with <Heart className="h-4 w-4 text-red-500" /> in Myanmar
+            Built by <a href="https://isaac.duckcloud.info" target="_blank" rel="noopener noreferrer" className="text-primary underline">Isaac</a>
           </p>
         </div>
       </div>

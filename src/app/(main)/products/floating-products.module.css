@@ -1,0 +1,44 @@
+.floatingProduct {
+  animation-name: product-float;
+  animation-duration: var(--float-duration, 8s);
+  animation-delay: var(--float-delay, 0s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.floatingProduct:hover,
+.floatingProduct:focus-within {
+  animation-play-state: paused;
+}
+
+@keyframes product-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--product-rotation, 0deg));
+  }
+
+  25% {
+    transform: translate3d(5px, -10px, 0)
+      rotate(calc(var(--product-rotation, 0deg) + 1deg));
+  }
+
+  50% {
+    transform: translate3d(-4px, -18px, 0)
+      rotate(calc(var(--product-rotation, 0deg) - 1deg));
+  }
+
+  75% {
+    transform: translate3d(4px, -7px, 0)
+      rotate(calc(var(--product-rotation, 0deg) + 0.5deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floatingProduct {
+    animation: none;
+    transform: rotate(var(--product-rotation, 0deg));
+  }
+}

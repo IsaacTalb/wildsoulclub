@@ -100,7 +100,7 @@ export default function NewDropsPage() {
 
   return (
     <div
-      className="h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] overflow-y-auto overscroll-y-contain snap-y snap-mandatory motion-reduce:snap-none"
+      className="h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] overflow-y-auto snap-y snap-mandatory motion-reduce:snap-none"
       aria-busy={loading}
     >
       {loading
