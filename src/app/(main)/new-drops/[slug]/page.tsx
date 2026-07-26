@@ -3,20 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getPublicDropBySlug } from "@/lib/server/drops";
 import { formatPrice } from "@/lib/utils";
-import { Drop } from "@/types/product";
-
-async function getDrop(slug: string): Promise<Drop | null> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const response = await fetch(`${baseUrl}/api/public/drops/${slug}`, { cache: "no-store" });
-  if (!response.ok) return null;
-  const json = await response.json();
-  return json.data ?? null;
-}
 
 export default async function DropDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const drop = await getDrop(slug);
+  const drop = await getPublicDropBySlug(slug);
   if (!drop) notFound();
 
   return (
