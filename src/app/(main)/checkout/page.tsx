@@ -25,9 +25,19 @@ const paymentMethods = [
   { id: "cbpay", name: "CB Pay", number: "09-789123456" },
 ];
 
+type CheckoutApiResponse = {
+  data?: {
+    id?: string;
+    uploadUrl?: string;
+    objectKey?: string;
+    imageUrl?: string;
+  };
+  error?: string;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, getSubtotal, clearCart } = useCart();
+  const { items, hasHydrated, getSubtotal, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState("kpay");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
@@ -50,12 +60,23 @@ export default function CheckoutPage() {
     return session ? { Authorization: `Bearer ${session.access_token}` } : {};
   };
 
+  const readJson = async (response: Response, fallback: string) => {
+    const body = await response.text();
+    try {
+      return JSON.parse(body) as CheckoutApiResponse;
+    } catch {
+      throw new Error(response.redirected
+        ? "Your session expired. Please sign in again before placing your order."
+        : `${fallback} The server returned an invalid response.`);
+    }
+  };
+
   const readErrorMessage = async (response: Response, fallback: string) => {
     try {
-      const result = await response.json();
-      return result.error ?? fallback;
-    } catch {
-      return fallback;
+      const result = await readJson(response, fallback);
+      return typeof result.error === "string" ? result.error : fallback;
+    } catch (error) {
+      return error instanceof Error ? error.message : fallback;
     }
   };
 
@@ -70,7 +91,7 @@ export default function CheckoutPage() {
       throw new Error(await readErrorMessage(uploadResponse, "Payment proof upload could not be started. Please try again."));
     }
 
-    const uploadResult = await uploadResponse.json();
+    const uploadResult = await readJson(uploadResponse, "Payment proof upload could not be started.");
     const { uploadUrl, objectKey, imageUrl } = uploadResult.data ?? {};
 
     if (!uploadUrl || !objectKey || !imageUrl) {
@@ -140,7 +161,7 @@ export default function CheckoutPage() {
         throw new Error(`Order creation failed: ${await readErrorMessage(orderResponse, "Unable to create your order. Please try again.")}`);
       }
 
-      const orderResult = await orderResponse.json();
+      const orderResult = await readJson(orderResponse, "Order creation failed.");
       const order = orderResult.data;
       if (!order?.id) {
         throw new Error("Order creation failed: the server did not return an order ID.");
@@ -169,6 +190,10 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (!hasHydrated) {
+    return <div className="container mx-auto min-h-[50vh] px-4 py-16 text-center text-muted-foreground" role="status">Loading checkout…</div>;
+  }
 
   if (items.length === 0) {
     return (

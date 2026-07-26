@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,10 +10,14 @@ import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, getSubtotal } = useCart();
+  const { items, hasHydrated, removeItem, updateQuantity, getSubtotal } = useCart();
   const deliveryFee = items.length > 0 ? 3000 : 0;
   const subtotal = getSubtotal();
   const total = subtotal + deliveryFee;
+
+  if (!hasHydrated) {
+    return <div className="container mx-auto min-h-[50vh] px-4 py-16 text-center text-muted-foreground" role="status">Loading your cart…</div>;
+  }
 
   if (items.length === 0) {
     return (
