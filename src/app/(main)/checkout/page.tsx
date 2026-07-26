@@ -102,6 +102,17 @@ export default function CheckoutPage() {
 
     try {
       const authHeaders = await getAuthHeaders();
+      if (!("Authorization" in authHeaders)) {
+        throw new Error("Please sign in before placing your order.");
+      }
+      if (!paymentProof.type.startsWith("image/")) {
+        throw new Error("Payment proof must be an image file.");
+      }
+      if (paymentProof.size > 10 * 1024 * 1024) {
+        throw new Error("Payment proof must be smaller than 10 MB.");
+      }
+
+      const uploadedProof = await uploadPaymentProof(paymentProof, authHeaders);
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -110,6 +121,8 @@ export default function CheckoutPage() {
             product_id: item.product_id,
             variant_id: item.variant_id ?? null,
             quantity: item.quantity,
+            size: item.size || null,
+            color: item.color || null,
           })),
           full_name: data.full_name,
           email: data.email,
@@ -133,7 +146,6 @@ export default function CheckoutPage() {
         throw new Error("Order creation failed: the server did not return an order ID.");
       }
 
-      const uploadedProof = await uploadPaymentProof(paymentProof, authHeaders);
       const paymentResponse = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -274,7 +286,7 @@ export default function CheckoutPage() {
                     onChange={(event) => setPaymentProof(event.target.files?.[0] ?? null)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Upload a clear image of your transfer confirmation.
+                    Upload a clear JPG, PNG, or other image up to 10 MB.
                   </p>
                 </div>
               </CardContent>
