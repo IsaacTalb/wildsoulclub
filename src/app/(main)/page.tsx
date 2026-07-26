@@ -1273,7 +1273,7 @@ export default function HomePage() {
       {/*                              Banner CTA                            */}
       {/* ------------------------------------------------------------------ */}
 
-      <section className="py-16">
+      {/* <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="relative overflow-hidden rounded-[32px] border border-border/50 bg-gradient-to-r from-primary/10 to-primary/5 p-8 text-center md:p-16">
             <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
@@ -1304,7 +1304,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <Footer />
     </div>
