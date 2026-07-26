@@ -35,7 +35,8 @@ export async function GET() {
       .from("drops")
       .select(DROP_SELECT)
       .in("status", ["scheduled", "active"])
-      .order("release_date", { ascending: false, nullsFirst: false });
+      .order("release_date", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
     if (error) throw error;
     return NextResponse.json({ success: true, data: (data ?? []).map((drop) => normalizeDrop(drop as DropRow)) });
   } catch {

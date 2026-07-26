@@ -3,150 +3,174 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Clock } from "lucide-react";
+import { ArrowRight, CalendarDays, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Drop } from "@/types/product";
+import type { Drop } from "@/types/product";
 
 const DROP_IMAGE_PLACEHOLDER =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
-const skeletonCards = Array.from({ length: 4 }, (_, index) => index);
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23171717'/%3E%3C/svg%3E";
+const skeletonSections = Array.from({ length: 2 }, (_, index) => index);
+
+function formatReleaseDate(releaseDate?: string) {
+  if (!releaseDate) return "Release date coming soon";
+
+  return new Date(releaseDate).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function NewDropsPage() {
   const [newDrops, setNewDrops] = useState<Drop[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  const fetchNewDrops = async () => {
+    setLoading(true);
+    setError(false);
+
+    try {
+      const response = await fetch("/api/new-drops");
+      if (!response.ok) throw new Error("Failed to fetch drops");
+      const payload: unknown = await response.json();
+      const drops =
+        typeof payload === "object" && payload !== null && "data" in payload && Array.isArray(payload.data)
+          ? (payload.data as Drop[])
+          : [];
+      setNewDrops(drops);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchNewDrops = async () => {
-      try {
-        const res = await fetch("/api/new-drops");
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        setNewDrops(data.data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch new drops");
-      } finally {
-        setLoading(false);
-      }
-    };
+    const controller = new AbortController();
+    fetch("/api/new-drops", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to fetch drops");
+        const payload: unknown = await response.json();
+        const drops =
+          typeof payload === "object" && payload !== null && "data" in payload && Array.isArray(payload.data)
+            ? (payload.data as Drop[])
+            : [];
+        setNewDrops(drops);
+      })
+      .catch((fetchError: unknown) => {
+        if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
+        setError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
 
-    fetchNewDrops();
+    return () => controller.abort();
   }, []);
 
-  if (error) {
+  if (error || (!loading && newDrops.length === 0)) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Sparkles className="h-4 w-4" />
-            Fresh off the press
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">New Drops</h1>
-          <p className="text-muted-foreground">Failed to load drops. Please try again later.</p>
+      <div className="flex h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] items-center justify-center bg-muted/30 px-6 text-center">
+        <div className="max-w-md rounded-3xl border bg-background/90 p-8 shadow-sm">
+          <Sparkles className="mx-auto mb-5 h-9 w-9 text-primary" aria-hidden="true" />
+          <h1 className="text-3xl font-bold tracking-tight">{error ? "The drops got away" : "The next release is taking shape"}</h1>
+          <p className="mt-3 text-muted-foreground">
+            {error
+              ? "We couldn’t load the latest releases. Check your connection and try once more."
+              : "There aren’t any active or scheduled drops right now. Check back soon for what’s next."}
+          </p>
+          {error && (
+            <Button className="mt-6" onClick={fetchNewDrops} disabled={loading}>
+              <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+              {loading ? "Trying again…" : "Try again"}
+            </Button>
+          )}
+          {!error && (
+            <Button className="mt-6" asChild>
+              <Link href="/products">
+                Explore the shop <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Hero */}
-      <div
-        className="mb-12 text-center"
-      >
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-          <Sparkles className="h-4 w-4" />
-          Fresh off the press
-        </div>
-        <h1 className="text-4xl md:text-5xl font-bold mb-3">New Drops</h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Be the first to rock our latest styles — fresh drops, curated as proper releases.
-        </p>
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
-          skeletonCards.map((item) => (
-            <Card key={item} className="overflow-hidden border-0 shadow-sm">
-              <CardContent className="p-0">
-                <div className="aspect-[16/9] bg-muted p-6">
-                  <div className="h-full w-full animate-pulse rounded-lg bg-background/60" />
+    <div
+      className="h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] overflow-y-auto overscroll-y-contain snap-y snap-mandatory motion-reduce:snap-none"
+      aria-busy={loading}
+    >
+      {loading
+        ? skeletonSections.map((item) => (
+            <section
+              key={item}
+              className="relative min-h-full snap-start snap-always overflow-hidden bg-muted motion-reduce:snap-normal"
+              aria-label="Loading release"
+            >
+              <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-muted via-muted-foreground/10 to-muted motion-reduce:animate-none" />
+              <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10 lg:p-16">
+                <div className="max-w-2xl space-y-4 rounded-2xl bg-background/20 p-5 backdrop-blur-sm">
+                  <div className="h-4 w-32 animate-pulse rounded bg-background/50 motion-reduce:animate-none" />
+                  <div className="h-12 w-3/4 animate-pulse rounded bg-background/50 motion-reduce:animate-none" />
+                  <div className="h-20 w-full animate-pulse rounded bg-background/40 motion-reduce:animate-none" />
                 </div>
-                <div className="space-y-3 p-4">
-                  <div className="h-3 w-20 animate-pulse rounded-full bg-muted" />
-                  <div className="h-5 w-3/4 animate-pulse rounded-full bg-muted" />
-                  <div className="h-4 w-16 animate-pulse rounded-full bg-muted" />
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           ))
-        ) : newDrops.map((drop) => (
-          <div key={drop.id}>
-            <Link href={`/new-drops/${drop.slug}`}>
-              <Card className="group overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-0">
-                  <div className="aspect-[16/9] bg-muted relative flex items-center justify-center">
-                    {drop.banner_image_url ? (
-                      <Image
-                        src={drop.banner_image_url}
-                        alt={drop.name}
-                        fill
-                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                        placeholder="blur"
-                        blurDataURL={DROP_IMAGE_PLACEHOLDER}
-                        preload={false}
-                        className="object-contain"
-                      />
-                    ) : (
-                      <span className="text-muted-foreground/40 text-sm">Product Image</span>
-                    )}
-                    <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground">
-                      New Drop
-                    </Badge>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      {drop.collections?.name || "Latest collection"}
-                    </p>
-                    <h3 className="font-semibold group-hover:text-primary transition-colors">
-                      {drop.name}
-                    </h3>
-                    {drop.description && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{drop.description}</p>}
-                    <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {drop.release_date ? (
-                        new Date(drop.release_date).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      ) : (
-                        "Release date coming soon"
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        ))}
-      </div>
+        : newDrops.map((drop, index) => (
+            <section
+              key={drop.id}
+              className="relative min-h-full snap-start snap-always isolate overflow-hidden bg-neutral-900 text-white motion-reduce:snap-normal"
+              aria-labelledby={`drop-${drop.id}`}
+            >
+              {drop.banner_image_url ? (
+                <Image
+                  src={drop.banner_image_url}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  placeholder="blur"
+                  blurDataURL={DROP_IMAGE_PLACEHOLDER}
+                  preload={index === 0}
+                  className="-z-20 object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 -z-20 bg-gradient-to-br from-neutral-700 via-neutral-900 to-black" />
+              )}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/20 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/45 sm:to-transparent" />
 
-      {/* CTA */}
-      <div
-        className="mt-16 text-center py-12 px-4 rounded-xl bg-muted/50"
-      >
-        <h2 className="text-2xl font-bold mb-2">Want early access?</h2>
-        <p className="text-muted-foreground mb-6">Sign up for notifications on our next drop.</p>
-        <Link href="/sign-up">
-          <Button size="lg">
-            Notify Me <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </Link>
-      </div>
+              <div className="flex min-h-[calc(100vh-4rem)] min-h-[calc(100svh-4rem)] items-end px-5 py-8 sm:px-10 sm:py-12 lg:px-[max(4rem,8vw)] lg:py-16">
+                <div className="max-w-2xl">
+                  <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/80 sm:text-sm">
+                    <span>{drop.collections?.name || "Latest collection"}</span>
+                    <span className="flex items-center gap-2 normal-case tracking-normal">
+                      <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                      {formatReleaseDate(drop.release_date)}
+                    </span>
+                  </div>
+                  {index === 0 && <p className="mb-2 text-sm font-medium text-white/75">Newest release</p>}
+                  <h1 id={`drop-${drop.id}`} className="text-4xl font-bold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
+                    {drop.name}
+                  </h1>
+                  <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
+                    {drop.description || "Discover the pieces in our latest curated release."}
+                  </p>
+                  <Button
+                    className="mt-7 bg-white text-black hover:bg-white/90"
+                    size="lg"
+                    asChild
+                  >
+                    <Link href={`/new-drops/${drop.slug}`}>
+                      Explore this drop <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </section>
+          ))}
     </div>
   );
 }
