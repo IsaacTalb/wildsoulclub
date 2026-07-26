@@ -4,29 +4,71 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronLeft, Minus, Plus, ShoppingCart, Heart, Share2 } from "lucide-react";
+import {
+  ChevronLeft,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Heart,
+  Share2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import type { Product, ProductVariant } from "@/types";
-import type { PublicProductVariant } from "@/types/product";
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
 
-type PublicProductResponse = Omit<Product, "images" | "variants"> & {
-  thumbnail_url?: string;
-  categories?: { id?: string | null; name?: string | null; slug?: string | null } | null;
-  product_images: Array<{ url?: string; image_url?: string }>;
-  product_variants: PublicProductVariant[];
-};
+interface PublicProductImage {
+  id?: string | null;
+  url?: string | null;
+  image_url?: string | null;
+  is_thumbnail?: boolean;
+  sort_order?: number;
+}
 
-type DisplayProduct = PublicProductResponse & {
+interface PublicProductVariant {
+  id: string;
+  size?: string | null;
+  color?: string | null;
+  stock: number;
+  price?: number | null;
+  sale_price?: number | null;
+  is_active: boolean;
+}
+
+interface PublicProduct {
+  id: string;
+  name: string;
+  slug?: string | null;
+  description?: string | null;
+  price: number;
+  sale_price?: number | null;
+  category_id?: string | null;
+  category?: string | { name?: string | null } | null;
+  categories?: {
+    id?: string | null;
+    name?: string | null;
+    slug?: string | null;
+  } | null;
+  stock: number;
+  sku?: string | null;
+  sizes?: string[] | null;
+  colors?: string[] | null;
+  thumbnail_url?: string | null;
+  product_images?: PublicProductImage[] | null;
+  product_variants?: PublicProductVariant[] | null;
+}
+
+interface DisplayProduct extends PublicProduct {
   images: string[];
   variants: PublicProductVariant[];
-};
+  sizes: string[];
+  colors: string[];
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -46,16 +88,20 @@ export default function ProductDetailPage() {
 
       const response = await fetch(`/api/public/products/${params.productId}`);
       const result = (await response.json()) as {
-        data?: PublicProductResponse;
+        data?: PublicProduct;
         error?: string;
       };
-      if (!response.ok) throw new Error(result.error ?? "Failed to load product");
+      if (!response.ok)
+        throw new Error(result.error ?? "Failed to load product");
 
       const productData = result.data;
-      if (!productData) throw new Error("Product response did not include a product");
+      if (!productData)
+        throw new Error("Product response did not include a product");
       const imageUrls = [
         productData.thumbnail_url,
-        ...(productData.product_images ?? []).map((image: { url?: string; image_url?: string }) => image.url || image.image_url),
+        ...(productData.product_images ?? []).map(
+          (image) => image.url || image.image_url,
+        ),
       ].filter((url): url is string => Boolean(url));
 
       setProduct({
@@ -65,6 +111,7 @@ export default function ProductDetailPage() {
         colors: productData.colors || [],
         variants: productData.product_variants || [],
       });
+      setQuantity(1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load product");
     } finally {
@@ -76,61 +123,138 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [fetchProduct]);
 
-  const selectedVariant = useMemo(() => {
-    if (!product?.variants?.length) return null;
-    return product.variants.find((variant) => (!selectedSize || variant.size === selectedSize) && (!selectedColor || variant.color === selectedColor)) ?? null;
-  }, [product, selectedColor, selectedSize]);
-
-  const effectiveStock = selectedVariant ? Number(selectedVariant.stock ?? 0) : Number(product?.stock ?? 0);
   const requiresSize = Boolean(product?.sizes?.length);
   const requiresColor = Boolean(product?.colors?.length);
+  const hasVariants = Boolean(product?.variants.length);
+  const optionsComplete =
+    (!requiresSize || Boolean(selectedSize)) &&
+    (!requiresColor || Boolean(selectedColor));
+  const activeVariants = useMemo(
+    () => product?.variants.filter((variant) => variant.is_active) ?? [],
+    [product],
+  );
+  const selectedVariant = useMemo(() => {
+    if (!optionsComplete || !activeVariants.length) return null;
+    return (
+      activeVariants.find(
+        (variant) =>
+          (variant.size ?? "") === (requiresSize ? selectedSize : "") &&
+          (variant.color ?? "") === (requiresColor ? selectedColor : ""),
+      ) ?? null
+    );
+  }, [
+    activeVariants,
+    optionsComplete,
+    requiresColor,
+    requiresSize,
+    selectedColor,
+    selectedSize,
+  ]);
+  const effectiveStock = hasVariants
+    ? selectedVariant
+      ? Math.max(0, Number(selectedVariant.stock))
+      : null
+    : Math.max(0, Number(product?.stock ?? 0));
+  const isSizeAvailable = (size: string) =>
+    activeVariants.some(
+      (variant) =>
+        Number(variant.stock) > 0 &&
+        variant.size === size &&
+        (!selectedColor || variant.color === selectedColor),
+    );
+  const isColorAvailable = (color: string) =>
+    activeVariants.some(
+      (variant) =>
+        Number(variant.stock) > 0 &&
+        variant.color === color &&
+        (!selectedSize || variant.size === selectedSize),
+    );
 
-  const handleAddToCart = () => {
-    if (requiresSize && !selectedSize) return;
-    if (requiresColor && !selectedColor) return;
-    if (!product || effectiveStock <= 0) return;
-
-    addItem(
-      {
-        ...product,
-        images: [],
-        variants: product.variants.map(
-          (variant): ProductVariant => ({
-            ...variant,
-            price: variant.price ?? undefined,
-            sale_price: variant.sale_price ?? undefined,
-            id: variant.id,
-            product_id: product.id,
-            size: variant.size ?? "",
-            color: variant.color ?? "",
-            sku: "",
-            created_at: "",
-          }),
-        ),
-        category_id: product.category_id || "",
-        sku: product.sku || "",
-        is_active: true,
-        is_archived: false,
-        is_featured: false,
-        created_at: "",
-        updated_at: "",
-      },
-      quantity,
-      selectedSize || selectedVariant?.size || "",
-      selectedColor || selectedVariant?.color || "",
-      selectedVariant?.id
+  const clampQuantityForOptions = (size: string, color: string) => {
+    const complete =
+      (!requiresSize || Boolean(size)) && (!requiresColor || Boolean(color));
+    const stock = complete
+      ? activeVariants.find(
+          (variant) =>
+            (variant.size ?? "") === (requiresSize ? size : "") &&
+            (variant.color ?? "") === (requiresColor ? color : ""),
+        )?.stock
+      : undefined;
+    setQuantity((current) =>
+      stock === undefined ? 1 : Math.max(1, Math.min(current, Number(stock))),
     );
   };
 
-  if (loading) return <div className="container mx-auto px-4 py-8">Loading product...</div>;
-  if (error) return <div className="container mx-auto px-4 py-8">Error: {error}</div>;
-  if (!product) return <div className="container mx-auto px-4 py-8">Product not found</div>;
+  const handleAddToCart = () => {
+    if (
+      !product ||
+      !optionsComplete ||
+      effectiveStock === null ||
+      effectiveStock <= 0
+    )
+      return;
+    const boundedQuantity = Math.min(Math.max(1, quantity), effectiveStock);
+
+    const cartProduct: Product = {
+      id: product.id,
+      name: product.name,
+      slug: product.slug ?? "",
+      description: product.description ?? "",
+      price: product.price,
+      sale_price: product.sale_price ?? undefined,
+      stock: product.stock,
+      sizes: product.sizes,
+      colors: product.colors,
+      thumbnail_url: product.thumbnail_url ?? "",
+      images: [],
+      variants: product.variants.map(
+        (variant): ProductVariant => ({
+          ...variant,
+          price: variant.price ?? undefined,
+          sale_price: variant.sale_price ?? undefined,
+          id: variant.id,
+          product_id: product.id,
+          size: variant.size ?? "",
+          color: variant.color ?? "",
+          sku: "",
+          created_at: "",
+        }),
+      ),
+      category_id: product.category_id || "",
+      sku: product.sku || "",
+      is_active: true,
+      is_archived: false,
+      is_featured: false,
+      created_at: "",
+      updated_at: "",
+    };
+
+    addItem(
+      cartProduct,
+      boundedQuantity,
+      selectedSize || selectedVariant?.size || "",
+      selectedColor || selectedVariant?.color || "",
+      selectedVariant?.id,
+    );
+  };
+
+  if (loading)
+    return (
+      <div className="container mx-auto px-4 py-8">Loading product...</div>
+    );
+  if (error)
+    return <div className="container mx-auto px-4 py-8">Error: {error}</div>;
+  if (!product)
+    return <div className="container mx-auto px-4 py-8">Product not found</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <div className="mb-6">
-        <Link href="/products" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1">
+        <Link
+          href="/products"
+          className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
+        >
           <ChevronLeft className="h-4 w-4" /> Back to Products
         </Link>
       </div>
@@ -157,7 +281,11 @@ export default function ProductDetailPage() {
             )}
             {product.sale_price && (
               <Badge className="absolute top-4 left-4 z-10 bg-red-500 text-lg px-3 py-1">
-                -{Math.round(((product.price - product.sale_price) / product.price) * 100)}%
+                -
+                {Math.round(
+                  ((product.price - product.sale_price) / product.price) * 100,
+                )}
+                %
               </Badge>
             )}
           </div>
@@ -198,17 +326,21 @@ export default function ProductDetailPage() {
           </h1>
 
           <div className="flex items-center gap-3 mb-6">
-            {(selectedVariant?.price || product.sale_price) ? (
+            {selectedVariant?.price || product.sale_price ? (
               <>
                 <span className="text-3xl font-bold text-red-500">
-                  {formatPrice(Number(selectedVariant?.price || product.sale_price))}
+                  {formatPrice(
+                    Number(selectedVariant?.price || product.sale_price),
+                  )}
                 </span>
                 <span className="text-xl text-muted-foreground line-through">
                   {formatPrice(product.price)}
                 </span>
               </>
             ) : (
-              <span className="text-3xl font-bold">{formatPrice(product.price)}</span>
+              <span className="text-3xl font-bold">
+                {formatPrice(product.price)}
+              </span>
             )}
           </div>
 
@@ -216,27 +348,36 @@ export default function ProductDetailPage() {
 
           <div className="mb-6">
             <p className="font-medium mb-3">Description</p>
-            <div className="prose max-w-none">
-              {product.description}
-            </div>
+            <div className="prose max-w-none">{product.description}</div>
           </div>
 
           {/* Size Selection */}
           {product.sizes && product.sizes.length > 0 && (
             <div className="mb-6">
               <h3 className="font-medium mb-3">
-                Size {selectedSize && <span className="text-primary">- {selectedSize}</span>}
+                Size{" "}
+                {selectedSize && (
+                  <span className="text-primary">- {selectedSize}</span>
+                )}
               </h3>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map((size: string) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-4 py-2 rounded-md border text-sm font-medium transition-all ${selectedSize === size ? "border-primary bg-primary text-primary-foreground" : "border-input hover:border-primary hover:text-primary"}`}
-                  >
-                    {size}
-                  </button>
-                ))}
+                {product.sizes.map((size: string) => {
+                  const unavailable = hasVariants && !isSizeAvailable(size);
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        clampQuantityForOptions(size, selectedColor);
+                      }}
+                      disabled={unavailable}
+                      aria-label={`${size}${unavailable ? " (out of stock)" : ""}`}
+                      className={`px-4 py-2 rounded-md border text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${selectedSize === size ? "border-primary bg-primary text-primary-foreground" : "border-input hover:border-primary hover:text-primary"}`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -245,18 +386,29 @@ export default function ProductDetailPage() {
           {product.colors && product.colors.length > 0 && (
             <div className="mb-6">
               <h3 className="font-medium mb-3">
-                Color {selectedColor && <span className="text-primary">- {selectedColor}</span>}
+                Color{" "}
+                {selectedColor && (
+                  <span className="text-primary">- {selectedColor}</span>
+                )}
               </h3>
               <div className="flex flex-wrap gap-2">
-                {product.colors.map((color: string) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-4 py-2 rounded-md border text-sm font-medium transition-all ${selectedColor === color ? "border-primary bg-primary text-primary-foreground" : "border-input hover:border-primary hover:text-primary"}`}
-                  >
-                    {color}
-                  </button>
-                ))}
+                {product.colors.map((color: string) => {
+                  const unavailable = hasVariants && !isColorAvailable(color);
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => {
+                        setSelectedColor(color);
+                        clampQuantityForOptions(selectedSize, color);
+                      }}
+                      disabled={unavailable}
+                      aria-label={`${color}${unavailable ? " (out of stock)" : ""}`}
+                      className={`px-4 py-2 rounded-md border text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${selectedColor === color ? "border-primary bg-primary text-primary-foreground" : "border-input hover:border-primary hover:text-primary"}`}
+                    >
+                      {color}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -269,19 +421,40 @@ export default function ProductDetailPage() {
                 variant="outline"
                 size="icon"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+                aria-label="Decrease quantity"
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="text-lg font-medium w-8 text-center">{quantity}</span>
+              <span className="text-lg font-medium w-8 text-center">
+                {quantity}
+              </span>
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setQuantity(Math.min(effectiveStock || quantity + 1, quantity + 1))}
+                onClick={() =>
+                  effectiveStock !== null &&
+                  setQuantity(Math.min(effectiveStock, quantity + 1))
+                }
+                disabled={
+                  effectiveStock === null ||
+                  effectiveStock <= 0 ||
+                  quantity >= effectiveStock
+                }
+                aria-label="Increase quantity"
               >
                 <Plus className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-muted-foreground ml-2">
-                {effectiveStock > 0 ? `${effectiveStock} in stock` : "Out of stock"}
+              <span
+                className="text-sm text-muted-foreground ml-2"
+                role="status"
+                aria-live="polite"
+              >
+                {!optionsComplete
+                  ? `Select ${[requiresSize && !selectedSize ? "a size" : "", requiresColor && !selectedColor ? "a color" : ""].filter(Boolean).join(" and ")} to see availability`
+                  : effectiveStock === null || effectiveStock <= 0
+                    ? "Out of stock"
+                    : `${effectiveStock} available`}
               </span>
             </div>
           </div>
@@ -292,7 +465,11 @@ export default function ProductDetailPage() {
               size="lg"
               className="flex-1 text-base"
               onClick={handleAddToCart}
-              disabled={(requiresSize && !selectedSize) || (requiresColor && !selectedColor) || effectiveStock <= 0}
+              disabled={
+                !optionsComplete ||
+                effectiveStock === null ||
+                effectiveStock <= 0
+              }
             >
               <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
             </Button>
