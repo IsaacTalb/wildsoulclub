@@ -11,6 +11,7 @@ export interface ProductImage {
 export interface Product {
   id: string;
   name: string;
+  slug?: string;
   description: string;
   price: number;
   stock: number;
@@ -21,6 +22,7 @@ export interface Product {
   collections?: { id: string; name: string; slug?: string };
   drops?: { id: string; name: string; slug?: string; release_date?: string; status?: string };
   is_active: boolean;
+  is_archived?: boolean;
   is_new: boolean;
   is_new_drop?: boolean;
   is_archive_sale: boolean;
