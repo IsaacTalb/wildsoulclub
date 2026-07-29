@@ -13,8 +13,8 @@ export default function MainLayout({
     <>
       <CartHydration />
       <Header />
-      <main className="flex-1">{children}</main>
-      <Footer />
+      <main className="flex-1 relative">{children}</main>
+      {/* <Footer /> */}
     </>
   );
 }

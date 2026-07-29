@@ -2,6 +2,7 @@
 
 import { Shield, Sparkles, Heart, Globe, MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Footer } from "@/components/layout/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 
@@ -16,7 +17,7 @@ export default function AboutPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="py-16 md:py-24 bg-muted/30">
+      <section className="py-8 md:py-12 bg-muted/30">
         <div className="container mx-auto px-4 text-center">
           <h1
             className="text-4xl md:text-6xl font-bold mb-4"
@@ -32,7 +33,7 @@ export default function AboutPage() {
       </section>
 
       {/* Story */}
-      <section className="py-16">
+      <section className="py-8">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="prose prose-neutral dark:prose-invert max-w-none">
             <p className="text-lg leading-relaxed">
@@ -53,7 +54,7 @@ export default function AboutPage() {
       </section>
 
       {/*Contact */}
-      <section className="py-16">
+      <section className="py-8">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="prose prose-neutral dark:prose-invert max-w-none">
             <Card>
@@ -71,14 +72,14 @@ export default function AboutPage() {
                     <Phone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium">Phone</p>
-                      <p className="text-sm text-muted-foreground">09-123456789</p>
+                      <p className="text-sm text-muted-foreground">09-767676114</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium">Email</p>
-                      <p className="text-sm text-muted-foreground">hello@wildsoulclub.com</p>
+                      <p className="text-sm text-muted-foreground">wildsoulclubonline@gmail.com</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -99,7 +100,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="py-16 bg-muted/30">
+      {/* <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">What We Stand For</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -115,10 +116,10 @@ export default function AboutPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
       
       {/* CTA */}
-      <section className="py-16 text-center">
+      {/* <section className="py-16 text-center">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-4">Ready to Join the Tribe?</h2>
           <p className="text-muted-foreground mb-6">Explore our latest collection and find your style.</p>
@@ -126,7 +127,8 @@ export default function AboutPage() {
             <Button size="lg">Explore Collections</Button>
           </Link>
         </div>
-      </section>
+      </section> */}
+      <Footer />
     </div>
   );
 }

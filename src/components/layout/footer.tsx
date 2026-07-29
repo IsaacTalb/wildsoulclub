@@ -5,11 +5,11 @@ export function Footer() {
   return (
     <footer className="border-t bg-background">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* Brand */}
           <div>
             <Link href="/" className="text-xl font-bold tracking-tight">
-              WILD<span className="text-primary">SOUL</span>
+              WILD SOUL CLUB
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
               Myanmar streetwear brand inspired by the wild spirit. 
@@ -54,7 +54,7 @@ export function Footer() {
           </div>
 
           {/* Contact */}
-          <div>
+          {/* <div>
             <h3 className="font-semibold mb-3">Contact Us</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>wildsoulclubonline@gmail.com</li>
@@ -65,20 +65,14 @@ export function Footer() {
               <p className="text-sm font-medium mb-2">Payment Methods</p>
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="px-2 py-1 bg-muted rounded">KBZPay</span>
-                {/* <span className="px-2 py-1 bg-muted rounded">Wave</span>
-                <span className="px-2 py-1 bg-muted rounded">AYA Pay</span>
-                <span className="px-2 py-1 bg-muted rounded">CB Pay</span> */}
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
-        <div className="border-t mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+        <div className="border-t mt-8 pt-6 flex flex-col md:flex-row items-center justify-center gap-4 text-sm text-muted-foreground text-center">
           <p>
             &copy; {new Date().getFullYear()} Wild Soul Club. All rights reserved.
-          </p>
-          <p className="flex items-center gap-1">
-            Built by <a href="https://isaac.duckcloud.info" target="_blank" rel="noopener noreferrer" className="text-primary underline">Isaac</a>
           </p>
         </div>
       </div>

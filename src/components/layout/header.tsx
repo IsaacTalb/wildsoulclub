@@ -225,7 +225,7 @@ export function Header() {
               side="left"
               className="!fixed !inset-y-0 !left-0 !right-auto !top-0 !bottom-0 !z-[100] !m-0 flex !h-dvh !max-h-dvh !translate-y-0 w-[min(22rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-r-[2rem] border-r bg-background/95 p-0 shadow-2xl backdrop-blur-2xl duration-300"
             >
-              <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-6">
+              {/* <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-6">
                 <Link
                   href="/"
                   className="inline-flex items-center text-lg font-bold tracking-tight"
@@ -236,7 +236,7 @@ export function Header() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   Explore the latest drops.
                 </p>
-              </div>
+              </div> */}
 
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
                 <form action={submitSearch} className="relative z-10 mb-4">
@@ -249,9 +249,9 @@ export function Header() {
                   />
                   <button
                     type="submit"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-primary"
+                    className="absolute w-90% right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-primary"
                   >
-                    Go
+                    {/* Go */}
                   </button>
                 </form>
 
@@ -333,7 +333,7 @@ export function Header() {
               </div>
 
               <div className="shrink-0 border-t border-border/60 bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
-                <button
+                {/* <button
                   type="button"
                   className="mb-3 flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-sm font-medium transition-colors hover:bg-muted"
                   onClick={() =>
@@ -351,7 +351,7 @@ export function Header() {
                   <span className="text-xs capitalize text-muted-foreground">
                     {resolvedTheme ?? "system"}
                   </span>
-                </button>
+                </button> */}
 
                 {session ? (
                   <div className="space-y-2">
@@ -502,7 +502,7 @@ export function Header() {
           </Button>
 
           {/* Theme Toggle */}
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             className="hidden sm:inline-flex"
@@ -513,7 +513,7 @@ export function Header() {
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </Button>
+          </Button> */}
 
           {/* Auth - Desktop */}
           <div className="hidden xl:block">
