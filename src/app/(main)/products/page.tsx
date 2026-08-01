@@ -1,34 +1,14 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Search, ShoppingCart } from "lucide-react";
+import { ArrowUpRight, ShoppingCart } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Product } from "@/types/product";
 import { formatPrice } from "@/lib/utils";
 
 import styles from "./floating-products.module.css";
-
-type CategoryOption = {
-  id: string;
-  name: string;
-};
-
-type FloatingStyle = CSSProperties & {
-  "--float-delay": string;
-  "--float-duration": string;
-  "--product-rotation": string;
-};
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 25'%3E%3Crect width='20' height='25' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='12.5' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
@@ -40,67 +20,40 @@ const floatingProductLayouts = [
   {
     desktop: "md:left-[5%] md:top-[9%] md:w-[17%]",
     mobile: "left-[3%] top-[5%] w-[39%]",
-    rotation: "-2deg",
-    delay: "0s",
-    duration: "7.2s",
   },
   {
     desktop: "md:left-[34%] md:top-[2%] md:w-[13%]",
     mobile: "right-[5%] top-[2%] w-[31%]",
-    rotation: "2deg",
-    delay: "-1.4s",
-    duration: "8.4s",
   },
   {
     desktop: "md:left-[43%] md:top-[27%] md:w-[18%]",
     mobile: "left-[29%] top-[30%] w-[42%]",
-    rotation: "0deg",
-    delay: "-2.3s",
-    duration: "7.8s",
   },
   {
     desktop: "md:right-[8%] md:top-[12%] md:w-[13%]",
     mobile: "right-[3%] top-[21%] w-[27%]",
-    rotation: "3deg",
-    delay: "-3.1s",
-    duration: "9s",
   },
   {
     desktop: "md:left-[8%] md:top-[55%] md:w-[12%]",
     mobile: "left-[4%] top-[57%] w-[29%]",
-    rotation: "-4deg",
-    delay: "-0.8s",
-    duration: "8.8s",
   },
   {
     desktop: "md:right-[18%] md:top-[45%] md:w-[16%]",
     mobile: "right-[6%] top-[52%] w-[36%]",
-    rotation: "1deg",
-    delay: "-4s",
-    duration: "7.5s",
   },
   {
     desktop: "md:right-[-2%] md:top-[75%] md:w-[15%]",
     mobile: "right-[-5%] top-[77%] w-[34%]",
-    rotation: "-2deg",
-    delay: "-2.8s",
-    duration: "9.4s",
   },
   {
     desktop: "md:left-[27%] md:top-[72%] md:w-[14%]",
     mobile: "left-[29%] top-[80%] w-[30%]",
-    rotation: "3deg",
-    delay: "-1.9s",
-    duration: "8.1s",
   },
 ] as const;
 
 const singleProductLayout = {
   desktop: "md:left-1/2 md:top-1/2 md:w-[24%]",
   mobile: "left-1/2 top-1/2 w-[65%]",
-  rotation: "-2deg",
-  delay: "0s",
-  duration: "8s",
 } as const;
 
 function chunkProducts<T>(items: T[], size: number) {
@@ -151,19 +104,13 @@ function ProductFloatingSkeleton() {
       className="relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]"
     >
       {floatingProductLayouts.map((layout, index) => {
-        const animationStyle: FloatingStyle = {
-          "--float-delay": layout.delay,
-          "--float-duration": layout.duration,
-          "--product-rotation": layout.rotation,
-        };
-
         return (
           <div
             key={index}
             className={`absolute ${layout.mobile} ${layout.desktop}`}
             style={{ zIndex: 10 + (index % 4) }}
           >
-            <div className={styles.floatingProduct} style={animationStyle}>
+            <div className={styles.floatingProduct}>
               <div className="aspect-square w-full animate-pulse rounded-[2rem] bg-black/[0.055] shadow-sm dark:bg-white/[0.07]" />
             </div>
           </div>
@@ -174,24 +121,9 @@ function ProductFloatingSkeleton() {
 }
 
 export default function ProductsPage() {
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [sort, setSort] = useState("newest");
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<CategoryOption[]>([
-    { id: "all", name: "All Products" },
-  ]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 350);
-
-    return () => window.clearTimeout(timeout);
-  }, [search]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -199,89 +131,20 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-
-        const params = new URLSearchParams();
-
-        if (debouncedSearch) {
-          params.append("search", debouncedSearch);
-        }
-
-        if (category !== "all") {
-          params.append("category", category);
-        }
-
-        if (sort) {
-          params.append("sort", sort);
-        }
-
-        const queryString = params.toString();
-        const response = await fetch(
-          `/api/public/products${queryString ? `?${queryString}` : ""}`,
-          { signal: controller.signal },
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch products");
-        }
-
+        const response = await fetch("/api/public/products", { signal: controller.signal });
+        if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
-
         setProducts(data.data || []);
         setError(null);
       } catch (fetchError) {
-        if (
-          fetchError instanceof DOMException &&
-          fetchError.name === "AbortError"
-        ) {
-          return;
-        }
-
-        setError(
-          fetchError instanceof Error
-            ? fetchError.message
-            : "Failed to fetch products",
-        );
+        if (fetchError instanceof DOMException && fetchError.name === "AbortError") return;
+        setError(fetchError instanceof Error ? fetchError.message : "Failed to fetch products");
       } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     void fetchProducts();
-
-    return () => controller.abort();
-  }, [debouncedSearch, category, sort]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("/api/public/categories", {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        setCategories([
-          { id: "all", name: "All Products" },
-          ...(data.data || []),
-        ]);
-      } catch (fetchError) {
-        if (
-          fetchError instanceof DOMException &&
-          fetchError.name === "AbortError"
-        ) {
-          return;
-        }
-      }
-    };
-
-    void fetchCategories();
-
     return () => controller.abort();
   }, []);
 
@@ -315,49 +178,6 @@ export default function ProductsPage() {
       </div>
 
       <section className="relative mx-auto max-w-[1600px]">
-        {/* Filters */}
-        <div className="liquid-glass sticky top-4 z-30 mb-8 grid gap-3 rounded-[1.5rem] p-3 md:grid-cols-[1fr_auto_auto]">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search products..."
-              className="h-12 rounded-full border-white/20 bg-white/20 pl-11 shadow-none backdrop-blur focus-visible:ring-1"
-            />
-          </div>
-
-          <Select
-            value={category}
-            onValueChange={(value) => setCategory(value || "all")}
-          >
-            <SelectTrigger className="h-12 w-full rounded-full border-white/20 bg-white/20 md:w-[190px]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((categoryOption) => (
-                <SelectItem key={categoryOption.id} value={categoryOption.id}>
-                  {categoryOption.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={sort}
-            onValueChange={(value) => setSort(value || "newest")}
-          >
-            <SelectTrigger className="h-12 w-full rounded-full border-white/20 bg-white/20 md:w-[190px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="price-asc">Price: Low to High</SelectItem>
-              <SelectItem value="price-desc">Price: High to Low</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Products Showcase */}
         {isInitialLoading ? (
           <ProductFloatingSkeleton />
@@ -406,12 +226,6 @@ export default function ProductsPage() {
                   const imageUrl = getProductImage(product);
                   const globalIndex = groupIndex * PRODUCTS_PER_CANVAS + index;
 
-                  const animationStyle: FloatingStyle = {
-                    "--float-delay": layout.delay,
-                    "--float-duration": layout.duration,
-                    "--product-rotation": layout.rotation,
-                  };
-
                   return (
                     <div
                       key={product.id}
@@ -424,7 +238,6 @@ export default function ProductsPage() {
                     >
                       <div
                         className={styles.floatingProduct}
-                        style={animationStyle}
                       >
                         <Link
                           href={`/products/${product.slug || product.id}`}
@@ -437,7 +250,7 @@ export default function ProductsPage() {
                           className="group relative block focus-visible:outline-none"
                         >
                           <div
-                            className={`relative aspect-square w-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:z-40 group-hover:scale-110 group-focus-visible:scale-110 ${
+                            className={`relative aspect-square w-full ${
                               status?.unavailable
                                 ? "opacity-65 grayscale-[20%]"
                                 : ""
@@ -452,7 +265,7 @@ export default function ProductsPage() {
                               placeholder="blur"
                               blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                               preload={globalIndex === 0}
-                              className="object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)] transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-2 group-hover:drop-shadow-[0_35px_35px_rgba(0,0,0,0.18)] group-focus-visible:-translate-y-2"
+                              className="object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]"
                             />
 
                             {status && (
@@ -462,7 +275,7 @@ export default function ProductsPage() {
                             )}
                           </div>
 
-                          <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 translate-y-2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-[0_16px_45px_rgba(0,0,0,0.09)] backdrop-blur-2xl transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 dark:border-white/10 dark:bg-neutral-900/85">
+                          <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-[0_16px_45px_rgba(0,0,0,0.09)] backdrop-blur-2xl transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 dark:border-white/10 dark:bg-neutral-900/85">
                             <p className="line-clamp-1 text-xs font-medium text-black/80 dark:text-white/80">
                               {product.name}
                             </p>

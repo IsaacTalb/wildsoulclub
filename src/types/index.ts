@@ -43,6 +43,8 @@ export interface Product {
   is_active: boolean;
   is_archived: boolean;
   is_featured: boolean;
+  is_best_seller: boolean;
+  best_seller_rank: number;
   meta_title?: string;
   meta_description?: string;
   created_at: string;

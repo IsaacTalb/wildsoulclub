@@ -142,6 +142,8 @@ CREATE TABLE products (
   is_archived BOOLEAN DEFAULT false,
   deleted_at TIMESTAMPTZ,
   is_featured BOOLEAN DEFAULT false,
+  is_best_seller BOOLEAN NOT NULL DEFAULT false,
+  best_seller_rank INT NOT NULL DEFAULT 0 CHECK (best_seller_rank >= 0 AND (is_best_seller OR best_seller_rank = 0)),
   is_new_drop BOOLEAN DEFAULT false,
   is_archive_sale BOOLEAN DEFAULT false,
   new_drop_start_date TIMESTAMPTZ,
@@ -159,6 +161,7 @@ CREATE INDEX idx_products_drop ON products(drop_id);
 CREATE INDEX idx_products_active ON products(is_active);
 CREATE INDEX idx_products_active_visible ON products(created_at DESC) WHERE is_active = true AND deleted_at IS NULL;
 CREATE INDEX idx_products_featured ON products(is_featured) WHERE is_featured = true AND deleted_at IS NULL;
+CREATE INDEX idx_products_best_sellers ON products(best_seller_rank, created_at DESC) WHERE is_best_seller = true AND is_active = true AND deleted_at IS NULL;
 
 -- ==========================================
 -- PRODUCT IMAGES

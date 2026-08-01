@@ -10,7 +10,7 @@ type VariantInput = { id?: string; size?: string; color?: string; stock?: number
 class VariantValidationError extends Error {}
 class ImageCleanupError extends Error {}
 
-const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"];
+const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_best_seller", "best_seller_rank", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"];
 
 
 async function cleanupProductImageObjects(objectKeys: Array<string | null | undefined>, context: string) {
@@ -42,12 +42,14 @@ function normalizeValue(field: string, value: unknown) {
   if (value === "") return null;
   if (["sizes", "colors"].includes(field) && typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
   if (["price", "sale_price"].includes(field) && value != null) return Number(value);
-  if (["discount_percent", "stock"].includes(field) && value != null) return Number(value);
+  if (["discount_percent", "stock", "best_seller_rank"].includes(field) && value != null) return Number(value);
   return value;
 }
 
 function productPayload(value: Record<string, unknown>) {
-  return Object.fromEntries(productFields.filter((field) => field in value).map((field) => [field, normalizeValue(field, value[field])]));
+  const payload = Object.fromEntries(productFields.filter((field) => field in value).map((field) => [field, normalizeValue(field, value[field])]));
+  if (payload.is_best_seller === false) payload.best_seller_rank = 0;
+  return payload;
 }
 
 async function appendProductImages(productId: string, images: unknown) {
