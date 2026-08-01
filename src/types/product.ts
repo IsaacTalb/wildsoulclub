@@ -23,6 +23,8 @@ export interface Product {
   drops?: { id: string; name: string; slug?: string; release_date?: string; status?: string };
   is_active: boolean;
   is_archived?: boolean;
+  is_best_seller: boolean;
+  best_seller_rank: number;
   is_new: boolean;
   is_new_drop?: boolean;
   is_archive_sale: boolean;
