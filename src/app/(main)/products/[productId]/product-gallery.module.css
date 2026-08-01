@@ -15,31 +15,21 @@
   z-index: var(--slide-z);
   transform: translate3d(var(--slide-x), 0, 0) scale(var(--slide-scale));
   transform-origin: center;
-  will-change: transform, opacity;
 }
 
-.gallerySlide[aria-disabled="true"] {
-  cursor: default;
-}
+.gallerySlide[aria-disabled="true"] { cursor: default; }
 
-.gallerySlideMoving {
-  transition:
-    transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 620ms cubic-bezier(0.22, 1, 0.36, 1);
+.galleryViewport:hover .gallerySlideMoving,
+.galleryViewport:focus-within .gallerySlideMoving {
+  transition: transform 620ms ease-in-out, opacity 620ms ease-in-out;
 }
 
 @media (min-width: 768px) {
-  .galleryViewport {
-    touch-action: pan-x pinch-zoom;
-  }
-
-  .gallerySlide {
-    transform: translate3d(0, var(--slide-y), 0) scale(var(--slide-scale));
-  }
+  .galleryViewport { touch-action: pan-x pinch-zoom; }
+  .gallerySlide { transform: translate3d(0, var(--slide-y), 0) scale(var(--slide-scale)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gallerySlideMoving {
-    transition-duration: 1ms;
-  }
+  .galleryViewport:hover .gallerySlideMoving,
+  .galleryViewport:focus-within .gallerySlideMoving { transition: none; }
 }

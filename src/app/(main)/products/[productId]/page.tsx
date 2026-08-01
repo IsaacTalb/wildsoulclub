@@ -3,10 +3,8 @@
 import type { CSSProperties, TouchEvent, WheelEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  ChevronLeft,
   Minus,
   Plus,
   ShoppingCart,
@@ -151,7 +149,7 @@ function LoopingProductGallery({
   return (
     <section
       aria-label={`${productName} image gallery`}
-      className={`${styles.galleryViewport} relative isolate overflow-hidden rounded-[2.25rem] border border-white/50 bg-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_28px_80px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.035]`}
+      className={`${styles.galleryViewport} relative isolate w-full max-w-full overflow-hidden rounded-lg border border-foreground/10`}
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -171,10 +169,6 @@ function LoopingProductGallery({
       }}
       tabIndex={canLoop ? 0 : -1}
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/85 blur-3xl dark:bg-white/[0.04]"
-      />
 
       <div className="relative aspect-[4/5] min-h-[480px] w-full sm:min-h-[560px] md:h-[min(76vh,760px)] md:min-h-[620px] md:aspect-auto">
         {images.length > 0 ? (
@@ -243,7 +237,7 @@ function LoopingProductGallery({
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
-                    className="object-contain p-5 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-8 md:p-10"
+                    className="rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4"
                   />
                 </span>
               </button>
@@ -484,16 +478,6 @@ export default function ProductDetailPage() {
       />
 
       <div className="container mx-auto max-w-[1500px]">
-        {/* Breadcrumb */}
-        <div className="mb-6">
-          <Link
-            href="/products"
-            className="inline-flex items-center gap-1 rounded-full border border-white/50 bg-white/45 px-4 py-2 text-sm text-muted-foreground shadow-sm backdrop-blur-xl transition-colors hover:text-primary dark:border-white/10 dark:bg-white/[0.05]"
-          >
-            <ChevronLeft className="h-4 w-4" /> Back to Products
-          </Link>
-        </div>
-
         <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-[minmax(0,1.12fr)_minmax(340px,0.88fr)] lg:gap-12">
           {/* Image Gallery */}
           <LoopingProductGallery
@@ -546,11 +530,6 @@ export default function ProductDetailPage() {
             </div>
 
             <Separator className="mb-6" />
-
-            <div className="mb-6">
-              <p className="font-medium mb-3">Description</p>
-              <div className="prose max-w-none">{product.description}</div>
-            </div>
 
             {/* Size Selection */}
             {product.sizes && product.sizes.length > 0 && (
@@ -692,7 +671,26 @@ export default function ProductDetailPage() {
               </Button>
             </div>
 
-            <Button variant="liquid" size="touch" className="w-full">
+            <section className="mt-8 border-t border-foreground/10 pt-6" aria-labelledby="product-description-heading">
+              <h2 id="product-description-heading" className="text-xl font-semibold">Description</h2>
+              <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground">{product.description || "No product description is available yet."}</p>
+            </section>
+
+            <section className="mt-8" aria-labelledby="size-chart-heading">
+              <h2 id="size-chart-heading" className="text-xl font-semibold">Size chart</h2>
+              {product.sizes.length > 0 ? (
+                <div className="mt-3 overflow-x-auto rounded-lg border border-foreground/10">
+                  <table className="w-full min-w-[18rem] border-collapse text-left text-sm">
+                    <thead className="bg-foreground/5"><tr><th scope="col" className="px-4 py-3 font-semibold">Size</th><th scope="col" className="px-4 py-3 font-semibold">Availability</th></tr></thead>
+                    <tbody>{product.sizes.map((size) => <tr key={size} className="border-t border-foreground/10"><th scope="row" className="px-4 py-3 font-medium">{size}</th><td className="px-4 py-3 text-muted-foreground">{hasVariants ? (isSizeAvailable(size) ? "In stock" : "Out of stock") : "Available"}</td></tr>)}</tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="mt-3 rounded-lg border border-dashed border-foreground/20 p-4 text-sm text-muted-foreground">Sizing information is not available for this item. Contact us for fit and measurement guidance before ordering.</p>
+              )}
+            </section>
+
+            <Button variant="liquid" size="touch" className="mt-8 w-full">
               <Share2 className="mr-2 h-4 w-4" /> Share
             </Button>
           </div>
