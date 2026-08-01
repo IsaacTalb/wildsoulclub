@@ -11,20 +11,18 @@ import {
   LogIn,
   LogOut,
   Menu,
-  Moon,
   Search,
   ShoppingCart,
-  Sun,
   User,
   UserCircle,
   UserPlus,
+  X,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
 import { useCart } from "@/hooks/use-cart";
 import {
   DropdownMenu,
@@ -33,7 +31,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Drop } from "@/types/product";
 
 const leftLinks = [
   { href: "/products", label: "Shop" },
@@ -42,123 +39,13 @@ const leftLinks = [
 ];
 
 const mobileLinks = [
-  { href: "/products", label: "Shop" },
   { href: "/new-drops", label: "New Drop" },
   { href: "/archive-sales", label: "Archive Sale" },
   { href: "/about", label: "About Us" },
   { href: "/collections", label: "Collections" },
 ];
 
-type DropsState =
-  | { status: "loading"; drops: Drop[] }
-  | { status: "success"; drops: Drop[] }
-  | { status: "failure"; drops: Drop[] };
-
-function useNewDrops() {
-  const [state, setState] = useState<DropsState>({
-    status: "loading",
-    drops: [],
-  });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/new-drops", { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Failed to fetch drops");
-        const payload: unknown = await response.json();
-        const drops =
-          typeof payload === "object" &&
-          payload !== null &&
-          "data" in payload &&
-          Array.isArray(payload.data)
-            ? (payload.data as Drop[])
-            : [];
-        setState({ status: "success", drops });
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError")
-          return;
-        setState({ status: "failure", drops: [] });
-      });
-
-    return () => controller.abort();
-  }, []);
-
-  return state;
-}
-
-function DropLinks({
-  state,
-  onSelect,
-  mobile = false,
-}: {
-  state: DropsState;
-  onSelect?: () => void;
-  mobile?: boolean;
-}) {
-  const linkClassName = mobile
-    ? "flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    : "w-full cursor-pointer px-3 py-2";
-
-  if (state.status === "loading") {
-    const message = <span role="status">Loading drops…</span>;
-    return mobile ? (
-      <p className="px-3 py-3 text-sm text-muted-foreground">{message}</p>
-    ) : (
-      <DropdownMenuItem disabled className="px-3 py-2 text-muted-foreground">
-        {message}
-      </DropdownMenuItem>
-    );
-  }
-  if (state.status === "failure") {
-    const message = <span role="alert">Drops couldn&apos;t be loaded.</span>;
-    return mobile ? (
-      <p className="px-3 py-3 text-sm text-destructive">{message}</p>
-    ) : (
-      <DropdownMenuItem disabled className="px-3 py-2 text-destructive">
-        {message}
-      </DropdownMenuItem>
-    );
-  }
-
-  return (
-    <>
-      {state.drops.length === 0 &&
-        (mobile ? (
-          <p className="px-3 py-3 text-sm text-muted-foreground">
-            No active or scheduled drops.
-          </p>
-        ) : (
-          <DropdownMenuItem
-            disabled
-            className="px-3 py-2 text-muted-foreground"
-          >
-            No active or scheduled drops.
-          </DropdownMenuItem>
-        ))}
-      {state.drops.map((drop) =>
-        mobile ? (
-          <Link
-            key={drop.id}
-            href={`/new-drops/${drop.slug}`}
-            className={linkClassName}
-            onClick={onSelect}
-          >
-            {drop.name}
-          </Link>
-        ) : (
-          <DropdownMenuItem
-            key={drop.id}
-            render={<Link href={`/new-drops/${drop.slug}`} />}
-            className={linkClassName}
-          >
-            {drop.name}
-          </DropdownMenuItem>
-        ),
-      )}
-    </>
-  );
-}
+type Category = { id: string; name: string };
 
 export function Header() {
   const pathname = usePathname();
@@ -180,12 +67,43 @@ export function Header() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const { setTheme, resolvedTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [mobileDropsOpen, setMobileDropsOpen] = useState(false);
-  const [desktopDropsOpen, setDesktopDropsOpen] = useState(false);
-  const dropsState = useNewDrops();
+  const [mobileShopOpen, setMobileShopOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch("/api/public/categories", { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        const payload: unknown = await response.json();
+        const data =
+          typeof payload === "object" &&
+          payload !== null &&
+          "data" in payload &&
+          Array.isArray(payload.data)
+            ? payload.data
+            : [];
+        setCategories(
+          data.filter(
+            (category): category is Category =>
+              typeof category === "object" &&
+              category !== null &&
+              typeof category.id === "string" &&
+              typeof category.name === "string",
+          ),
+        );
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
+        setCategories([]);
+      });
+
+    return () => controller.abort();
+  }, []);
   const { getItemCount } = useCart();
   const cartCount = getItemCount();
 
@@ -212,7 +130,7 @@ export function Header() {
     >
       <div
         className={cn(
-          "liquid-pill container relative grid h-16 grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between",
+          "liquid-pill relative grid h-16 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between",
           isHomepage &&
             "!border-white/30 !bg-black/35 !text-white shadow-[0_12px_40px_rgba(0,0,0,0.28)] [&_a]:!text-white [&_button]:!text-white",
         )}
@@ -235,35 +153,38 @@ export function Header() {
             <SheetContent
               id="mobile-navigation"
               side="left"
+              showCloseButton={false}
               className="!fixed !inset-y-0 !left-0 !right-auto !top-0 !bottom-0 !z-[100] !m-0 flex !h-dvh !max-h-dvh !translate-y-0 w-[min(22rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-r-[2rem] border-r bg-background/95 p-0 shadow-2xl backdrop-blur-2xl duration-300"
             >
-              {/* <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-6">
-                <Link
-                  href="/"
-                  className="inline-flex items-center text-lg font-bold tracking-tight"
+              <div className="flex shrink-0 justify-end px-2 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
+                <button
+                  type="button"
+                  className="flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Close navigation menu"
                   onClick={() => setIsOpen(false)}
                 >
-                  wildsoulclub@
-                </Link>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Explore the latest drops.
-                </p>
-              </div> */}
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-                <form action={submitSearch} className="relative z-10 mb-4">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+                <form
+                  action={submitSearch}
+                  className="relative z-10 mb-4 w-full"
+                >
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     name="search"
                     aria-label="Search products"
                     placeholder="Search products..."
-                    className="liquid-pill h-11 pl-10 pr-14"
+                    className="liquid-pill h-11 w-full pl-10 pr-12"
                   />
                   <button
                     type="submit"
-                    className="absolute w-90% right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-primary"
+                    className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-xl text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Submit product search"
                   >
-                    {/* Go */}
+                    <Search className="h-4 w-4" />
                   </button>
                 </form>
 
@@ -271,100 +192,82 @@ export function Header() {
                   className="flex flex-col gap-1"
                   aria-label="Mobile navigation"
                 >
-                  {mobileLinks.map((link) =>
-                    link.href === "/new-drops" ? (
-                      <div key={link.href}>
-                        <button
-                          type="button"
-                          className={cn(
-                            "flex min-h-11 w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-base font-medium transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            pathname.startsWith("/new-drops")
-                              ? "bg-muted text-foreground"
-                              : "text-muted-foreground",
-                          )}
-                          aria-expanded={mobileDropsOpen}
-                          aria-controls="mobile-new-drops-menu"
-                          onClick={() => setMobileDropsOpen((open) => !open)}
-                        >
-                          New Drop
-                          <ChevronDown
-                            className={cn(
-                              "h-4 w-4 transition-transform duration-300",
-                              mobileDropsOpen && "rotate-180",
-                            )}
-                          />
-                        </button>
+                  <div>
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex min-h-11 w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-base font-medium transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        pathname === "/products"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground",
+                      )}
+                      aria-expanded={mobileShopOpen}
+                      aria-controls="mobile-shop-menu"
+                      onClick={() => setMobileShopOpen((open) => !open)}
+                    >
+                      Shop
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 transition-transform duration-300",
+                          mobileShopOpen && "rotate-180",
+                        )}
+                      />
+                    </button>
+                    <div
+                      id="mobile-shop-menu"
+                      className={cn(
+                        "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+                        mobileShopOpen
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "pointer-events-none grid-rows-[0fr] opacity-0",
+                      )}
+                    >
+                      <div className="overflow-hidden">
                         <div
-                          id="mobile-new-drops-menu"
-                          className={cn(
-                            "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-                            mobileDropsOpen
-                              ? "grid-rows-[1fr] opacity-100"
-                              : "pointer-events-none grid-rows-[0fr] opacity-0",
-                          )}
+                          role="region"
+                          aria-label="Shop categories"
+                          className="ml-3 border-l pl-2"
                         >
-                          <div className="overflow-hidden">
-                            <div
-                              role="region"
-                              aria-label="New drops"
-                              className="ml-3 border-l pl-2"
+                          <Link
+                            href="/products"
+                            className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            Shop all
+                          </Link>
+                          {categories.map((category) => (
+                            <Link
+                              key={category.id}
+                              href={`/products?category=${encodeURIComponent(category.id)}`}
+                              className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                              onClick={() => setIsOpen(false)}
                             >
-                              <DropLinks
-                                state={dropsState}
-                                mobile
-                                onSelect={() => setIsOpen(false)}
-                              />
-                              <Link
-                                href="/new-drops"
-                                className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                onClick={() => setIsOpen(false)}
-                              >
-                                View all drops
-                              </Link>
-                            </div>
-                          </div>
+                              {category.name}
+                            </Link>
+                          ))}
                         </div>
                       </div>
-                    ) : (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                          "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition-colors hover:bg-muted hover:text-primary",
-                          pathname === link.href
-                            ? "bg-muted text-foreground"
-                            : "text-muted-foreground",
-                        )}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {link.label}
-                      </Link>
-                    ),
-                  )}
+                    </div>
+                  </div>
+                  {mobileLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={cn(
+                        "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-base font-medium transition-colors hover:bg-muted hover:text-primary",
+                        pathname === link.href
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground",
+                      )}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                 </nav>
               </div>
 
               <div className="shrink-0 border-t border-border/60 bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
-                {/* <button
-                  type="button"
-                  className="mb-3 flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-sm font-medium transition-colors hover:bg-muted"
-                  onClick={() =>
-                    setTheme(resolvedTheme === "dark" ? "light" : "dark")
-                  }
-                >
-                  <span className="flex items-center gap-3">
-                    {resolvedTheme === "dark" ? (
-                      <Moon className="h-4 w-4" />
-                    ) : (
-                      <Sun className="h-4 w-4" />
-                    )}
-                    Appearance
-                  </span>
-                  <span className="text-xs capitalize text-muted-foreground">
-                    {resolvedTheme ?? "system"}
-                  </span>
-                </button> */}
-
                 {session ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
@@ -421,59 +324,58 @@ export function Header() {
 
         {/* Left: Desktop nav links */}
         <nav className="hidden xl:flex items-center gap-1">
-          {leftLinks.slice(0, 1).map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "px-3 py-2 text-sm font-medium rounded-md transition-colors hover:text-primary hover:bg-muted",
-                pathname === link.href
-                  ? "text-foreground bg-muted"
-                  : "text-muted-foreground",
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-          <DropdownMenu
-            open={desktopDropsOpen}
-            onOpenChange={setDesktopDropsOpen}
-            modal={false}
-          >
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger
               openOnHover
               closeDelay={150}
               className={cn(
                 "inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                pathname.startsWith("/new-drops")
+                pathname === "/products"
                   ? "bg-muted text-foreground"
                   : "text-muted-foreground",
               )}
-              aria-expanded={desktopDropsOpen}
-              aria-label="New Drop menu"
+              aria-label="Shop menu"
             >
-              New Drop
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  desktopDropsOpen && "rotate-180",
-                )}
-              />
+              Shop
+              <ChevronDown className="h-4 w-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              aria-label="New drops"
+              aria-label="Shop categories"
               className="max-h-80 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto"
             >
-              <DropLinks state={dropsState} />
-              <DropdownMenuSeparator />
               <DropdownMenuItem
-                render={<Link href="/new-drops" />}
+                render={<Link href="/products" />}
                 className="w-full cursor-pointer px-3 py-2 font-medium"
               >
-                View all drops
+                Shop all
               </DropdownMenuItem>
+              {categories.length > 0 && <DropdownMenuSeparator />}
+              {categories.map((category) => (
+                <DropdownMenuItem
+                  key={category.id}
+                  render={
+                    <Link
+                      href={`/products?category=${encodeURIComponent(category.id)}`}
+                    />
+                  }
+                  className="w-full cursor-pointer px-3 py-2"
+                >
+                  {category.name}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          <Link
+            href="/new-drops"
+            className={cn(
+              "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-primary",
+              pathname.startsWith("/new-drops")
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground",
+            )}
+          >
+            New Drop
+          </Link>
           {leftLinks.slice(1).map((link) => (
             <Link
               key={link.href}
@@ -512,20 +414,6 @@ export function Header() {
           >
             <Search className="h-5 w-5" />
           </Button>
-
-          {/* Theme Toggle */}
-          {/* <Button
-            variant="ghost"
-            size="icon"
-            className="hidden sm:inline-flex"
-            onClick={() =>
-              setTheme(resolvedTheme === "dark" ? "light" : "dark")
-            }
-            aria-label="Toggle color theme"
-          >
-            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          </Button> */}
 
           {/* Auth - Desktop */}
           <div className="hidden xl:block">
