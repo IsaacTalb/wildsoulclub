@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Fragment } from "react";
 import { ArrowRight, CalendarDays, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Drop } from "@/types/product";
+import { FloatingProductCanvas, chunkFloatingProducts } from "@/components/products/floating-product-canvas";
 
 const DROP_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23171717'/%3E%3C/svg%3E";
@@ -121,8 +123,8 @@ export default function NewDropsPage() {
             </section>
           ))
         : newDrops.map((drop, index) => (
+            <Fragment key={drop.id}>
             <section
-              key={drop.id}
               className="relative min-h-full snap-start snap-always isolate overflow-hidden bg-neutral-900 text-white motion-reduce:snap-normal"
               aria-labelledby={`drop-${drop.id}`}
             >
@@ -158,18 +160,18 @@ export default function NewDropsPage() {
                   <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
                     {drop.description || "Discover the pieces in our latest curated release."}
                   </p>
-                  <Button
-                    className="mt-7 bg-white text-black hover:bg-white/90"
-                    size="lg"
-                    asChild
-                  >
-                    <Link href={`/new-drops/${drop.slug}`}>
-                      Explore this drop <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
-                    </Link>
-                  </Button>
+
                 </div>
               </div>
             </section>
+            {(drop.products ?? []).length > 0 && (
+              <section className="bg-[#f7f7f5] px-4 dark:bg-neutral-950 md:px-8" aria-label={`${drop.name} products`}>
+                {chunkFloatingProducts(drop.products ?? []).map((products, groupIndex) => (
+                  <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} />
+                ))}
+              </section>
+            )}
+            </Fragment>
           ))}
     </div>
   );

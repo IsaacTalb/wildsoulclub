@@ -1,17 +1,8 @@
 "use client";
 
-import { Shield, Sparkles, Heart, Globe, MapPin, Phone, Mail, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
-
-const values = [
-  { icon: Sparkles, title: "Quality First", desc: "We use premium materials for all our products." },
-  { icon: Heart, title: "Made with Passion", desc: "Every design tells a story from Myanmar." },
-  { icon: Shield, title: "Sustainable", desc: "Committed to eco-friendly practices." },
-  { icon: Globe, title: "Proudly Myanmar", desc: "Celebrating local culture and creativity." },
-];
 
 export default function AboutPage() {
   return (

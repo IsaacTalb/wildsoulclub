@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { Globe, Camera, MessageCircle, Send, Heart } from "lucide-react";
 
 export function Footer() {
   return (
     <footer className="border-t bg-background">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-4 lg:gap-12">
           {/* Brand */}
-          <div>
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link href="/" className="text-xl font-bold tracking-tight">
               WILD SOUL CLUB
             </Link>
@@ -54,20 +53,14 @@ export function Footer() {
           </div>
 
           {/* Contact */}
-          {/* <div>
+          <div>
             <h3 className="font-semibold mb-3">Contact Us</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>wildsoulclubonline@gmail.com</li>
               <li>09767676114</li>
               <li>Pannita Street, Hlaing Township, Yangon</li>
             </ul>
-            <div className="mt-4">
-              <p className="text-sm font-medium mb-2">Payment Methods</p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="px-2 py-1 bg-muted rounded">KBZPay</span>
-              </div>
-            </div>
-          </div> */}
+          </div>
         </div>
 
         <div className="border-t mt-8 pt-6 flex flex-col md:flex-row items-center justify-center gap-4 text-sm text-muted-foreground text-center">

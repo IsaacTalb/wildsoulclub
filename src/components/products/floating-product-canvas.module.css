@@ -1,0 +1,17 @@
+.floatingProduct {
+  transform-origin: center;
+  transition: scale 500ms ease-in-out;
+}
+
+.floatingProduct:hover,
+.floatingProduct:focus-within {
+  scale: 1.08;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floatingProduct,
+  .floatingProduct * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
