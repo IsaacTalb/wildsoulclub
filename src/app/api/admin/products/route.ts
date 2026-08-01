@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/auth";
 import { deleteFiles } from "@/lib/upload";
 import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
+import { normalizeProductSlug } from "@/lib/product-slug";
 
 type UploadedImage = { image_url?: string; object_key?: string; file_size?: number; mime_type?: string };
 type VariantInput = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sale_price?: number | string | null; sku?: string; is_active?: boolean; _delete?: boolean };
@@ -10,7 +11,7 @@ type VariantInput = { id?: string; size?: string; color?: string; stock?: number
 class VariantValidationError extends Error {}
 class ImageCleanupError extends Error {}
 
-const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_best_seller", "best_seller_rank", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"];
+const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_best_seller", "best_seller_rank", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date"];
 
 
 async function cleanupProductImageObjects(objectKeys: Array<string | null | undefined>, context: string) {
@@ -50,6 +51,22 @@ function productPayload(value: Record<string, unknown>) {
   const payload = Object.fromEntries(productFields.filter((field) => field in value).map((field) => [field, normalizeValue(field, value[field])]));
   if (payload.is_best_seller === false) payload.best_seller_rank = 0;
   return payload;
+}
+
+async function slugExists(slug: string, excludedProductId?: string) {
+  let query = supabaseAdmin.from("products").select("id", { count: "exact", head: true }).eq("slug", slug);
+  if (excludedProductId) query = query.neq("id", excludedProductId);
+  const { count, error } = await query;
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+function slugConflictResponse() {
+  return NextResponse.json({ success: false, error: "A product with this slug already exists." }, { status: 409 });
+}
+
+function isUniqueViolation(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
 }
 
 async function appendProductImages(productId: string, images: unknown) {
@@ -207,7 +224,8 @@ export async function POST(req: Request) {
     const adminUserId = await requireAdmin();
     const body = await req.json();
     if (!body.name || !body.price) return NextResponse.json({ success: false, error: "Name and price are required" }, { status: 400 });
-    const slug = body.slug || body.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const slug = normalizeProductSlug(typeof body.slug === "string" && body.slug.trim() ? body.slug : body.name);
+    if (await slugExists(slug)) return slugConflictResponse();
     const { data: product, error } = await supabaseAdmin.from("products").insert({ ...productPayload(body), slug }).select().single();
     if (error) throw error;
     await appendProductImages(product.id, body.images);
@@ -217,6 +235,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
     if (error instanceof VariantValidationError) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    if (isUniqueViolation(error)) return slugConflictResponse();
     return NextResponse.json({ success: false, error: "Failed to create product" }, { status: 500 });
   }
 }
@@ -241,7 +260,12 @@ export async function PATCH(req: Request) {
     } else if (imageAction === "reorder") {
       await reorderImages(id, imageOrder);
     } else {
-      const { error } = await supabaseAdmin.from("products").update({ ...productPayload(body), updated_at: new Date().toISOString() }).eq("id", id);
+      const payload = productPayload(body);
+      if ("slug" in body) {
+        payload.slug = normalizeProductSlug(typeof body.slug === "string" && body.slug.trim() ? body.slug : (body.name ?? beforeProduct.name));
+        if (await slugExists(String(payload.slug), id)) return slugConflictResponse();
+      }
+      const { error } = await supabaseAdmin.from("products").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
       await appendProductImages(id, body.images);
       await syncVariants(id, body.variants, adminUserId);
@@ -257,6 +281,7 @@ export async function PATCH(req: Request) {
   } catch (error) {
     if (error instanceof VariantValidationError) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     if (error instanceof ImageCleanupError) return NextResponse.json({ success: false, warning: error.message }, { status: 409 });
+    if (isUniqueViolation(error)) return slugConflictResponse();
     return NextResponse.json({ success: false, error: "Failed to update product" }, { status: 500 });
   }
 }

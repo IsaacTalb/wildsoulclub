@@ -148,8 +148,6 @@ CREATE TABLE products (
   is_archive_sale BOOLEAN DEFAULT false,
   new_drop_start_date TIMESTAMPTZ,
   new_drop_end_date TIMESTAMPTZ,
-  meta_title TEXT,
-  meta_description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
