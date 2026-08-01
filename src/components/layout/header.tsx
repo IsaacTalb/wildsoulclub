@@ -162,6 +162,7 @@ function DropLinks({
 
 export function Header() {
   const pathname = usePathname();
+  const isHomepage = pathname === "/";
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
 
@@ -206,10 +207,16 @@ export function Header() {
     <header
       className={cn(
         "top-0 z-50 h-[var(--site-header-height)] w-full px-0 pt-[max(0.25rem,env(safe-area-inset-top))] sm:px-0",
-        pathname === "/" ? "absolute" : "sticky",
+        isHomepage ? "fixed text-white" : "sticky",
       )}
     >
-      <div className="liquid-pill container relative grid h-16 grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between">
+      <div
+        className={cn(
+          "liquid-pill container relative grid h-16 grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between",
+          isHomepage &&
+            "!border-white/30 !bg-black/35 !text-white shadow-[0_12px_40px_rgba(0,0,0,0.28)] [&_a]:!text-white [&_button]:!text-white",
+        )}
+      >
         {/* Mobile navigation */}
         <div className="relative z-20 flex min-w-0 items-center justify-self-start xl:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
