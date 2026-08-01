@@ -79,17 +79,28 @@ merged into `main`, the `Apply Supabase migrations` GitHub Actions workflow
 previews and applies pending migrations in version order. It can also be run
 manually with `workflow_dispatch`.
 
-Create a protected GitHub environment named `production` and add a secret named
-`SUPABASE_DB_URL`. Use the percent-encoded Postgres connection string from the
-Supabase dashboard (prefer the session pooler connection string for GitHub's
-IPv4 runners). Restrict environment deployment branches to `main` and require
-reviewers if production changes need manual approval.
+Create a protected GitHub environment named `production`. The simplest setup is
+to add a `SUPABASE_DB_URL` environment secret containing the percent-encoded
+Postgres connection string from the Supabase dashboard. Prefer the session
+pooler connection string for GitHub's IPv4 runners.
+
+Alternatively, configure all three of these GitHub environment secrets:
+
+- `SUPABASE_ACCESS_TOKEN`: a personal access token from Supabase account settings.
+- `SUPABASE_DB_PASSWORD`: the project's database password, not an API key.
+- `SUPABASE_PROJECT_REF`: the project reference shown in project settings.
+
+`SUPABASE_URL` can replace `SUPABASE_PROJECT_REF`; the workflow extracts the
+reference from a URL such as `https://project-ref.supabase.co`. Restrict the
+environment deployment branches to `main` and require reviewers if production
+changes need manual approval.
 
 The Supabase service-role and public API keys used by the application cannot
 execute database DDL and are not a substitute for `SUPABASE_DB_URL`. Vercel
-environment variables are also not automatically available to GitHub Actions;
-configure this database URL in the GitHub `production` environment without
-exposing it as a `NEXT_PUBLIC_` variable.
+environment variables are also not automatically available to GitHub Actions.
+Copy one of the credential sets above into the GitHub `production` environment.
+Never expose the database URL, access token, or database password as a
+`NEXT_PUBLIC_` variable.
 
 To preview the same operation locally before opening a pull request, run:
 
