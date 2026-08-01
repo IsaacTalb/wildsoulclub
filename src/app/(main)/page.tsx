@@ -2,13 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
-
-import { Header } from "@/components/layout/header";
-// import { Footer } from "@/components/layout/footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 /* -------------------------------------------------------------------------- */
 /*                                   Types                                    */
@@ -91,7 +84,6 @@ type HeroSlide = {
   title: string;
   subtitle: string;
   image: string;
-  href: string;
   startDate: string | null;
   endDate: string | null;
 };
@@ -365,7 +357,7 @@ function HeroCountdown({
 }) {
   if (currentTime === null) {
     return (
-      <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] px-6 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150">
+      <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150">
         <div className="flex items-center justify-center gap-3">
           <div className="h-8 w-12 animate-pulse rounded-lg bg-white/10" />
           <div className="h-8 w-12 animate-pulse rounded-lg bg-white/10" />
@@ -382,6 +374,10 @@ function HeroCountdown({
     currentTime,
   );
 
+  if (!status.countdown) {
+    return null;
+  }
+
   return (
     <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150 sm:px-6 sm:py-4">
       <div
@@ -390,53 +386,27 @@ function HeroCountdown({
       />
 
       <div className="relative flex flex-col items-center">
-        <div className="mb-2 flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              status.state === "live"
-                ? "animate-pulse bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]"
-                : status.state === "upcoming"
-                  ? "bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.7)]"
-                  : status.state === "ended"
-                    ? "bg-white/35"
-                    : "bg-white/80"
-            }`}
+        <div className="flex items-center justify-center divide-x divide-white/15">
+          <CountdownUnit
+            value={status.countdown.days}
+            label="Days"
           />
 
-          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/75 sm:text-xs">
-            {status.label}
-          </span>
+          <CountdownUnit
+            value={status.countdown.hours}
+            label="Hours"
+          />
+
+          <CountdownUnit
+            value={status.countdown.minutes}
+            label="Mins"
+          />
+
+          <CountdownUnit
+            value={status.countdown.seconds}
+            label="Secs"
+          />
         </div>
-
-        {status.countdown ? (
-          <div className="flex items-center justify-center divide-x divide-white/15">
-            <CountdownUnit
-              value={status.countdown.days}
-              label="Days"
-            />
-
-            <CountdownUnit
-              value={status.countdown.hours}
-              label="Hours"
-            />
-
-            <CountdownUnit
-              value={status.countdown.minutes}
-              label="Mins"
-            />
-
-            <CountdownUnit
-              value={status.countdown.seconds}
-              label="Secs"
-            />
-          </div>
-        ) : (
-          <p className="text-sm font-medium text-white/75">
-            {status.state === "ended"
-              ? "Explore our latest available pieces."
-              : "The collection is available now."}
-          </p>
-        )}
       </div>
     </div>
   );
@@ -576,6 +546,8 @@ const floatingProductLayouts = [
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isHeroInteractionActive, setIsHeroInteractionActive] =
+    useState(false);
 
   const [homeProducts, setHomeProducts] = useState<
     HomeProduct[]
@@ -615,7 +587,6 @@ export default function HomePage() {
             product.collection?.name ||
             getCategoryName(product.category),
           image: getProductImage(product),
-          href: `/products/${product.slug || product.id}`,
           startDate,
           endDate,
         };
@@ -724,7 +695,7 @@ export default function HomePage() {
   /* ------------------------------------------------------------------------ */
 
   useEffect(() => {
-    if (heroSlides.length <= 1) {
+    if (heroSlides.length <= 1 || isHeroInteractionActive) {
       return;
     }
 
@@ -738,7 +709,7 @@ export default function HomePage() {
     return () => {
       window.clearInterval(timer);
     };
-  }, [heroSlides.length]);
+  }, [heroSlides.length, isHeroInteractionActive]);
 
   useEffect(() => {
     if (
@@ -750,14 +721,12 @@ export default function HomePage() {
   }, [currentSlide, heroSlides.length]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
+    <div className="bg-background">
       {/* ------------------------------------------------------------------ */}
       {/*                            Hero slider                             */}
       {/* ------------------------------------------------------------------ */}
 
-      <section className="relative h-[100svh] min-h-[620px] w-full overflow-hidden bg-neutral-950">
+      <section className="relative h-[calc(100svh-env(safe-area-inset-bottom))] min-h-0 w-full overflow-hidden bg-neutral-950">
         {heroSlides.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center bg-neutral-950">
             <div className="container mx-auto px-4 text-center">
@@ -769,22 +738,6 @@ export default function HomePage() {
                 <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl lg:text-7xl">
                   New collections are coming
                 </h1>
-
-                <p className="mt-4 max-w-lg text-base leading-relaxed text-white/65 md:text-lg">
-                  Add a featured or new-drop product in
-                  Supabase to display it in this hero
-                  slider.
-                </p>
-
-                <Link href="/products" className="mt-8">
-                  <Button
-                    size="lg"
-                    className="rounded-full border border-white/20 bg-white/15 px-8 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_12px_30px_rgba(0,0,0,0.2)] backdrop-blur-xl hover:bg-white/25"
-                  >
-                    Shop Now
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
               </div>
             </div>
           </div>
@@ -792,30 +745,21 @@ export default function HomePage() {
           heroSlides.map((slide, index) => {
             const isActive = index === currentSlide;
 
-            const countdownStatus =
-              currentTime === null
-                ? null
-                : getCountdownStatus(
-                    slide.startDate,
-                    slide.endDate,
-                    currentTime,
-                  );
-
-            const buttonLabel =
-              countdownStatus?.state === "upcoming"
-                ? "Preview Drop"
-                : countdownStatus?.state === "ended"
-                  ? "View Product"
-                  : "Shop Live";
-
             return (
               <div
                 key={slide.id}
                 aria-hidden={!isActive}
+                aria-label={`${slide.subtitle} collection. Reveal countdown.`}
+                inert={!isActive}
+                tabIndex={isActive ? 0 : -1}
+                onPointerEnter={() => setIsHeroInteractionActive(true)}
+                onPointerLeave={() => setIsHeroInteractionActive(false)}
+                onFocus={() => setIsHeroInteractionActive(true)}
+                onBlur={() => setIsHeroInteractionActive(false)}
                 className={`absolute inset-0 transition-all duration-1000 ease-out ${
                   isActive
-                    ? "visible scale-100 opacity-100"
-                    : "invisible scale-[1.03] opacity-0"
+                    ? "group visible scale-100 opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                    : "pointer-events-none invisible scale-[1.03] opacity-0"
                 }`}
               >
                 {/* Background product image */}
@@ -845,28 +789,10 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_5%,rgba(0,0,0,0.42)_100%)]" />
 
                 {/* Center content */}
-                <div className="relative z-10 flex h-full items-center justify-center">
+                <div className="relative z-10 flex h-full items-center justify-center px-[env(safe-area-inset-left)] pb-[max(1rem,env(safe-area-inset-bottom))] pt-[var(--site-header-height)]">
                   <div className="container mx-auto px-4">
-                    <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-3 text-center sm:gap-4">
-                      {/* Subtitle */}
-                      <div
-                        className={`relative overflow-hidden rounded-full border border-white/20 bg-white/[0.1] px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-700 ${
-                          isActive
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-4 opacity-0"
-                        }`}
-                      >
-                        <div
-                          aria-hidden="true"
-                          className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"
-                        />
-
-                        <p className="relative text-[10px] font-semibold uppercase tracking-[0.28em] text-white/80 sm:text-xs">
-                          {slide.subtitle}
-                        </p>
-                      </div>
-
-                      {/* Product title */}
+                    <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-3 text-center landscape:gap-2 sm:gap-4">
+                      {/* Collection name */}
                       <div
                         className={`relative overflow-hidden rounded-[28px] border border-white/20 bg-white/[0.09] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_25px_80px_rgba(0,0,0,0.3)] backdrop-blur-2xl backdrop-saturate-150 transition-all delay-100 duration-700 sm:rounded-[36px] sm:px-10 sm:py-7 ${
                           isActive
@@ -885,17 +811,17 @@ export default function HomePage() {
                           className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"
                         />
 
-                        <h1 className="relative max-w-3xl text-balance text-4xl font-semibold leading-[0.95] tracking-[-0.05em] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)] sm:text-5xl md:text-7xl lg:text-8xl">
-                          {slide.title}
+                        <h1 className="relative max-w-3xl text-balance text-[clamp(2rem,10vmin,6rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
+                          {slide.subtitle}
                         </h1>
                       </div>
 
                       {/* Countdown */}
                       <div
-                        className={`transition-all delay-200 duration-700 ${
+                        className={`max-h-0 translate-y-2 overflow-hidden opacity-0 transition-all delay-100 duration-500 group-hover:max-h-32 group-hover:translate-y-0 group-hover:opacity-100 group-focus:max-h-32 group-focus:translate-y-0 group-focus:opacity-100 ${
                           isActive
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-5 opacity-0"
+                            ? ""
+                            : "!max-h-0 !opacity-0"
                         }`}
                       >
                         <HeroCountdown
@@ -905,33 +831,6 @@ export default function HomePage() {
                         />
                       </div>
 
-                      {/* Live button */}
-                      <div
-                        className={`transition-all delay-300 duration-700 ${
-                          isActive
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-5 opacity-0"
-                        }`}
-                      >
-                        <Link
-                          href={slide.href}
-                          tabIndex={isActive ? 0 : -1}
-                        >
-                          <Button
-                            size="lg"
-                            className="group h-12 rounded-full border border-white/25 bg-white/[0.14] px-7 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_15px_40px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150 transition-all hover:scale-[1.03] hover:border-white/40 hover:bg-white/[0.24] active:scale-[0.98] sm:h-14 sm:px-9"
-                          >
-                            {countdownStatus?.state ===
-                              "live" && (
-                              <span className="mr-2 h-2 w-2 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
-                            )}
-
-                            {buttonLabel}
-
-                            <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                          </Button>
-                        </Link>
-                      </div>
                     </div>
                   </div>
                 </div>

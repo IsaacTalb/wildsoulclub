@@ -203,7 +203,12 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full px-0 pt-1 sm:px-0">
+    <header
+      className={cn(
+        "top-0 z-50 h-[var(--site-header-height)] w-full px-0 pt-[max(0.25rem,env(safe-area-inset-top))] sm:px-0",
+        pathname === "/" ? "absolute" : "sticky",
+      )}
+    >
       <div className="liquid-pill container relative grid h-16 grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between">
         {/* Mobile navigation */}
         <div className="relative z-20 flex min-w-0 items-center justify-self-start xl:hidden">
