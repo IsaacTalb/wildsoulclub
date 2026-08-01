@@ -11,7 +11,7 @@ type VariantInput = { id?: string; size?: string; color?: string; stock?: number
 class VariantValidationError extends Error {}
 class ImageCleanupError extends Error {}
 
-const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_best_seller", "best_seller_rank", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date"];
+const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_best_seller", "best_seller_rank", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date"];
 
 
 async function cleanupProductImageObjects(objectKeys: Array<string | null | undefined>, context: string) {
@@ -43,7 +43,7 @@ function normalizeValue(field: string, value: unknown) {
   if (value === "") return null;
   if (["sizes", "colors"].includes(field) && typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
   if (["price", "sale_price"].includes(field) && value != null) return Number(value);
-  if (["discount_percent", "stock", "best_seller_rank"].includes(field) && value != null) return Number(value);
+  if (["discount_percent", "best_seller_rank"].includes(field) && value != null) return Number(value);
   return value;
 }
 
@@ -230,7 +230,6 @@ export async function POST(req: Request) {
     if (error) throw error;
     await appendProductImages(product.id, body.images);
     await syncVariants(product.id, body.variants, adminUserId);
-    await writeInventoryTransaction({ productId: product.id, quantityDelta: Number(product.stock ?? 0), reason: "manual_adjustment", referenceType: "product", referenceId: product.id, actorUserId: adminUserId });
     await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: product.id, action: "create", after: product });
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error) {
@@ -273,9 +272,6 @@ export async function PATCH(req: Request) {
 
     const { data, error: fetchError } = await supabaseAdmin.from("products").select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name), drops(id, name, slug)").eq("id", id).single();
     if (fetchError) throw fetchError;
-    const stockBefore = Number(beforeProduct?.stock ?? 0);
-    const stockAfter = Number(data?.stock ?? 0);
-    await writeInventoryTransaction({ productId: id, quantityDelta: stockAfter - stockBefore, reason: "manual_adjustment", referenceType: "product", referenceId: id, actorUserId: adminUserId });
     await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: id, action: body.action === "restore" ? "restore" : imageAction ? `image_${imageAction}` : "update", before: beforeProduct, after: data });
     return NextResponse.json({ success: true, data });
   } catch (error) {

@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/auth";
-import { writeAuditLog } from "@/lib/operational-history";
 
 const allowedStatuses = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
 type OrderStatus = (typeof allowedStatuses)[number];
 
 function isAllowedStatus(status: unknown): status is OrderStatus {
   return typeof status === "string" && allowedStatuses.includes(status as OrderStatus);
-}
-
-function isInvalidTransition(currentStatus: OrderStatus, nextStatus: OrderStatus) {
-  return currentStatus === "delivered" && nextStatus === "pending";
 }
 
 export async function GET() {
@@ -55,49 +50,20 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { data: existingOrder, error: fetchError } = await supabaseAdmin
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .single();
+    const { data, error } = await supabaseAdmin.rpc("update_order_status", {
+      p_order_id: orderId,
+      p_status: status,
+      p_courier: typeof courier === "string" ? courier : null,
+      p_tracking_number: typeof tracking_number === "string" ? tracking_number : null,
+      p_actor_user_id: adminUserId,
+    });
 
-    if (fetchError) throw fetchError;
-
-    const currentStatus = existingOrder?.status;
-    if (!isAllowedStatus(currentStatus)) {
-      return NextResponse.json(
-        { success: false, error: "Order has an invalid current fulfillment status" },
-        { status: 400 }
-      );
+    if (error) {
+      if (["invalid", "not found", "cannot"].some((term) => error.message.toLowerCase().includes(term))) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+      }
+      throw error;
     }
-
-    if (isInvalidTransition(currentStatus, status)) {
-      return NextResponse.json(
-        { success: false, error: "Delivered orders cannot be moved back to pending" },
-        { status: 400 }
-      );
-    }
-
-    const updates: Record<string, string | null> = {
-      status,
-      updated_at: new Date().toISOString(),
-    };
-
-    if (status === "shipped") {
-      updates.courier = typeof courier === "string" ? courier.trim() || null : null;
-      updates.tracking_number = typeof tracking_number === "string" ? tracking_number.trim() || null : null;
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from("orders")
-      .update(updates)
-      .eq("id", orderId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    await writeAuditLog({ actorUserId: adminUserId, entityType: "order", entityId: orderId, action: "update", before: existingOrder, after: data });
 
     return NextResponse.json({ success: true, data });
   } catch {
