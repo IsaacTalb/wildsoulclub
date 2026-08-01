@@ -36,6 +36,8 @@ export type PublicProductRow = {
   is_active?: boolean | null;
   is_archived?: boolean | null;
   is_featured?: boolean | null;
+  is_best_seller?: boolean | null;
+  best_seller_rank?: number | null;
   is_new_drop?: boolean | null;
   is_archive_sale?: boolean | null;
   new_drop_start_date?: string | null;
@@ -49,7 +51,8 @@ export type PublicProductRow = {
 export const PUBLIC_PRODUCT_SELECT = `
   id, name, slug, description, price, sale_price, discount_percent,
   category_id, collection_id, stock, sizes, colors, thumbnail_url,
-  thumbnail_key, is_active, is_archived, is_featured, is_new_drop,
+  thumbnail_key, is_active, is_archived, is_featured, is_best_seller,
+  best_seller_rank, is_new_drop,
   is_archive_sale, new_drop_start_date, new_drop_end_date,
   product_images(id, image_url, object_key, is_thumbnail, sort_order),
   product_variants(id, size, color, stock, price, sale_price, is_active),
@@ -114,6 +117,8 @@ export function normalizePublicProduct(product: PublicProductRow) {
     is_active: product.is_active,
     is_archived: product.is_archived,
     is_featured: product.is_featured,
+    is_best_seller: product.is_best_seller ?? false,
+    best_seller_rank: product.best_seller_rank ?? 0,
     is_new_drop: product.is_new_drop,
     is_archive_sale: product.is_archive_sale,
     new_drop_start_date: product.new_drop_start_date,

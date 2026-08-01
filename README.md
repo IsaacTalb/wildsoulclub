@@ -72,6 +72,31 @@ NEXT_PUBLIC_APP_NAME=Wild Soul Club
 
 Run `src/db/schema.sql` in the Supabase SQL editor. The schema stores structured shop data in Supabase and stores image/object references as Cloudflare R2 URLs and object keys.
 
+### Production database migrations
+
+Production schema changes live in `supabase/migrations/`. When a migration is
+merged into `main`, the `Apply Supabase migrations` GitHub Actions workflow
+previews and applies pending migrations in version order. It can also be run
+manually with `workflow_dispatch`.
+
+Create a protected GitHub environment named `production` and add a secret named
+`SUPABASE_DB_URL`. Use the percent-encoded Postgres connection string from the
+Supabase dashboard (prefer the session pooler connection string for GitHub's
+IPv4 runners). Restrict environment deployment branches to `main` and require
+reviewers if production changes need manual approval.
+
+The Supabase service-role and public API keys used by the application cannot
+execute database DDL and are not a substitute for `SUPABASE_DB_URL`. Vercel
+environment variables are also not automatically available to GitHub Actions;
+configure this database URL in the GitHub `production` environment without
+exposing it as a `NEXT_PUBLIC_` variable.
+
+To preview the same operation locally before opening a pull request, run:
+
+```bash
+npx supabase db push --db-url "$SUPABASE_DB_URL" --include-all --dry-run
+```
+
 Supabase Auth users are mirrored into the public `users` table by the `handle_new_auth_user()` trigger. To make your first admin, sign up once, copy your auth user UUID from Supabase Auth, then run:
 
 ```sql

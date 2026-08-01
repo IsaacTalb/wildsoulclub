@@ -448,6 +448,8 @@ export default function ProductDetailPage() {
       is_active: true,
       is_archived: false,
       is_featured: false,
+      is_best_seller: false,
+      best_seller_rank: 0,
       created_at: "",
       updated_at: "",
     };

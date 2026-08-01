@@ -24,6 +24,10 @@ export async function GET(req: Request) {
     if (collection) query = query.eq("collection_id", collection);
     if (search) query = query.ilike("name", `%${search}%`);
 
+    query = query
+      .order("is_best_seller", { ascending: false })
+      .order("best_seller_rank", { ascending: true });
+
     if (sort === "price-asc" || sort === "price_asc")
       query = query.order("price", { ascending: true });
     else if (sort === "price-desc" || sort === "price_desc")
