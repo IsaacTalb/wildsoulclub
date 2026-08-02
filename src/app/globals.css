@@ -93,12 +93,6 @@ html {
   background: white;
 }
 
-/* Product photography with white studio backdrops visually dissolves into the page. */
-.product-cutout {
-  background: transparent;
-  mix-blend-mode: multiply;
-}
-
 .glass-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in oklch, var(--foreground) 16%, transparent) transparent;

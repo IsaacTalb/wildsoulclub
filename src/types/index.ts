@@ -56,6 +56,8 @@ export interface ProductImage {
   product_id: string;
   image_url: string;
   object_key: string;
+  transparent_url?: string | null;
+  transparent_object_key?: string | null;
   file_size: number;
   mime_type: string;
   is_thumbnail: boolean;
