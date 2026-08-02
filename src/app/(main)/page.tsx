@@ -377,50 +377,56 @@ function HeroCountdown({
     endDate,
     currentTime,
   );
+  const countdown = status.countdown;
+  const showLiveCta = status.state === "live";
 
-  if (!status.countdown) {
-    if (status.state === "ended") return null;
-
-    return (
-      <Link
-        href={href}
-        className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/35 bg-white px-6 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-black shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
-      >
-        Live
-      </Link>
-    );
+  if (!countdown && !showLiveCta) {
+    return null;
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150 sm:px-6 sm:py-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent"
-      />
-
-      <div className="relative flex flex-col items-center">
-        <div className="flex items-center justify-center divide-x divide-white/15">
-          <CountdownUnit
-            value={status.countdown.days}
-            label="Days"
+    <div className="flex flex-col items-center gap-3">
+      {countdown && (
+        <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150 sm:px-6 sm:py-4">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent"
           />
 
-          <CountdownUnit
-            value={status.countdown.hours}
-            label="Hours"
-          />
+          <div className="relative flex flex-col items-center">
+            <div className="flex items-center justify-center divide-x divide-white/15">
+              <CountdownUnit
+                value={countdown.days}
+                label="Days"
+              />
 
-          <CountdownUnit
-            value={status.countdown.minutes}
-            label="Mins"
-          />
+              <CountdownUnit
+                value={countdown.hours}
+                label="Hours"
+              />
 
-          <CountdownUnit
-            value={status.countdown.seconds}
-            label="Secs"
-          />
+              <CountdownUnit
+                value={countdown.minutes}
+                label="Mins"
+              />
+
+              <CountdownUnit
+                value={countdown.seconds}
+                label="Secs"
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {showLiveCta && (
+        <Link
+          href={href}
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/35 bg-white px-6 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-black shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
+        >
+          Live
+        </Link>
+      )}
     </div>
   );
 }
