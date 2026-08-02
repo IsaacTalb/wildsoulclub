@@ -66,6 +66,12 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=Wild Soul Club
 ```
 
+`NEXT_PUBLIC_APP_URL` is the canonical public origin used for absolute metadata
+URLs in production (for example, `https://www.example.com`, without a path).
+When it is unset, metadata safely falls back to `http://localhost:3000` for
+local development and preview builds; production deployments should always set
+the canonical value.
+
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` is the preferred browser key. If your Supabase dashboard only gives you a publishable key, set `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` too; the app will use it as a fallback.
 
 ### Database setup

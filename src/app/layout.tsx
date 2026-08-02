@@ -14,7 +14,12 @@ const helvetica = localFont({
   display: "swap",
 });
 
+const metadataBase = new URL(
+  process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000",
+);
+
 export const metadata: Metadata = {
+  metadataBase,
   title: {
     default: "Wild Soul Club - Myanmar Streetwear Brand",
     template: "%s | Wild Soul Club",
@@ -27,11 +32,6 @@ export const metadata: Metadata = {
     "clothing brand myanmar",
     "streetwear myanmar",
   ],
-  icons: {
-    icon: [{ url: "/images/wsc-logo.svg", type: "image/svg+xml" }],
-    shortcut: "/images/wsc-logo.svg",
-    apple: "/images/wsc-logo.svg",
-  },
   openGraph: {
     title: "Wild Soul Club",
     description: "Myanmar Streetwear Brand",
