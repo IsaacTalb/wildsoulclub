@@ -2,6 +2,8 @@ export interface ProductImage {
   id: string;
   object_key: string;
   image_url?: string;
+  transparent_url?: string | null;
+  transparent_object_key?: string | null;
   url: string;
   is_thumbnail?: boolean;
   sort_order?: number;

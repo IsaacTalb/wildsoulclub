@@ -25,6 +25,7 @@ interface PublicProductImage {
   id?: string | null;
   url?: string | null;
   image_url?: string | null;
+  transparent_url?: string | null;
   is_thumbnail?: boolean;
   sort_order?: number;
 }
@@ -63,10 +64,15 @@ interface PublicProduct {
 }
 
 interface DisplayProduct extends PublicProduct {
-  images: string[];
+  images: DisplayImage[];
   variants: PublicProductVariant[];
   sizes: string[];
   colors: string[];
+}
+
+interface DisplayImage {
+  src: string;
+  isTransparent: boolean;
 }
 
 type GallerySlideStyle = CSSProperties & {
@@ -87,7 +93,7 @@ function LoopingProductGallery({
   price,
   salePrice,
 }: {
-  images: string[];
+  images: DisplayImage[];
   productName: string;
   price: number;
   salePrice?: number | null;
@@ -224,7 +230,7 @@ function LoopingProductGallery({
               >
                 <span className="relative block h-full w-full">
                   <Image
-                    src={images[imageIndex]}
+                    src={images[imageIndex].src}
                     alt={
                       offset === 0
                         ? productName
@@ -235,7 +241,7 @@ function LoopingProductGallery({
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
-                    className="product-cutout rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4"
+                    className={images[imageIndex].isTransparent ? "rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4" : "rounded-lg object-cover"}
                   />
                 </span>
               </button>
@@ -314,16 +320,20 @@ export default function ProductDetailPage() {
       const productData = result.data;
       if (!productData)
         throw new Error("Product response did not include a product");
-      const imageUrls = [
-        productData.thumbnail_url,
-        ...(productData.product_images ?? []).map(
-          (image) => image.url || image.image_url,
-        ),
-      ].filter((url): url is string => Boolean(url));
+      const productImages = (productData.product_images ?? []).flatMap((image): DisplayImage[] => {
+        const original = image.url || image.image_url;
+        const preferred = image.transparent_url || original;
+        return preferred ? [{ src: preferred, isTransparent: Boolean(image.transparent_url) }] : [];
+      });
+      const imageUrls = productImages.length > 0
+        ? productImages
+        : productData.thumbnail_url
+          ? [{ src: productData.thumbnail_url, isTransparent: false }]
+          : [];
 
       setProduct({
         ...productData,
-        images: Array.from(new Set(imageUrls)),
+        images: imageUrls.filter((image, index, all) => all.findIndex((candidate) => candidate.src === image.src) === index),
         sizes: productData.sizes || [],
         colors: productData.colors || [],
         variants: productData.product_variants || [],

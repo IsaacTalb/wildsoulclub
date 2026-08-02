@@ -169,6 +169,8 @@ CREATE TABLE product_images (
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
   image_url TEXT NOT NULL,
   object_key TEXT NOT NULL,
+  transparent_url TEXT,
+  transparent_object_key TEXT,
   file_size INT,
   mime_type TEXT,
   is_thumbnail BOOLEAN DEFAULT false,

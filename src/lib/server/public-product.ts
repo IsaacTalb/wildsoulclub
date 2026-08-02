@@ -4,6 +4,8 @@ export type PublicProductImageRow = {
   id?: string | null;
   image_url?: string | null;
   object_key?: string | null;
+  transparent_url?: string | null;
+  transparent_object_key?: string | null;
   is_thumbnail?: boolean | null;
   sort_order?: number | null;
 };
@@ -54,7 +56,7 @@ export const PUBLIC_PRODUCT_SELECT = `
   thumbnail_key, is_active, is_archived, is_featured, is_best_seller,
   best_seller_rank, is_new_drop,
   is_archive_sale, new_drop_start_date, new_drop_end_date,
-  product_images(id, image_url, object_key, is_thumbnail, sort_order),
+  product_images(id, image_url, object_key, transparent_url, transparent_object_key, is_thumbnail, sort_order),
   product_variants(id, size, color, stock, price, sale_price, is_active),
   categories(id, name, slug), collections(id, name, slug)
 `;
@@ -80,6 +82,7 @@ export function normalizePublicProduct(product: PublicProductRow) {
     .map((image) => ({
       id: image.id,
       url: publicImageUrl(image.image_url, image.object_key),
+      transparent_url: publicImageUrl(image.transparent_url, image.transparent_object_key),
       is_thumbnail: image.is_thumbnail ?? false,
       sort_order: image.sort_order ?? 0,
     }))

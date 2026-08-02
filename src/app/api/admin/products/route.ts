@@ -26,14 +26,14 @@ async function cleanupProductImageObjects(objectKeys: Array<string | null | unde
 async function deleteProductImage(productId: string, imageId: string) {
   const { data: image, error: fetchError } = await supabaseAdmin
     .from("product_images")
-    .select("object_key")
+    .select("object_key, transparent_object_key")
     .eq("id", imageId)
     .eq("product_id", productId)
     .single();
 
   if (fetchError) throw fetchError;
 
-  await cleanupProductImageObjects([image.object_key], `product image delete (${imageId})`);
+  await cleanupProductImageObjects([image.object_key, image.transparent_object_key], `product image delete (${imageId})`);
 
   const { error } = await supabaseAdmin.from("product_images").delete().eq("id", imageId).eq("product_id", productId);
   if (error) throw error;
@@ -194,6 +194,20 @@ async function setThumbnail(productId: string, imageId: string) {
   if (productError) throw productError;
 }
 
+async function setTransparentAsset(productId: string, imageId: string, asset: unknown) {
+  const uploaded = asset as UploadedImage | null;
+  if (!uploaded?.image_url || !uploaded.object_key || !["image/png", "image/webp"].includes(uploaded.mime_type ?? "")) {
+    throw new VariantValidationError("Cutout assets must be transparent PNG or WebP files.");
+  }
+  const { data: current, error: fetchError } = await supabaseAdmin.from("product_images").select("transparent_object_key").eq("id", imageId).eq("product_id", productId).single();
+  if (fetchError) throw fetchError;
+  const { error } = await supabaseAdmin.from("product_images").update({ transparent_url: uploaded.image_url, transparent_object_key: uploaded.object_key }).eq("id", imageId).eq("product_id", productId);
+  if (error) throw error;
+  if (current.transparent_object_key && current.transparent_object_key !== uploaded.object_key) {
+    await cleanupProductImageObjects([current.transparent_object_key], `product cutout replacement (${imageId})`);
+  }
+}
+
 async function reorderImages(productId: string, imageOrder: unknown) {
   if (!Array.isArray(imageOrder)) return;
   for (const [index, imageId] of imageOrder.entries()) {
@@ -256,6 +270,8 @@ export async function PATCH(req: Request) {
       await deleteProductImage(id, imageId);
     } else if (imageAction === "thumbnail" && imageId) {
       await setThumbnail(id, imageId);
+    } else if (imageAction === "cutout" && imageId) {
+      await setTransparentAsset(id, imageId, body.cutout);
     } else if (imageAction === "reorder") {
       await reorderImages(id, imageOrder);
     } else {

@@ -16,7 +16,7 @@ export interface FloatingProduct {
   sale_price?: number | null;
   stock?: number | null;
   thumbnail_url?: string | null;
-  product_images?: Array<{ url?: string | null; image_url?: string | null; object_key?: string | null }> | null;
+  product_images?: Array<{ url?: string | null; image_url?: string | null; object_key?: string | null; transparent_url?: string | null }> | null;
   category?: string | null;
   categories?: { name?: string | null } | null;
   is_active?: boolean;
@@ -57,14 +57,15 @@ export function FloatingProductCanvas({ products, groupIndex = 0 }: { products: 
     <div className="relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]">
       {products.map((product, index) => {
         const single = products.length === 1;
-        const image = product.thumbnail_url || product.product_images?.[0]?.url || product.product_images?.[0]?.image_url || product.product_images?.[0]?.object_key || PLACEHOLDER;
+        const productImage = product.product_images?.[0];
+        const image = productImage?.transparent_url || product.thumbnail_url || productImage?.url || productImage?.image_url || productImage?.object_key || PLACEHOLDER;
         const status = statusFor(product);
         return (
           <div key={product.id} className={`absolute ${single ? "left-1/2 top-1/2 w-[65%] -translate-x-1/2 -translate-y-1/2 md:w-[24%]" : layouts[index]}`} style={{ zIndex: 10 + (index % 4) }}>
             <div className={styles.floatingProduct}>
               <Link href={`/products/${product.slug || product.id}`} aria-label={`View ${product.name}`} prefetch={groupIndex === 0 ? null : false} className="group relative block rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
                 <div className="relative aspect-square w-full">
-                  <Image src={image} alt={product.name} fill unoptimized sizes="(min-width: 768px) 20vw, 42vw" placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className="product-cutout rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" />
+                  <Image src={image} alt={product.name} fill unoptimized sizes="(min-width: 768px) 20vw, 42vw" placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className={productImage?.transparent_url ? "rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" : "rounded-lg object-cover"} />
                   {status && <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/85 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-black/65 opacity-0 backdrop-blur-xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">{status}</span>}
                 </div>
                 <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-xl backdrop-blur-2xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
