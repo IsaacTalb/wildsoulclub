@@ -12,13 +12,17 @@ export default async function DropDetailPage({ params }: { params: Promise<{ slu
   const groups = chunkFloatingProducts(drop.products ?? []);
   return (
     <div className="overflow-hidden bg-white">
-      <section className="relative isolate flex min-h-[calc(100vh-var(--site-header-height))] min-h-[calc(100svh-var(--site-header-height))] items-end overflow-hidden bg-neutral-900 px-5 py-10 text-white sm:px-10 lg:px-[max(4rem,8vw)] lg:py-16" aria-labelledby="drop-title">
-        {drop.banner_image_url ? <Image src={drop.banner_image_url} alt="" fill priority sizes="100vw" className="-z-20 object-cover" /> : <div className="absolute inset-0 -z-20 bg-gradient-to-br from-neutral-700 to-black" />}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/15" />
+      <section className={`relative isolate flex min-h-[calc(100vh-var(--site-header-height))] min-h-[calc(100svh-var(--site-header-height))] items-end overflow-hidden bg-white px-5 py-10 sm:px-10 lg:px-[max(4rem,8vw)] lg:py-16 ${drop.banner_image_url ? "text-white" : "text-foreground"}`} aria-labelledby="drop-title">
+        {drop.banner_image_url ? (
+          <>
+            <Image src={drop.banner_image_url} alt="" fill priority sizes="100vw" className="-z-20 object-cover" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/15" />
+          </>
+        ) : null}
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">{drop.collections?.name || "Wild Soul Club"}</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">{drop.collections?.name || "Wild Soul Club"}</p>
           <h1 id="drop-title" className="mt-3 text-5xl font-bold leading-none tracking-tight sm:text-7xl">{drop.name}</h1>
-          {drop.description && <p className="mt-5 max-w-2xl text-lg text-white/80">{drop.description}</p>}
+          {drop.description && <p className="mt-5 max-w-2xl text-lg opacity-80">{drop.description}</p>}
         </div>
       </section>
       <section aria-label={`${drop.name} products`} className="mx-auto max-w-[1600px] px-4 md:px-8">

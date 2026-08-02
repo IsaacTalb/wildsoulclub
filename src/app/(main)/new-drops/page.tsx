@@ -73,8 +73,8 @@ export default function NewDropsPage() {
 
   if (error || (!loading && newDrops.length === 0)) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] items-center justify-center bg-muted/30 px-6 text-center">
-        <div className="max-w-md rounded-3xl border bg-background/90 p-8 shadow-sm">
+      <div className="flex h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] items-center justify-center bg-white px-6 text-center">
+        <div className="max-w-md rounded-3xl border bg-white p-8 shadow-sm">
           <Sparkles className="mx-auto mb-5 h-9 w-9 text-primary" aria-hidden="true" />
           <h1 className="text-3xl font-bold tracking-tight">{error ? "The drops got away" : "The next release is taking shape"}</h1>
           <p className="mt-3 text-muted-foreground">
@@ -109,15 +109,15 @@ export default function NewDropsPage() {
         ? skeletonSections.map((item) => (
             <section
               key={item}
-              className="relative min-h-full snap-start snap-always overflow-hidden bg-muted motion-reduce:snap-normal"
+              className="relative min-h-full snap-start snap-always overflow-hidden bg-white motion-reduce:snap-normal"
               aria-label="Loading release"
             >
-              <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-muted via-muted-foreground/10 to-muted motion-reduce:animate-none" />
+              <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white via-neutral-100 to-white motion-reduce:animate-none" />
               <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10 lg:p-16">
-                <div className="max-w-2xl space-y-4 rounded-2xl bg-background/20 p-5 backdrop-blur-sm">
-                  <div className="h-4 w-32 animate-pulse rounded bg-background/50 motion-reduce:animate-none" />
-                  <div className="h-12 w-3/4 animate-pulse rounded bg-background/50 motion-reduce:animate-none" />
-                  <div className="h-20 w-full animate-pulse rounded bg-background/40 motion-reduce:animate-none" />
+                <div className="max-w-2xl space-y-4 rounded-2xl bg-white/20 p-5 backdrop-blur-sm">
+                  <div className="h-4 w-32 animate-pulse rounded bg-white/50 motion-reduce:animate-none" />
+                  <div className="h-12 w-3/4 animate-pulse rounded bg-white/50 motion-reduce:animate-none" />
+                  <div className="h-20 w-full animate-pulse rounded bg-white/40 motion-reduce:animate-none" />
                 </div>
               </div>
             </section>
@@ -125,7 +125,7 @@ export default function NewDropsPage() {
         : newDrops.map((drop, index) => (
             <Fragment key={drop.id}>
             <section
-              className="relative min-h-full snap-start snap-always isolate overflow-hidden bg-neutral-900 text-white motion-reduce:snap-normal"
+              className={`relative min-h-full snap-start snap-always isolate overflow-hidden bg-white motion-reduce:snap-normal ${drop.banner_image_url ? "text-white" : "text-foreground [&_h1]:!text-foreground [&_p]:!text-foreground [&_span]:!text-foreground"}`}
               aria-labelledby={`drop-${drop.id}`}
             >
               {drop.banner_image_url ? (
@@ -139,10 +139,8 @@ export default function NewDropsPage() {
                   preload={index === 0}
                   className="-z-20 object-cover"
                 />
-              ) : (
-                <div className="absolute inset-0 -z-20 bg-gradient-to-br from-neutral-700 via-neutral-900 to-black" />
-              )}
-              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/20 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/45 sm:to-transparent" />
+              ) : null}
+              {drop.banner_image_url ? <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/20 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/45 sm:to-transparent" /> : null}
 
               <div className="flex min-h-[calc(100vh-4rem)] min-h-[calc(100svh-4rem)] items-end px-5 py-8 sm:px-10 sm:py-12 lg:px-[max(4rem,8vw)] lg:py-16">
                 <div className="max-w-2xl">

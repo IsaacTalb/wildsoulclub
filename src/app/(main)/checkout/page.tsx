@@ -287,7 +287,7 @@ export default function CheckoutPage() {
                   ))}
                 </RadioGroup>
 
-                <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <div className="mt-6 p-4 bg-white rounded-lg">
                   <div className="flex items-start gap-3">
                     <Info className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                     <div className="text-sm text-muted-foreground">
@@ -327,7 +327,7 @@ export default function CheckoutPage() {
                 <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3">
-                      <div className="w-14 h-14 rounded bg-muted shrink-0" />
+                      <div className="w-14 h-14 rounded bg-white shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-1">{item.product?.name}</p>
                         <p className="text-xs text-muted-foreground">

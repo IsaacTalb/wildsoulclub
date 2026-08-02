@@ -741,21 +741,21 @@ export default function HomePage() {
   }, [currentSlide, heroSlides.length]);
 
   return (
-    <div className="bg-background">
+    <div className="bg-white">
       {/* ------------------------------------------------------------------ */}
       {/*                            Hero slider                             */}
       {/* ------------------------------------------------------------------ */}
 
-      <section className="relative h-[calc(100svh-env(safe-area-inset-bottom))] min-h-0 w-full overflow-hidden bg-neutral-950">
+      <section className="relative h-[calc(100svh-env(safe-area-inset-bottom))] min-h-0 w-full overflow-hidden bg-white">
         {heroSlides.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-neutral-950">
+          <div className="absolute inset-0 flex items-center justify-center bg-white">
             <div className="container mx-auto px-4 text-center">
-              <div className="mx-auto flex max-w-2xl flex-col items-center rounded-[32px] border border-white/15 bg-white/[0.08] px-6 py-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_30px_100px_rgba(0,0,0,0.45)] backdrop-blur-2xl backdrop-saturate-150 sm:px-10">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
+              <div className="mx-auto flex max-w-2xl flex-col items-center rounded-[32px] border border-neutral-200 bg-white px-6 py-10 shadow-sm sm:px-10">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
                   Wild Soul Club
                 </p>
 
-                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white md:text-6xl lg:text-7xl">
+                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-foreground md:text-6xl lg:text-7xl">
                   New collections are coming
                 </h1>
               </div>
@@ -776,7 +776,7 @@ export default function HomePage() {
                 onPointerLeave={() => setIsHeroInteractionActive(false)}
                 onFocus={() => setIsHeroInteractionActive(true)}
                 onBlur={() => setIsHeroInteractionActive(false)}
-                className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                className={`absolute inset-0 bg-white transition-all duration-1000 ease-out ${!slide.image ? "[&_h1]:!text-foreground" : ""} ${
                   isActive
                     ? "group visible scale-100 opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
                     : "pointer-events-none invisible scale-[1.03] opacity-0"
@@ -797,16 +797,16 @@ export default function HomePage() {
                         : "scale-100"
                     }`}
                   />
-                ) : (
-                  <div className="absolute inset-0 bg-neutral-900" />
-                )}
+                ) : null}
 
                 {/* Dark image overlays */}
-                <div className="absolute inset-0 bg-black/25" />
-
-                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/65" />
-
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_5%,rgba(0,0,0,0.42)_100%)]" />
+                {slide.image ? (
+                  <>
+                    <div className="absolute inset-0 bg-black/25" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/65" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_5%,rgba(0,0,0,0.42)_100%)]" />
+                  </>
+                ) : null}
 
                 {/* Center content */}
                 <div className="relative z-10 flex h-full items-center justify-center px-[env(safe-area-inset-left)] pb-[max(1rem,env(safe-area-inset-bottom))] pt-[var(--site-header-height)]">
@@ -869,7 +869,7 @@ export default function HomePage() {
 
         {/* Slider indicators */}
         {heroSlides.length > 1 && (
-          <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-black/10 px-3 py-2 shadow-lg backdrop-blur-2xl sm:bottom-8">
+          <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 shadow-lg backdrop-blur-2xl sm:bottom-8">
             {heroSlides.map((slide, index) => (
               <button
                 key={slide.id}
