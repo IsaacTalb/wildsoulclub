@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, TouchEvent, WheelEvent } from "react";
+import type { CSSProperties, PointerEvent, WheelEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
@@ -100,7 +100,9 @@ function LoopingProductGallery({
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
-  const touchStartX = useRef<number | null>(null);
+  const swipeStart = useRef<{ pointerId: number; x: number; y: number } | null>(
+    null,
+  );
 
   const canLoop = images.length > 1;
   const slideOffsets = canLoop ? [-2, -1, 0, 1, 2] : [0];
@@ -108,9 +110,15 @@ function LoopingProductGallery({
   const moveGallery = useCallback(
     (nextDirection: -1 | 1) => {
       if (!canLoop || direction !== 0) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setActiveImage((current) =>
+          wrapIndex(current + nextDirection, images.length),
+        );
+        return;
+      }
       setDirection(nextDirection);
     },
-    [canLoop, direction],
+    [canLoop, direction, images.length],
   );
 
   const finishMovement = useCallback(() => {
@@ -129,20 +137,28 @@ function LoopingProductGallery({
     }
   };
 
-  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    touchStartX.current = event.touches[0]?.clientX ?? null;
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!canLoop || event.pointerType === "mouse") return;
+    swipeStart.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
-    if (touchStartX.current === null) return;
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const start = swipeStart.current;
+    if (!start || start.pointerId !== event.pointerId) return;
 
-    const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
-    const distance = touchStartX.current - endX;
+    const distanceX = start.x - event.clientX;
+    const distanceY = start.y - event.clientY;
+    swipeStart.current = null;
 
-    touchStartX.current = null;
-
-    if (Math.abs(distance) < 42) return;
-    moveGallery(distance > 0 ? 1 : -1);
+    if (Math.abs(distanceX) < 42 || Math.abs(distanceX) <= Math.abs(distanceY))
+      return;
+    event.preventDefault();
+    moveGallery(distanceX > 0 ? 1 : -1);
   };
 
   const discountPercent =
@@ -155,10 +171,10 @@ function LoopingProductGallery({
       aria-label={`${productName} image gallery`}
       className={`${styles.galleryViewport} relative isolate w-full max-w-full overflow-hidden rounded-lg border border-foreground/10`}
       onWheel={handleWheel}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={() => {
-        touchStartX.current = null;
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => {
+        swipeStart.current = null;
       }}
       onKeyDown={(event) => {
         if (event.key === "ArrowDown" || event.key === "ArrowRight") {
@@ -477,16 +493,7 @@ export default function ProductDetailPage() {
     return <div className="container mx-auto px-4 py-8">Product not found</div>;
 
   return (
-    <div className="relative isolate min-h-screen overflow-hidden bg-white py-5 md:px-4 md:py-8">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-32 top-28 -z-10 h-96 w-96 rounded-full bg-violet-200/20 blur-[110px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-32 top-1/2 -z-10 h-[460px] w-[460px] rounded-full bg-blue-200/20 blur-[120px]"
-      />
-
+    <div className="min-h-screen bg-white py-5 md:px-4 md:py-8">
       <div className="container mx-auto max-w-[1500px]">
         <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] lg:gap-10">
           {/* Image Gallery */}
@@ -499,16 +506,7 @@ export default function ProductDetailPage() {
           />
 
           {/* Product Info */}
-          <div className="glass-scrollbar relative isolate mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[2.25rem] border border-white/60 bg-white/60 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_28px_85px_rgba(15,23,42,0.1)] backdrop-blur-3xl backdrop-saturate-150 sm:p-6 md:sticky md:top-20 md:mx-0 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[520px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5 lg:p-6">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -left-16 -top-24 -z-10 h-64 w-[120%] rotate-[-8deg] bg-gradient-to-b from-white/75 via-white/15 to-transparent blur-2xl"
-            />
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -bottom-24 -right-24 -z-10 h-72 w-72 rounded-full bg-blue-200/25 blur-3xl"
-            />
-
+          <div className="glass-scrollbar mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[2.25rem] border border-black/10 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-6 md:sticky md:top-20 md:mx-0 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[520px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5 lg:p-6">
             <p className="mb-1.5 text-xs uppercase tracking-[0.16em] text-muted-foreground">
               {product.categories?.name ||
                 (typeof product.category === "string"
@@ -656,7 +654,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex min-w-0 flex-col gap-3 min-[420px]:flex-row">
+            <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
               <Button
                 variant="liquid-primary"
                 size="touch"

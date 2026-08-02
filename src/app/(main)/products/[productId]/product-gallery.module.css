@@ -19,8 +19,7 @@
 
 .gallerySlide[aria-disabled="true"] { cursor: default; }
 
-.galleryViewport:hover .gallerySlideMoving,
-.galleryViewport:focus-within .gallerySlideMoving {
+.gallerySlideMoving {
   transition: transform 620ms ease-in-out, opacity 620ms ease-in-out;
 }
 
@@ -30,6 +29,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .galleryViewport:hover .gallerySlideMoving,
-  .galleryViewport:focus-within .gallerySlideMoving { transition: none; }
+  .gallerySlideMoving { transition: none; }
 }
