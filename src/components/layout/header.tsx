@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from 'next/image';
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -401,10 +401,13 @@ export function Header() {
           <Image
             src="/images/wsc-logo.svg"
             alt="Wild Soul Club"
-            width={40}          // adjust to your desired size
-            height={40}         // adjust to your desired size
-            className="object-contain"
-            priority            // optional, if this is above the fold
+            width={140}
+            height={32}
+            className={cn(
+              "h-8 w-auto max-w-[8.75rem] object-contain",
+              isHomepage && "invert",
+            )}
+            preload
           />
         </Link>
 
@@ -484,17 +487,20 @@ export function Header() {
 
       {/* Search Bar */}
       {searchOpen && (
-        <div className="container mx-auto mt-2 rounded-[1.35rem] border px-4 py-3 bg-background/80 backdrop-blur-xl">
-          <div className="container mx-auto">
-            <div className="relative">
+        <div className="mx-auto mt-2 hidden w-[min(42rem,calc(100%-2rem))] rounded-[1.35rem] border bg-white/90 px-4 py-3 shadow-xl backdrop-blur-xl lg:block">
+          <form action={submitSearch} className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                name="search"
+                aria-label="Search products"
                 placeholder="Search products..."
-                className="pl-10"
+                className="h-11 pl-10 pr-12"
                 autoFocus
               />
-            </div>
-          </div>
+              <button type="submit" className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-r-xl" aria-label="Submit product search">
+                <Search className="h-4 w-4" />
+              </button>
+          </form>
         </div>
       )}
     </header>

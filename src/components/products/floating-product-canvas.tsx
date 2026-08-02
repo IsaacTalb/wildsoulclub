@@ -64,10 +64,10 @@ export function FloatingProductCanvas({ products, groupIndex = 0 }: { products: 
             <div className={styles.floatingProduct}>
               <Link href={`/products/${product.slug || product.id}`} aria-label={`View ${product.name}`} prefetch={groupIndex === 0 ? null : false} className="group relative block rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
                 <div className="relative aspect-square w-full">
-                  <Image src={image} alt={product.name} fill unoptimized sizes="(min-width: 768px) 20vw, 42vw" placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className="rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" />
+                  <Image src={image} alt={product.name} fill unoptimized sizes="(min-width: 768px) 20vw, 42vw" placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className="product-cutout rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" />
                   {status && <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/85 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-black/65 opacity-0 backdrop-blur-xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">{status}</span>}
                 </div>
-                <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-xl backdrop-blur-2xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none dark:border-white/10 dark:bg-neutral-900/85">
+                <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-xl backdrop-blur-2xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
                   <p className="line-clamp-1 text-xs font-medium">{product.name}</p>
                   <p className="mt-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{product.categories?.name || product.category || "Wild Soul"}</p>
                   <div className="mt-2 flex justify-center gap-2 text-[11px] font-semibold"><span>{formatPrice(product.sale_price || product.price)}</span>{product.sale_price && <span className="text-muted-foreground line-through">{formatPrice(product.price)}</span>}</div>
@@ -83,5 +83,5 @@ export function FloatingProductCanvas({ products, groupIndex = 0 }: { products: 
 }
 
 export function FloatingProductSkeleton() {
-  return <div className="relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]" aria-label="Loading products">{layouts.map((layout) => <div key={layout} className={`absolute ${layout}`}><div className="aspect-square animate-pulse rounded-lg bg-black/[0.055] motion-reduce:animate-none dark:bg-white/[0.07]" /></div>)}</div>;
+  return <div className="relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]" aria-label="Loading products">{layouts.map((layout) => <div key={layout} className={`absolute ${layout}`}><div className="aspect-square animate-pulse rounded-lg bg-black/[0.055] motion-reduce:animate-none" /></div>)}</div>;
 }
