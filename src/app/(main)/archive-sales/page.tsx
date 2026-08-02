@@ -26,7 +26,7 @@ export default function ArchiveSalesPage() {
 
   const groups = useMemo(() => chunkFloatingProducts(products), [products]);
   return (
-    <div className="overflow-hidden bg-[#f7f7f5] px-4 dark:bg-neutral-950 md:px-8">
+    <div className="overflow-hidden bg-white px-4 md:px-8">
       <section className="mx-auto max-w-[1600px]" aria-label="Archive sale products">
         {loading ? <FloatingProductSkeleton /> : error ? <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">{error}. Please try again later.</div> : groups.length ? groups.map((group, index) => <FloatingProductCanvas key={index} products={group} groupIndex={index} />) : <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">There are no archive-sale pieces available right now.</div>}
       </section>

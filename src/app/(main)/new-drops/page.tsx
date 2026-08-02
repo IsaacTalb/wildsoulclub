@@ -165,7 +165,7 @@ export default function NewDropsPage() {
               </div>
             </section>
             {(drop.products ?? []).length > 0 && (
-              <section className="bg-[#f7f7f5] px-4 dark:bg-neutral-950 md:px-8" aria-label={`${drop.name} products`}>
+              <section className="bg-white px-4 md:px-8" aria-label={`${drop.name} products`}>
                 {chunkFloatingProducts(drop.products ?? []).map((products, groupIndex) => (
                   <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} />
                 ))}

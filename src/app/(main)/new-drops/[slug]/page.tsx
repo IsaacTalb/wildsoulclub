@@ -11,7 +11,7 @@ export default async function DropDetailPage({ params }: { params: Promise<{ slu
 
   const groups = chunkFloatingProducts(drop.products ?? []);
   return (
-    <div className="overflow-hidden bg-[#f7f7f5] dark:bg-neutral-950">
+    <div className="overflow-hidden bg-white">
       <section className="relative isolate flex min-h-[calc(100vh-var(--site-header-height))] min-h-[calc(100svh-var(--site-header-height))] items-end overflow-hidden bg-neutral-900 px-5 py-10 text-white sm:px-10 lg:px-[max(4rem,8vw)] lg:py-16" aria-labelledby="drop-title">
         {drop.banner_image_url ? <Image src={drop.banner_image_url} alt="" fill priority sizes="100vw" className="-z-20 object-cover" /> : <div className="absolute inset-0 -z-20 bg-gradient-to-br from-neutral-700 to-black" />}
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/15" />

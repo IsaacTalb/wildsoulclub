@@ -9,11 +9,9 @@ import {
   Plus,
   ShoppingCart,
   Heart,
-  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import type { Product, ProductVariant } from "@/types";
@@ -237,7 +235,7 @@ function LoopingProductGallery({
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
-                    className="rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4"
+                    className="product-cutout rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4"
                   />
                 </span>
               </button>
@@ -297,6 +295,8 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [sizeChartOpen, setSizeChartOpen] = useState(false);
 
   const fetchProduct = useCallback(async () => {
     try {
@@ -467,18 +467,18 @@ export default function ProductDetailPage() {
     return <div className="container mx-auto px-4 py-8">Product not found</div>;
 
   return (
-    <div className="relative isolate min-h-screen overflow-hidden bg-[#f5f5f3] px-4 py-8 dark:bg-neutral-950">
+    <div className="relative isolate min-h-screen overflow-hidden bg-white py-5 md:px-4 md:py-8">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-32 top-28 -z-10 h-96 w-96 rounded-full bg-violet-200/20 blur-[110px] dark:bg-violet-500/[0.07]"
+        className="pointer-events-none absolute -left-32 top-28 -z-10 h-96 w-96 rounded-full bg-violet-200/20 blur-[110px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-32 top-1/2 -z-10 h-[460px] w-[460px] rounded-full bg-blue-200/20 blur-[120px] dark:bg-blue-500/[0.06]"
+        className="pointer-events-none absolute -right-32 top-1/2 -z-10 h-[460px] w-[460px] rounded-full bg-blue-200/20 blur-[120px]"
       />
 
       <div className="container mx-auto max-w-[1500px]">
-        <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-[minmax(0,1.12fr)_minmax(340px,0.88fr)] lg:gap-12">
+        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] lg:gap-10">
           {/* Image Gallery */}
           <LoopingProductGallery
             key={product.id}
@@ -489,52 +489,50 @@ export default function ProductDetailPage() {
           />
 
           {/* Product Info */}
-          <div className="relative isolate overflow-hidden rounded-[2.25rem] border border-white/60 bg-white/55 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_28px_85px_rgba(15,23,42,0.1)] backdrop-blur-3xl backdrop-saturate-150 dark:border-white/10 dark:bg-white/[0.055] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_28px_85px_rgba(0,0,0,0.3)] sm:p-8 md:sticky md:top-24">
+          <div className="glass-scrollbar relative isolate mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[2.25rem] border border-white/60 bg-white/60 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_28px_85px_rgba(15,23,42,0.1)] backdrop-blur-3xl backdrop-saturate-150 sm:p-6 md:sticky md:top-20 md:mx-0 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[520px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5 lg:p-6">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute -left-16 -top-24 -z-10 h-64 w-[120%] rotate-[-8deg] bg-gradient-to-b from-white/75 via-white/15 to-transparent blur-2xl dark:from-white/10"
+              className="pointer-events-none absolute -left-16 -top-24 -z-10 h-64 w-[120%] rotate-[-8deg] bg-gradient-to-b from-white/75 via-white/15 to-transparent blur-2xl"
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute -bottom-24 -right-24 -z-10 h-72 w-72 rounded-full bg-blue-200/25 blur-3xl dark:bg-blue-500/[0.07]"
+              className="pointer-events-none absolute -bottom-24 -right-24 -z-10 h-72 w-72 rounded-full bg-blue-200/25 blur-3xl"
             />
 
-            <p className="text-sm text-muted-foreground uppercase tracking-wide mb-2">
+            <p className="mb-1.5 text-xs uppercase tracking-[0.16em] text-muted-foreground">
               {product.categories?.name ||
                 (typeof product.category === "string"
                   ? product.category
                   : product.category?.name) ||
                 "Uncategorized"}
             </p>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            <h1 className="mb-3 text-2xl font-bold lg:text-3xl">
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-3 mb-6">
+            <div className="mb-4 flex items-center gap-3">
               {selectedVariant?.price || product.sale_price ? (
                 <>
-                  <span className="text-3xl font-bold text-red-500">
+                  <span className="text-2xl font-bold text-red-500">
                     {formatPrice(
                       Number(selectedVariant?.price || product.sale_price),
                     )}
                   </span>
-                  <span className="text-xl text-muted-foreground line-through">
+                  <span className="text-lg text-muted-foreground line-through">
                     {formatPrice(product.price)}
                   </span>
                 </>
               ) : (
-                <span className="text-3xl font-bold">
+                <span className="text-2xl font-bold">
                   {formatPrice(product.price)}
                 </span>
               )}
             </div>
 
-            <Separator className="mb-6" />
-
             {/* Size Selection */}
             {product.sizes && product.sizes.length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-medium mb-3">
+              <div className="mb-4">
+                <h3 className="mb-2 font-medium">
                   Size{" "}
                   {selectedSize && (
                     <span className="text-primary">- {selectedSize}</span>
@@ -568,8 +566,8 @@ export default function ProductDetailPage() {
 
             {/* Color Selection */}
             {product.colors && product.colors.length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-medium mb-3">
+              <div className="mb-4">
+                <h3 className="mb-2 font-medium">
                   Color{" "}
                   {selectedColor && (
                     <span className="text-primary">- {selectedColor}</span>
@@ -602,8 +600,8 @@ export default function ProductDetailPage() {
             )}
 
             {/* Quantity */}
-            <div className="mb-6">
-              <h3 className="font-medium mb-3">Quantity</h3>
+            <div className="mb-4">
+              <h3 className="mb-2 font-medium">Quantity</h3>
               <div className="flex flex-wrap items-center gap-3">
                 <Button
                   variant="liquid"
@@ -648,7 +646,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Actions */}
-            <div className="mb-3 flex min-w-0 flex-col gap-3 sm:flex-row">
+            <div className="flex min-w-0 flex-col gap-3 min-[420px]:flex-row">
               <Button
                 variant="liquid-primary"
                 size="touch"
@@ -671,28 +669,60 @@ export default function ProductDetailPage() {
               </Button>
             </div>
 
-            <section className="mt-8 border-t border-foreground/10 pt-6" aria-labelledby="product-description-heading">
-              <h2 id="product-description-heading" className="text-xl font-semibold">Description</h2>
-              <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground">{product.description || "No product description is available yet."}</p>
-            </section>
-
-            <section className="mt-8" aria-labelledby="size-chart-heading">
-              <h2 id="size-chart-heading" className="text-xl font-semibold">Size chart</h2>
-              {product.sizes.length > 0 ? (
-                <div className="mt-3 overflow-x-auto rounded-lg border border-foreground/10">
-                  <table className="w-full min-w-[18rem] border-collapse text-left text-sm">
-                    <thead className="bg-foreground/5"><tr><th scope="col" className="px-4 py-3 font-semibold">Size</th><th scope="col" className="px-4 py-3 font-semibold">Availability</th></tr></thead>
-                    <tbody>{product.sizes.map((size) => <tr key={size} className="border-t border-foreground/10"><th scope="row" className="px-4 py-3 font-medium">{size}</th><td className="px-4 py-3 text-muted-foreground">{hasVariants ? (isSizeAvailable(size) ? "In stock" : "Out of stock") : "Available"}</td></tr>)}</tbody>
-                  </table>
+            <div className="mt-4 border-t border-foreground/10">
+              <section className="border-b border-foreground/10">
+                <button
+                  type="button"
+                  className="flex min-h-12 w-full items-center justify-between py-3 text-left font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-expanded={descriptionOpen}
+                  aria-controls="product-description-panel"
+                  onClick={() => setDescriptionOpen((open) => !open)}
+                >
+                  <span>Description</span>
+                  {descriptionOpen ? <Minus className="h-4 w-4" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                </button>
+                <div
+                  id="product-description-panel"
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${descriptionOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                >
+                  <div className="min-w-0 overflow-hidden">
+                    <p className="break-words pb-4 text-sm whitespace-pre-line leading-relaxed text-muted-foreground">
+                      {product.description || "No product description is available yet."}
+                    </p>
+                  </div>
                 </div>
-              ) : (
-                <p className="mt-3 rounded-lg border border-dashed border-foreground/20 p-4 text-sm text-muted-foreground">Sizing information is not available for this item. Contact us for fit and measurement guidance before ordering.</p>
-              )}
-            </section>
+              </section>
 
-            <Button variant="liquid" size="touch" className="mt-8 w-full">
-              <Share2 className="mr-2 h-4 w-4" /> Share
-            </Button>
+              <section>
+                <button
+                  type="button"
+                  className="flex min-h-12 w-full items-center justify-between py-3 text-left font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-expanded={sizeChartOpen}
+                  aria-controls="product-size-chart-panel"
+                  onClick={() => setSizeChartOpen((open) => !open)}
+                >
+                  <span>Size Chart</span>
+                  {sizeChartOpen ? <Minus className="h-4 w-4" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                </button>
+                <div
+                  id="product-size-chart-panel"
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${sizeChartOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+                >
+                  <div className="min-w-0 overflow-hidden">
+                    {product.sizes.length > 0 ? (
+                      <div className="mb-2 overflow-x-auto rounded-lg border border-foreground/10">
+                        <table className="w-full min-w-[18rem] border-collapse text-left text-sm">
+                          <thead className="bg-foreground/5"><tr><th scope="col" className="px-3 py-2 font-semibold">Size</th><th scope="col" className="px-3 py-2 font-semibold">Availability</th></tr></thead>
+                          <tbody>{product.sizes.map((size) => <tr key={size} className="border-t border-foreground/10"><th scope="row" className="px-3 py-2 font-medium">{size}</th><td className="px-3 py-2 text-muted-foreground">{hasVariants ? (isSizeAvailable(size) ? "In stock" : "Out of stock") : "Available"}</td></tr>)}</tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="mb-2 border-t border-dashed border-foreground/20 py-3 text-sm text-muted-foreground">Sizing information is not available for this item. Contact us for fit and measurement guidance before ordering.</p>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 /* -------------------------------------------------------------------------- */
 /*                                   Types                                    */
@@ -84,6 +85,7 @@ type HeroSlide = {
   title: string;
   subtitle: string;
   image: string;
+  href: string;
   startDate: string | null;
   endDate: string | null;
 };
@@ -350,10 +352,12 @@ function HeroCountdown({
   startDate,
   endDate,
   currentTime,
+  href,
 }: {
   startDate: string | null;
   endDate: string | null;
   currentTime: number | null;
+  href: string;
 }) {
   if (currentTime === null) {
     return (
@@ -375,7 +379,16 @@ function HeroCountdown({
   );
 
   if (!status.countdown) {
-    return null;
+    if (status.state === "ended") return null;
+
+    return (
+      <Link
+        href={href}
+        className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/35 bg-white px-6 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-black shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
+      >
+        Live
+      </Link>
+    );
   }
 
   return (
@@ -574,7 +587,7 @@ export default function HomePage() {
         (product) =>
           product.is_new_drop || product.is_featured,
       )
-      .slice(0, 3)
+      .slice(0, 1)
       .map((product) => {
         const { startDate, endDate } =
           getHeroDates(product);
@@ -587,6 +600,7 @@ export default function HomePage() {
             product.collection?.name ||
             getCategoryName(product.category),
           image: getProductImage(product),
+          href: `/products/${product.slug || product.id}`,
           startDate,
           endDate,
         };
@@ -835,6 +849,7 @@ export default function HomePage() {
                           startDate={slide.startDate}
                           endDate={slide.endDate}
                           currentTime={currentTime}
+                          href={slide.href}
                         />
                       </div>
 

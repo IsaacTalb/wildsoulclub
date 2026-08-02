@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 
 import type { Product } from "@/types/product";
 import { FloatingProductCanvas, FloatingProductSkeleton, chunkFloatingProducts } from "@/components/products/floating-product-canvas";
 
-export default function ProductsPage() {
+function ProductsContent() {
+  const searchParams = useSearchParams();
+  const requestQuery = searchParams.toString();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +20,7 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/public/products", { signal: controller.signal });
+        const response = await fetch(`/api/public/products${requestQuery ? `?${requestQuery}` : ""}`, { signal: controller.signal });
         if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
         setProducts(data.data || []);
@@ -32,7 +35,7 @@ export default function ProductsPage() {
 
     void fetchProducts();
     return () => controller.abort();
-  }, []);
+  }, [requestQuery]);
 
   const productGroups = useMemo(
     () => chunkFloatingProducts(products),
@@ -55,12 +58,12 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f7f7f5] px-4 dark:bg-neutral-950 md:px-8">
-      <div className="liquid-orb right-0 top-52 h-80 w-80 bg-fuchsia-200/50 dark:bg-fuchsia-500/20" />
-      <div className="liquid-orb bottom-10 left-1/3 h-64 w-64 bg-amber-200/50 dark:bg-amber-400/10" />
+    <div className="relative min-h-screen overflow-hidden bg-white px-4 md:px-8">
+      <div className="liquid-orb right-0 top-52 h-80 w-80 bg-fuchsia-200/40" />
+      <div className="liquid-orb bottom-10 left-1/3 h-64 w-64 bg-amber-200/40" />
 
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-[45%] h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/75 blur-3xl dark:bg-white/[0.025]" />
+        <div className="absolute left-1/2 top-[45%] h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/75 blur-3xl" />
       </div>
 
       <section className="relative mx-auto max-w-[1600px]">
@@ -91,7 +94,7 @@ export default function ProductsPage() {
 
             {isRefreshing && (
               <div className="pointer-events-none absolute inset-x-0 top-4 z-40 flex justify-center">
-                <span className="rounded-full border border-black/5 bg-white/80 px-4 py-2 text-xs font-medium text-black/55 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-neutral-900/80 dark:text-white/55">
+                <span className="rounded-full border border-black/5 bg-white/80 px-4 py-2 text-xs font-medium text-black/55 shadow-sm backdrop-blur-xl">
                   Updating products…
                 </span>
               </div>
@@ -108,5 +111,13 @@ export default function ProductsPage() {
         )}
       </section>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white"><FloatingProductSkeleton /></div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }
