@@ -131,7 +131,7 @@ export function Header() {
     >
       <div
         className={cn(
-          "liquid-pill relative grid h-13 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between",
+          "liquid-pill relative grid h-13 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center border-black/10 bg-white/95 px-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.08)] sm:px-4 xl:flex xl:justify-between",
           isHomepage &&
             "!border-white/30 !bg-black/35 !text-white shadow-[0_12px_40px_rgba(0,0,0,0.28)] [&_a]:!text-white [&_button]:!text-white",
         )}
