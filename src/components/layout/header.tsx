@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from 'next/image';
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
@@ -130,7 +131,7 @@ export function Header() {
     >
       <div
         className={cn(
-          "liquid-pill relative grid h-16 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between",
+          "liquid-pill relative grid h-13 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center px-2.5 shadow-lg sm:px-4 xl:flex xl:justify-between",
           isHomepage &&
             "!border-white/30 !bg-black/35 !text-white shadow-[0_12px_40px_rgba(0,0,0,0.28)] [&_a]:!text-white [&_button]:!text-white",
         )}
@@ -397,9 +398,14 @@ export function Header() {
           href="/"
           className="relative z-10 col-start-2 flex min-w-0 items-center justify-self-center xl:absolute xl:left-1/2 xl:-translate-x-1/2"
         >
-          <span className="truncate text-base font-bold tracking-tight sm:text-xl">
-            wildsoulclub@
-          </span>
+          <Image
+            src="/images/wsc-logo.svg"
+            alt="Wild Soul Club"
+            width={40}          // adjust to your desired size
+            height={40}         // adjust to your desired size
+            className="object-contain"
+            priority            // optional, if this is above the fold
+          />
         </Link>
 
         {/* Right Actions */}

@@ -794,11 +794,18 @@ export default function HomePage() {
                     <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-3 text-center landscape:gap-2 sm:gap-4">
                       {/* Collection name */}
                       <div
-                        className={`relative overflow-hidden rounded-[28px] border border-white/20 bg-white/[0.09] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_25px_80px_rgba(0,0,0,0.3)] backdrop-blur-2xl backdrop-saturate-150 transition-all delay-100 duration-700 sm:rounded-[36px] sm:px-10 sm:py-7 ${
-                          isActive
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-5 opacity-0"
-                        }`}
+                        className={`
+                          relative overflow-hidden 
+                          rounded-2xl sm:rounded-3xl   /* was 28px → 16px (mobile), 36px → 24px (desktop) */
+                          border border-white/20 
+                          bg-white/[0.09] 
+                          px-4 py-4 sm:px-8 sm:py-6    /* was px-5 py-5 / sm:px-10 sm:py-7 – now smaller */
+                          shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_25px_80px_rgba(0,0,0,0.3)] 
+                          backdrop-blur-2xl backdrop-saturate-150 
+                          transition-all delay-100 duration-700 
+                          max-w-2xl mx-auto           /* optional – limits width and centres on large screens */
+                          ${isActive ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"}
+                        `}
                       >
                         {/* Liquid glass reflection */}
                         <div
@@ -811,8 +818,8 @@ export default function HomePage() {
                           className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"
                         />
 
-                        <h1 className="relative max-w-3xl text-balance text-[clamp(2rem,10vmin,6rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
-                          {slide.subtitle}
+                        <h1 className="relative text-balance text-[clamp(1rem,3.5vmin,2.2rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
+                            {slide.title}
                         </h1>
                       </div>
 
