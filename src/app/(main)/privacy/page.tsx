@@ -1,6 +1,6 @@
 export default function PrivacyPage() {
   return (
-    <div className="container mx-auto px-4 py-16 max-w-3xl prose prose-sm md:prose-base dark:prose-invert">
+    <div className="container mx-auto max-w-3xl bg-white px-4 py-16 prose prose-sm md:prose-base">
       <h1>Privacy Policy</h1>
       <p className="text-muted-foreground">Last updated: July 1, 2026</p>
 

@@ -93,9 +93,6 @@ const glassCardClassName = `
   shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_24px_70px_rgba(15,23,42,0.08)]
   backdrop-blur-2xl
   backdrop-saturate-150
-  dark:border-white/10
-  dark:bg-white/[0.06]
-  dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_24px_70px_rgba(0,0,0,0.28)]
 `;
 
 /* -------------------------------------------------------------------------- */
@@ -104,7 +101,7 @@ const glassCardClassName = `
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen overflow-hidden bg-background">
+    <div className="min-h-screen overflow-hidden bg-white">
       <main>
         {/* ------------------------------------------------------------------ */}
         {/*                              Hero                                  */}
@@ -114,27 +111,27 @@ export default function ContactPage() {
           {/* Background liquid shapes */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-b from-neutral-100 via-white to-neutral-50 dark:from-neutral-950 dark:via-neutral-950 dark:to-black"
+            className="pointer-events-none absolute inset-0 -z-20 bg-white"
           />
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -left-32 top-10 -z-10 h-[420px] w-[420px] rounded-full bg-violet-300/20 blur-[110px] dark:bg-violet-500/10"
+            className="pointer-events-none absolute -left-32 top-10 -z-10 h-[420px] w-[420px] rounded-full bg-violet-300/20 blur-[110px]"
           />
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-24 top-28 -z-10 h-[380px] w-[380px] rounded-full bg-blue-300/20 blur-[120px] dark:bg-blue-500/10"
+            className="pointer-events-none absolute -right-24 top-28 -z-10 h-[380px] w-[380px] rounded-full bg-blue-300/20 blur-[120px]"
           />
 
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-[55%] -z-10 h-[360px] w-[540px] -translate-x-1/2 rounded-full bg-rose-200/20 blur-[130px] dark:bg-rose-500/[0.07]"
+            className="pointer-events-none absolute left-1/2 top-[55%] -z-10 h-[360px] w-[540px] -translate-x-1/2 rounded-full bg-rose-200/20 blur-[130px]"
           />
 
           <div className="container mx-auto">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-              <div className="relative mb-5 overflow-hidden rounded-full border border-white/60 bg-white/55 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_35px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.06]">
+              <div className="relative mb-5 overflow-hidden rounded-full border border-white/60 bg-white/55 px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_35px_rgba(15,23,42,0.08)] backdrop-blur-2xl">
                 <div
                   aria-hidden="true"
                   className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent"
@@ -176,7 +173,7 @@ export default function ContactPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="h-12 rounded-full border-foreground/10 bg-background/60 px-7 backdrop-blur-xl"
+                    className="h-12 rounded-full border-foreground/10 bg-white/60 px-7 backdrop-blur-xl"
                   >
                     <Mail className="mr-2 h-4 w-4" />
                     Email us
@@ -202,11 +199,11 @@ export default function ContactPage() {
                   {/* Glass reflection */}
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -left-12 -top-20 h-48 w-[120%] rotate-[-8deg] bg-gradient-to-b from-white/70 via-white/15 to-transparent blur-2xl dark:from-white/10"
+                    className="pointer-events-none absolute -left-12 -top-20 h-48 w-[120%] rotate-[-8deg] bg-gradient-to-b from-white/70 via-white/15 to-transparent blur-2xl"
                   />
 
                   <div className="relative flex h-full flex-col">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/70 bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/70 bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl">
                       <method.icon className="h-5 w-5 text-foreground/75" />
                     </div>
 
@@ -257,12 +254,12 @@ export default function ContactPage() {
               >
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-300/25 blur-3xl dark:bg-blue-500/10"
+                  className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-300/25 blur-3xl"
                 />
 
                 <div className="relative flex h-full flex-col">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/70 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/70 shadow-sm backdrop-blur-xl">
                       <MapPin className="h-5 w-5" />
                     </div>
 
@@ -289,7 +286,7 @@ export default function ContactPage() {
                     >
                       <Button
                         variant="outline"
-                        className="rounded-full border-foreground/10 bg-white/50 backdrop-blur-xl dark:bg-white/[0.05]"
+                        className="rounded-full border-foreground/10 bg-white/50 backdrop-blur-xl"
                       >
                         Open in Google Maps
                         <ExternalLink className="ml-2 h-4 w-4" />
@@ -305,11 +302,11 @@ export default function ContactPage() {
               >
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-rose-300/20 blur-3xl dark:bg-rose-500/10"
+                  className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-rose-300/20 blur-3xl"
                 />
 
                 <div className="relative flex h-full flex-col">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/70 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/70 bg-white/70 shadow-sm backdrop-blur-xl">
                     <PackageCheck className="h-5 w-5" />
                   </div>
 
@@ -360,7 +357,7 @@ export default function ContactPage() {
               {supportTopics.map((topic) => (
                 <div
                   key={topic.title}
-                  className="group rounded-[26px] border border-border/60 bg-background/70 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/10 hover:shadow-[0_20px_55px_rgba(15,23,42,0.07)] sm:p-7"
+                  className="group rounded-[26px] border border-border/60 bg-white/70 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/10 hover:shadow-[0_20px_55px_rgba(15,23,42,0.07)] sm:p-7"
                 >
                   <topic.icon className="h-6 w-6 text-foreground/70" />
 
@@ -385,7 +382,7 @@ export default function ContactPage() {
           <div className="container mx-auto">
             <div className={`${glassCardClassName} p-6 sm:p-8 md:p-12`}>
               <div className="relative grid items-center gap-8 md:grid-cols-[auto_1fr_auto]">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] border border-white/60 bg-white/70 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] border border-white/60 bg-white/70 shadow-sm backdrop-blur-xl">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
 
@@ -405,7 +402,7 @@ export default function ContactPage() {
                 <Link href="/privacy">
                   <Button
                     variant="outline"
-                    className="w-full rounded-full bg-background/50 md:w-auto"
+                    className="w-full rounded-full bg-white/50 md:w-auto"
                   >
                     Privacy policy
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -422,7 +419,7 @@ export default function ContactPage() {
 
         <section className="px-4 pb-20 pt-12 sm:px-6 md:pb-28 md:pt-20">
           <div className="container mx-auto">
-            <div className="relative overflow-hidden rounded-[36px] bg-neutral-950 px-6 py-16 text-center text-white shadow-[0_35px_100px_rgba(0,0,0,0.22)] sm:px-10 md:py-24">
+            <div className="relative overflow-hidden rounded-[36px] border border-neutral-200 bg-white px-6 py-16 text-center text-foreground shadow-[0_35px_100px_rgba(0,0,0,0.22)] sm:px-10 md:py-24">
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-violet-500/20 blur-[90px]"
@@ -439,7 +436,7 @@ export default function ContactPage() {
               />
 
               <div className="relative mx-auto max-w-3xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-foreground/50">
                   Discover Wild Soul Club
                 </p>
 
@@ -447,7 +444,7 @@ export default function ContactPage() {
                   Find your next piece.
                 </h2>
 
-                <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-white/60">
+                <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-foreground/60">
                   Explore our latest products, new drops, and selected archive
                   pieces.
                 </p>
@@ -455,7 +452,7 @@ export default function ContactPage() {
                 <Link href="/products" className="mt-8 inline-flex">
                   <Button
                     size="lg"
-                    className="h-12 rounded-full bg-white px-8 text-black hover:bg-white/90"
+                    className="h-12 rounded-full bg-primary px-8 text-primary-foreground hover:bg-primary/90"
                   >
                     Shop all products
                     <ArrowRight className="ml-2 h-4 w-4" />

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export interface Collection {
@@ -67,20 +66,19 @@ export default function CollectionsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {collections.map((collection, index) => (
+        {collections.map((collection) => (
           <div
             key={collection.id}
           >
             <Link href={`/collections/${collection.slug}`}>
               <Card className="group overflow-hidden border-0">
-                <CardContent className={`p-0 relative h-64 ${collection.banner_color || 'bg-slate-800'} flex items-end`}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <CardContent className="relative flex h-64 items-end bg-white p-0">
                   <div className="relative p-6 w-full">
-                    <h3 className="text-white text-xl font-bold">{collection.name}</h3>
-                    <p className="text-white/80 text-sm mt-1">{collection.description}</p>
+                    <h3 className="text-xl font-bold text-foreground">{collection.name}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{collection.description}</p>
                     <div className="flex items-center justify-between mt-3">
-                      <span className="text-white/60 text-xs">{collection.product_count || 0} Products</span>
-                      <span className="text-white text-sm group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">{collection.product_count || 0} Products</span>
+                      <span className="inline-flex items-center gap-1 text-sm text-foreground transition-transform group-hover:translate-x-1">
                         Explore <ArrowRight className="h-4 w-4" />
                       </span>
                     </div>

@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function AboutPage() {
   return (
-    <div>
+    <div className="bg-white">
       {/* Hero */}
-      <section className="py-8 md:py-12 bg-muted/30">
+      <section className="bg-white py-8 md:py-12">
         <div className="container mx-auto px-4 text-center">
           <h1
             className="text-4xl md:text-6xl font-bold mb-4"
@@ -26,7 +26,7 @@ export default function AboutPage() {
       {/* Story */}
       <section className="py-8">
         <div className="container mx-auto px-4 max-w-3xl">
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
+          <div className="prose prose-neutral max-w-none">
             <p className="text-lg leading-relaxed">
               Founded in 2024, Wild Soul Club is a Myanmar streetwear brand that blends urban edge with 
               local soul. We believe fashion is more than clothing — it&apos;s an expression of identity.
@@ -47,7 +47,7 @@ export default function AboutPage() {
       {/*Contact */}
       <section className="py-8">
         <div className="container mx-auto px-4 max-w-3xl">
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
+          <div className="prose prose-neutral max-w-none">
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-semibold mb-4">Contact Information</h3>
@@ -91,7 +91,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      {/* <section className="py-16 bg-muted/30">
+      {/* <section className="bg-white py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">What We Stand For</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

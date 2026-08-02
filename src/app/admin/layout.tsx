@@ -191,18 +191,18 @@ export default function AdminLayout({
 
   if (checkingAccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-white text-muted-foreground">
         Checking admin access...
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-white">
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-card transform transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-64 border-r bg-white transform transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -232,7 +232,7 @@ export default function AdminLayout({
                     "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white"
                   )}
                 >
                   <link.icon className="h-4 w-4" />
@@ -247,7 +247,7 @@ export default function AdminLayout({
       {/* Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-white/90 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -255,7 +255,7 @@ export default function AdminLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="h-14 border-b bg-card flex items-center justify-between px-4 gap-4">
+        <header className="h-14 border-b bg-white flex items-center justify-between px-4 gap-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"

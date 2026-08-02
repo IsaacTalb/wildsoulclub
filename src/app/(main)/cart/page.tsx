@@ -50,7 +50,7 @@ export default function CartPage() {
               key={item.id}
               className="flex gap-4 p-4 rounded-lg border bg-card"
             >
-              <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-md overflow-hidden bg-muted shrink-0" />
+              <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-md overflow-hidden bg-white shrink-0" />
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/products/${item.product_id}`}

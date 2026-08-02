@@ -16,7 +16,7 @@ export default async function CollectionDetailPage({ params }: { params: Promise
       <Link href="/collections" className="mb-6 inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground">
         <ArrowLeft className="mr-1 h-4 w-4" /> Back to Collections
       </Link>
-      <section className="relative mb-10 min-h-56 overflow-hidden rounded-2xl bg-muted p-8 sm:p-10">
+      <section className="relative mb-10 min-h-56 overflow-hidden rounded-2xl bg-white p-8 sm:p-10">
         {collection.image_url ? <Image src={collection.image_url} alt="" fill priority sizes="100vw" className="object-cover" /> : null}
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/75 to-background/20" />
         <div className="relative max-w-2xl">
@@ -38,7 +38,7 @@ export default async function CollectionDetailPage({ params }: { params: Promise
             <Link key={product.id} href={`/products/${product.id}`}>
               <Card className="group h-full overflow-hidden border-0 shadow-sm transition-shadow hover:shadow-md">
                 <CardContent className="p-0">
-                  <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-muted">
+                  <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-white">
                     {product.thumbnail_url ? (
                       <Image src={product.thumbnail_url!} alt={product.name ?? "Product"} fill sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-contain transition-transform duration-300 group-hover:scale-105" />
                     ) : <ShoppingBag className="h-12 w-12 text-muted-foreground/40" />}

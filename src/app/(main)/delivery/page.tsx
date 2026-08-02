@@ -55,7 +55,7 @@ export default function DeliveryPage() {
         ))}
       </div>
 
-      <div className="mt-8 p-6 bg-muted/50 rounded-lg">
+      <div className="mt-8 p-6 bg-white rounded-lg">
         <h3 className="font-semibold mb-2">Important Notes</h3>
         <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
           <li>Delivery times are estimates and may vary due to weather or road conditions.</li>
