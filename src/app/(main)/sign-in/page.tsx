@@ -41,7 +41,7 @@ export default function SignInPage() {
       if (!authCode) return;
 
       setLoading(true);
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+      const { error } = await supabase.auth.exchangeCodeForSession(authCode);
 
       if (error) {
         setError(error.message);
@@ -61,7 +61,7 @@ export default function SignInPage() {
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -191,7 +191,7 @@ export default function SignInPage() {
           </div>
 
           <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/sign-up" className="text-primary hover:underline">
               Sign up
             </Link>

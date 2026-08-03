@@ -50,8 +50,17 @@ export default function CheckoutPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [storefrontSettings, setStorefrontSettings] = useState<Record<string, string>>({});
 
+  const getValidSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+    const { error: userError } = await supabase.auth.getUser(session.access_token);
+    if (!userError) return session;
+    const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+    return refreshedSession;
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getValidSession().then((session) => {
       if (!session) router.replace("/sign-up?redirect=%2Fcheckout");
       else setCheckingAuth(false);
     });
@@ -98,7 +107,7 @@ export default function CheckoutPage() {
   });
 
   const getAuthHeaders = async (): Promise<Record<string, string>> => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getValidSession();
     return session ? { Authorization: `Bearer ${session.access_token}` } : {};
   };
 
@@ -297,7 +306,6 @@ export default function CheckoutPage() {
                   </Label>
                 </RadioGroup>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {fulfillmentMethod === "delivery" && <>
                   <div className="md:col-span-2">
                     <Label htmlFor="full_name">Full Name *</Label>
                     <Input id="full_name" {...register("full_name")} placeholder="Enter your full name" />
@@ -313,6 +321,7 @@ export default function CheckoutPage() {
                     <Input id="phone" {...register("phone")} placeholder="09-XXX XXX XXX" />
                     {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
                   </div>
+                  {fulfillmentMethod === "delivery" && <>
                   <div className="md:col-span-2">
                     <Label htmlFor="address">Address *</Label>
                     <Input id="address" {...register("address")} placeholder="Street address, building name" />
@@ -347,6 +356,14 @@ export default function CheckoutPage() {
                     <Label htmlFor="notes">Order Notes</Label>
                     <Textarea id="notes" {...register("notes")} placeholder="Special instructions (optional)" />
                   </div>
+                  <div className="md:col-span-2 rounded-lg border-2 border-red-500 bg-red-50 p-4 text-red-950">
+                    <p className="text-sm font-bold">KPay payment-note code</p>
+                    {createdOrder ? (
+                      <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] text-red-600">{createdOrder.payment_reference}</p>
+                    ) : (
+                      <p className="mt-1 text-sm">Your unique 6-character code will appear here after you click <strong>Continue to Payment</strong>.</p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -378,18 +395,18 @@ export default function CheckoutPage() {
                 </RadioGroup>
 
                 {createdOrder && (
-                  <div className="mt-6 rounded-lg border-2 border-primary bg-primary/5 p-5 text-center">
-                    <p className="text-sm font-medium">Use this exact code in your KPay payment note</p>
-                    <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em]">{createdOrder.payment_reference}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">This reference is saved with your order.</p>
+                  <div className="mt-6 rounded-lg border-2 border-red-500 bg-red-50 p-5 text-center text-red-950">
+                    <p className="text-sm font-bold">Important: use this exact code in your KPay note</p>
+                    <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] text-red-600">{createdOrder.payment_reference}</p>
+                    <p className="mt-2 text-xs">The same code is saved with your order for payment matching.</p>
                   </div>
                 )}
 
-                <div className="mt-6 p-4 bg-white rounded-lg">
+                <div className="mt-6 rounded-lg border border-red-300 bg-red-50 p-4">
                   <div className="flex items-start gap-3">
-                    <Info className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                    <div className="text-sm text-muted-foreground">
-                      <p className="font-medium text-foreground mb-1">Payment Instructions:</p>
+                    <Info className="h-5 w-5 shrink-0 text-red-600" />
+                    <div className="text-sm text-red-950">
+                      <p className="mb-2 font-bold">Easy payment steps</p>
                       <ol className="list-decimal list-inside space-y-1">
                         <li>{createdOrder ? `Enter ${createdOrder.payment_reference} in the payment note` : "Continue to generate your payment reference"}</li>
                         <li>Transfer the total amount to the selected account</li>
