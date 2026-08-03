@@ -1,6 +1,8 @@
 .galleryViewport {
   touch-action: pan-y pinch-zoom;
   overscroll-behavior: contain;
+  overflow: visible;
+  background: transparent;
 }
 
 .gallerySlide {
@@ -15,6 +17,8 @@
   z-index: var(--slide-z);
   transform: translate3d(var(--slide-x), 0, 0) scale(var(--slide-scale));
   transform-origin: center;
+  filter: saturate(calc(0.75 + var(--slide-opacity) * 0.25));
+  will-change: transform, opacity;
 }
 
 .gallerySlide[aria-disabled="true"] { cursor: default; }
@@ -25,7 +29,9 @@
 
 @media (min-width: 768px) {
   .galleryViewport { touch-action: pan-x pinch-zoom; }
-  .gallerySlide { transform: translate3d(0, var(--slide-y), 0) scale(var(--slide-scale)); }
+  .gallerySlide {
+    transform: translate3d(0, var(--slide-y), 0) scale(var(--slide-scale));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

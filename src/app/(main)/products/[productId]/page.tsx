@@ -169,7 +169,7 @@ function LoopingProductGallery({
   return (
     <section
       aria-label={`${productName} image gallery`}
-      className={`${styles.galleryViewport} relative isolate w-full max-w-full overflow-hidden rounded-lg border border-foreground/10`}
+      className={`${styles.galleryViewport} relative isolate w-full max-w-full`}
       onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
@@ -190,7 +190,7 @@ function LoopingProductGallery({
       tabIndex={canLoop ? 0 : -1}
     >
 
-      <div className="relative aspect-[4/5] min-h-[480px] w-full sm:min-h-[560px] md:h-[min(76vh,760px)] md:min-h-[620px] md:aspect-auto">
+      <div className="relative aspect-[4/5] min-h-[480px] w-full sm:min-h-[560px] md:h-[min(76vh,760px)] md:min-h-[620px] md:aspect-auto rounded-[1.75rem]">
         {images.length > 0 ? (
           slideOffsets.map((offset) => {
             const visualOffset = offset - direction;
@@ -210,8 +210,8 @@ function LoopingProductGallery({
                   : 0.12;
 
             const slideStyle: GallerySlideStyle = {
-              "--slide-x": `${visualOffset * 73}%`,
-              "--slide-y": `${visualOffset * 69}%`,
+              "--slide-x": `${visualOffset * 68}%`,
+              "--slide-y": `${visualOffset * 79}%`,
               "--slide-scale": slideScale,
               "--slide-opacity": slideOpacity,
               "--slide-z": 10 - distanceFromCenter,
@@ -270,20 +270,20 @@ function LoopingProductGallery({
         )}
       </div>
 
-      {discountPercent && (
+      {/* {discountPercent && (
         <Badge className="absolute left-5 top-5 z-30 rounded-full bg-red-500 px-3 py-1 text-sm text-white shadow-lg">
           -{discountPercent}%
         </Badge>
-      )}
+      )} */}
 
       {canLoop && (
         <>
-          <p className="pointer-events-none absolute bottom-5 left-5 z-30 hidden text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/35 md:block">
+          <p className="pointer-events-none absolute mt-2 bottom-3 left-5 z-30 hidden text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/35 md:block">
             Scroll to explore
           </p>
 
           <div
-            className="absolute inset-x-0 bottom-5 z-30 flex items-center justify-center gap-2 md:hidden"
+            className="absolute inset-x-0 mt-2 bottom-3 z-30 flex items-center justify-center gap-2 md:hidden"
             aria-label={`Image ${activeImage + 1} of ${images.length}`}
           >
             {images.map((_, index) => (
@@ -493,9 +493,9 @@ export default function ProductDetailPage() {
     return <div className="container mx-auto px-4 py-8">Product not found</div>;
 
   return (
-    <div className="min-h-screen bg-white py-5 md:px-4 md:py-8">
+    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-8 md:pt-[calc(var(--site-header-height)+2rem)]">
       <div className="container mx-auto max-w-[1500px]">
-        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] lg:gap-10">
+        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:gap-12">
           {/* Image Gallery */}
           <LoopingProductGallery
             key={product.id}
@@ -506,32 +506,32 @@ export default function ProductDetailPage() {
           />
 
           {/* Product Info */}
-          <div className="glass-scrollbar mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[2.25rem] border border-black/10 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-6 md:sticky md:top-20 md:mx-0 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[520px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5 lg:p-6">
-            <p className="mb-1.5 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="glass-scrollbar relative z-20 mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5 md:sticky md:top-20 md:mx-0 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[440px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5">
+            <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {product.categories?.name ||
                 (typeof product.category === "string"
                   ? product.category
                   : product.category?.name) ||
                 "Uncategorized"}
             </p>
-            <h1 className="mb-3 text-2xl font-bold lg:text-3xl">
+            <h1 className="mb-2 text-xl font-semibold leading-tight lg:text-2xl">
               {product.name}
             </h1>
 
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-3 flex items-center gap-2.5">
               {selectedVariant?.price || product.sale_price ? (
                 <>
-                  <span className="text-2xl font-bold text-red-500">
+                  <span className="text-xl font-semibold text-red-500">
                     {formatPrice(
                       Number(selectedVariant?.price || product.sale_price),
                     )}
                   </span>
-                  <span className="text-lg text-muted-foreground line-through">
+                  {/* <span className="text-sm text-muted-foreground line-through">
                     {formatPrice(product.price)}
-                  </span>
+                  </span> */}
                 </>
               ) : (
-                <span className="text-2xl font-bold">
+                <span className="text-xl font-semibold">
                   {formatPrice(product.price)}
                 </span>
               )}
@@ -539,8 +539,8 @@ export default function ProductDetailPage() {
 
             {/* Size Selection */}
             {product.sizes && product.sizes.length > 0 && (
-              <div className="mb-4">
-                <h3 className="mb-2 font-medium">
+              <div className="mb-3">
+                <h3 className="mb-1.5 text-sm font-medium">
                   Size{" "}
                   {selectedSize && (
                     <span className="text-primary">- {selectedSize}</span>
@@ -574,8 +574,8 @@ export default function ProductDetailPage() {
 
             {/* Color Selection */}
             {product.colors && product.colors.length > 0 && (
-              <div className="mb-4">
-                <h3 className="mb-2 font-medium">
+              <div className="mb-3">
+                <h3 className="mb-1.5 text-sm font-medium">
                   Color{" "}
                   {selectedColor && (
                     <span className="text-primary">- {selectedColor}</span>
@@ -608,9 +608,9 @@ export default function ProductDetailPage() {
             )}
 
             {/* Quantity */}
-            <div className="mb-4">
-              <h3 className="mb-2 font-medium">Quantity</h3>
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="mb-3">
+              <h3 className="mb-1.5 text-sm font-medium">Quantity</h3>
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="liquid"
                   size="icon-touch"
@@ -620,7 +620,7 @@ export default function ProductDetailPage() {
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="text-lg font-medium w-8 text-center">
+                <span className="w-7 text-center text-sm font-medium">
                   {quantity}
                 </span>
                 <Button
@@ -658,7 +658,7 @@ export default function ProductDetailPage() {
               <Button
                 variant="liquid-primary"
                 size="touch"
-                className="w-full min-w-0 flex-1 text-base"
+                  className="w-full min-w-0 flex-1 text-sm"
                 onClick={handleAddToCart}
                 disabled={
                   !optionsComplete ||
@@ -677,7 +677,7 @@ export default function ProductDetailPage() {
               </Button>
             </div>
 
-            <div className="mt-4 border-t border-foreground/10">
+            <div className="mt-3 border-t border-foreground/10 text-sm">
               <section className="border-b border-foreground/10">
                 <button
                   type="button"

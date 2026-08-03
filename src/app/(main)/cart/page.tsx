@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft } from "lucide-react";
+import Image from "next/image";
+import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -11,9 +13,25 @@ import { useCart } from "@/hooks/use-cart";
 
 export default function CartPage() {
   const { items, hasHydrated, removeItem, updateQuantity, getSubtotal } = useCart();
+  const [deliveryNotice, setDeliveryNotice] = useState(
+    "Delivery timing is confirmed after your order is placed.",
+  );
   const deliveryFee = items.length > 0 ? 3000 : 0;
   const subtotal = getSubtotal();
   const total = subtotal + deliveryFee;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/public/storefront-settings", { signal: controller.signal })
+      .then((response) => response.json())
+      .then((result: { data?: Record<string, string> }) => {
+        if (result.data?.delivery_notice) {
+          setDeliveryNotice(result.data.delivery_notice);
+        }
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   if (!hasHydrated) {
     return <div className="container mx-auto min-h-[50vh] px-4 py-16 text-center text-muted-foreground" role="status">Loading your cart…</div>;
@@ -50,7 +68,19 @@ export default function CartPage() {
               key={item.id}
               className="flex gap-4 p-4 rounded-lg border bg-card"
             >
-              <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-md overflow-hidden bg-white shrink-0" />
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted md:h-28 md:w-28">
+                {item.product?.thumbnail_url ? (
+                  <Image
+                    src={item.product.thumbnail_url}
+                    alt={item.product.name || "Product"}
+                    fill
+                    sizes="(min-width: 768px) 112px, 96px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs text-muted-foreground">No image</div>
+                )}
+              </div>
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/products/${item.product_id}`}
@@ -135,6 +165,14 @@ export default function CartPage() {
                 <Button variant="outline" className="w-full mb-4">
                   Apply Coupon
                 </Button>
+              </div>
+
+              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-black/5 bg-muted/45 p-3 text-sm">
+                <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div>
+                  <p className="font-medium">Delivery note</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{deliveryNotice}</p>
+                </div>
               </div>
 
               <Link href="/checkout">

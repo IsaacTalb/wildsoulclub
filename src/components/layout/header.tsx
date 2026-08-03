@@ -51,6 +51,8 @@ type Category = { id: string; name: string };
 export function Header() {
   const pathname = usePathname();
   const isHomepage = pathname === "/";
+  const isNewDropsPage = pathname.startsWith("/new-drops");
+  const usesFixedHeader = isHomepage || isNewDropsPage;
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
 
@@ -125,15 +127,16 @@ export function Header() {
   return (
     <header
       className={cn(
-        "top-0 z-50 h-[var(--site-header-height)] w-full px-0 pt-[max(0.25rem,env(safe-area-inset-top))] sm:px-0",
-        isHomepage ? "fixed text-white" : "sticky",
+        "top-0 z-50 h-[var(--site-header-height)] w-full px-0 pt-[max(0.25rem,env(safe-area-inset-top))] sm:px-0 fixed",
+        usesFixedHeader ? "fixed" : "sticky",
+        isHomepage && "text-white",
       )}
     >
       <div
         className={cn(
-          "liquid-pill relative grid h-13 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center border-black/10 bg-white/95 px-2.5 shadow-[0_8px_28px_rgba(15,23,42,0.08)] sm:px-4 xl:flex xl:justify-between",
+          "header-liquid-glass relative grid h-13 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center px-2.5 sm:px-4 xl:flex xl:justify-between",
           isHomepage &&
-            "!border-white/30 !bg-black/35 !text-white shadow-[0_12px_40px_rgba(0,0,0,0.28)] [&_a]:!text-white [&_button]:!text-white",
+            "header-liquid-glass-dark !text-white [&_a]:!text-white [&_button]:!text-white",
         )}
       >
         {/* Mobile navigation */}
@@ -399,10 +402,11 @@ export function Header() {
           className="relative z-10 col-start-2 flex min-w-0 items-center justify-self-center xl:absolute xl:left-1/2 xl:-translate-x-1/2"
         >
           <Image
-            src="/images/wsc-logo.svg"
+            src="/images/wildsoulclub.svg"
             alt="Wild Soul Club"
             width={140}
             height={32}
+            unoptimized
             className={cn(
               "h-8 w-auto max-w-[8.75rem] object-contain",
               isHomepage && "invert",

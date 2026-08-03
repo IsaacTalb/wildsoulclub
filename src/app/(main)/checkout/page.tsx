@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreditCard, ShieldCheck, Info } from "lucide-react";
@@ -18,12 +19,12 @@ import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { checkoutSchema, type CheckoutFormData } from "@/schemas";
 
-const paymentMethods = [
-  { id: "kpay", name: "KBZPay", number: "09-123456789" },
-  { id: "wave", name: "Wave", number: "09-987654321" },
-  { id: "ayapay", name: "AYA Pay", number: "09-456789123" },
-  { id: "cbpay", name: "CB Pay", number: "09-789123456" },
-];
+const paymentMethodDefinitions = [
+  { id: "kpay", name: "KBZPay", settingKey: "kpay_number" },
+  { id: "wave", name: "Wave", settingKey: "wave_number" },
+  { id: "ayapay", name: "AYA Pay", settingKey: "ayapay_number" },
+  { id: "cbpay", name: "CB Pay", settingKey: "cbpay_number" },
+] as const;
 
 type CheckoutApiResponse = {
   data?: {
@@ -42,6 +43,33 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [storefrontSettings, setStorefrontSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/public/storefront-settings", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load payment details");
+        return response.json();
+      })
+      .then((result: { data?: Record<string, string> }) =>
+        setStorefrontSettings(result.data ?? {}),
+      )
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setSubmitError("Payment account details are temporarily unavailable. Please refresh before paying.");
+      });
+    return () => controller.abort();
+  }, []);
+
+  const paymentMethods = useMemo(
+    () =>
+      paymentMethodDefinitions.flatMap((method) => {
+        const number = storefrontSettings[method.settingKey]?.trim();
+        return number ? [{ ...method, number }] : [];
+      }),
+    [storefrontSettings],
+  );
 
   const deliveryFee = items.length > 0 ? 3000 : 0;
   const subtotal = getSubtotal();
@@ -116,6 +144,11 @@ export default function CheckoutPage() {
 
     if (!paymentProof) {
       setSubmitError("Validation error: please upload your payment proof screenshot before placing the order.");
+      return;
+    }
+
+    if (!paymentMethods.some((method) => method.id === paymentMethod)) {
+      setSubmitError("Validation error: no valid payment account is selected. Please refresh and try again.");
       return;
     }
 
@@ -285,6 +318,11 @@ export default function CheckoutPage() {
                       <span className="text-sm text-muted-foreground">{method.number}</span>
                     </div>
                   ))}
+                  {paymentMethods.length === 0 && (
+                    <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                      Loading payment account details…
+                    </p>
+                  )}
                 </RadioGroup>
 
                 <div className="mt-6 p-4 bg-white rounded-lg">
@@ -327,7 +365,19 @@ export default function CheckoutPage() {
                 <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3">
-                      <div className="w-14 h-14 rounded bg-white shrink-0" />
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
+                        {item.product?.thumbnail_url ? (
+                          <Image
+                            src={item.product.thumbnail_url}
+                            alt={item.product.name || "Product"}
+                            fill
+                            sizes="56px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[9px] text-muted-foreground">No image</div>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium line-clamp-1">{item.product?.name}</p>
                         <p className="text-xs text-muted-foreground">

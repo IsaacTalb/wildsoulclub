@@ -59,10 +59,7 @@ function ProductsContent() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-white px-4 md:px-8">
-      <div className="liquid-orb right-0 top-52 h-80 w-80 bg-fuchsia-200/40" />
-      <div className="liquid-orb bottom-10 left-1/3 h-64 w-64 bg-amber-200/40" />
-
-      <div className="pointer-events-none absolute inset-0">
+        <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-[45%] h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/75 blur-3xl" />
       </div>
 

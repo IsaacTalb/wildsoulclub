@@ -1,8 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-
-import { formatPrice } from "@/lib/utils";
 import styles from "./floating-product-canvas.module.css";
 
 const PLACEHOLDER =
@@ -52,9 +49,23 @@ function statusFor(product: FloatingProduct) {
   return null;
 }
 
-export function FloatingProductCanvas({ products, groupIndex = 0 }: { products: FloatingProduct[]; groupIndex?: number }) {
+export function FloatingProductCanvas({
+  products,
+  groupIndex = 0,
+  fullViewport = false,
+}: {
+  products: FloatingProduct[];
+  groupIndex?: number;
+  fullViewport?: boolean;
+}) {
   return (
-    <div className="relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]">
+    <div
+      className={
+        fullViewport
+          ? "relative min-h-[calc(100svh-var(--site-header-height))] w-full"
+          : "relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]"
+      }
+    >
       {products.map((product, index) => {
         const single = products.length === 1;
         const productImage = product.product_images?.[0];
@@ -68,12 +79,12 @@ export function FloatingProductCanvas({ products, groupIndex = 0 }: { products: 
                   <Image src={image} alt={product.name} fill unoptimized sizes="(min-width: 768px) 20vw, 42vw" placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className={productImage?.transparent_url ? "rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" : "rounded-lg object-cover"} />
                   {status && <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/85 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-black/65 opacity-0 backdrop-blur-xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">{status}</span>}
                 </div>
-                <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-xl backdrop-blur-2xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+                {/* <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-xl backdrop-blur-2xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
                   <p className="line-clamp-1 text-xs font-medium">{product.name}</p>
                   <p className="mt-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground">{product.categories?.name || product.category || "Wild Soul"}</p>
                   <div className="mt-2 flex justify-center gap-2 text-[11px] font-semibold"><span>{formatPrice(product.sale_price || product.price)}</span>{product.sale_price && <span className="text-muted-foreground line-through">{formatPrice(product.price)}</span>}</div>
                   <ArrowUpRight className="mx-auto mt-2 h-3.5 w-3.5 text-muted-foreground" />
-                </div>
+                </div> */}
               </Link>
             </div>
           </div>

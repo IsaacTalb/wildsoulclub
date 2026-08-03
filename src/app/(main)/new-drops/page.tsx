@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
@@ -71,6 +71,16 @@ export default function NewDropsPage() {
     return () => controller.abort();
   }, []);
 
+  const sortedDrops = useMemo(
+    () =>
+      [...newDrops].sort((a, b) => {
+        const aDate = Date.parse(a.release_date || a.created_at || "") || 0;
+        const bDate = Date.parse(b.release_date || b.created_at || "") || 0;
+        return bDate - aDate;
+      }),
+    [newDrops],
+  );
+
   if (error || (!loading && newDrops.length === 0)) {
     return (
       <div className="flex h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] items-center justify-center bg-white px-6 text-center">
@@ -102,14 +112,14 @@ export default function NewDropsPage() {
 
   return (
     <div
-      className="h-[calc(100vh-4rem)] h-[calc(100svh-4rem)] overflow-y-auto snap-y snap-mandatory motion-reduce:snap-none"
+      className="bg-white pt-[var(--site-header-height)]"
       aria-busy={loading}
     >
       {loading
         ? skeletonSections.map((item) => (
             <section
               key={item}
-              className="relative min-h-full snap-start snap-always overflow-hidden bg-white motion-reduce:snap-normal"
+              className="relative min-h-[calc(100svh-var(--site-header-height))] overflow-hidden bg-white"
               aria-label="Loading release"
             >
               <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white via-neutral-100 to-white motion-reduce:animate-none" />
@@ -122,10 +132,10 @@ export default function NewDropsPage() {
               </div>
             </section>
           ))
-        : newDrops.map((drop, index) => (
+        : sortedDrops.map((drop, index) => (
             <Fragment key={drop.id}>
             <section
-              className={`relative min-h-full snap-start snap-always isolate overflow-hidden bg-white motion-reduce:snap-normal ${drop.banner_image_url ? "text-white" : "text-foreground [&_h1]:!text-foreground [&_p]:!text-foreground [&_span]:!text-foreground"}`}
+              className={`relative isolate min-h-[calc(100svh-var(--site-header-height))] overflow-hidden bg-white ${drop.banner_image_url ? "text-white" : "text-foreground [&_h1]:!text-foreground [&_p]:!text-foreground [&_span]:!text-foreground"}`}
               aria-labelledby={`drop-${drop.id}`}
             >
               {drop.banner_image_url ? (
@@ -140,32 +150,32 @@ export default function NewDropsPage() {
                   className="-z-20 object-cover"
                 />
               ) : null}
-              {drop.banner_image_url ? <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/20 sm:bg-gradient-to-r sm:from-black/90 sm:via-black/45 sm:to-transparent" /> : null}
+              {drop.banner_image_url ? <div className="absolute inset-0 -z-10 bg-black/50" /> : null}
 
-              <div className="flex min-h-[calc(100vh-4rem)] min-h-[calc(100svh-4rem)] items-end px-5 py-8 sm:px-10 sm:py-12 lg:px-[max(4rem,8vw)] lg:py-16">
-                <div className="max-w-2xl">
-                  <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/80 sm:text-sm">
+              <div className="flex min-h-[calc(100svh-var(--site-header-height))] items-center justify-center px-5 py-10 text-center sm:px-10 lg:px-[max(4rem,8vw)]">
+                <div className="mx-auto max-w-3xl">
+                  <div className="mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-90 sm:text-sm">
                     <span>{drop.collections?.name || "Latest collection"}</span>
                     <span className="flex items-center gap-2 normal-case tracking-normal">
                       <CalendarDays className="h-4 w-4" aria-hidden="true" />
                       {formatReleaseDate(drop.release_date)}
                     </span>
                   </div>
-                  {index === 0 && <p className="mb-2 text-sm font-medium text-white/75">Newest release</p>}
+                  {/* {index === 0 && <p className="mb-2 text-sm font-medium text-white/75">Newest release</p>} */}
                   <h1 id={`drop-${drop.id}`} className="text-4xl font-bold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
                     {drop.name}
                   </h1>
-                  <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
+                  {/* <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
                     {drop.description || "Discover the pieces in our latest curated release."}
-                  </p>
+                  </p> */}
 
                 </div>
               </div>
             </section>
             {(drop.products ?? []).length > 0 && (
-              <section className="bg-white px-4 md:px-8" aria-label={`${drop.name} products`}>
+              <section className="bg-white px-3 sm:px-4 md:px-8" aria-label={`${drop.name} products`}>
                 {chunkFloatingProducts(drop.products ?? []).map((products, groupIndex) => (
-                  <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} />
+                  <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} fullViewport />
                 ))}
               </section>
             )}
