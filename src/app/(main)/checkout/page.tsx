@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreditCard, ShieldCheck, Info } from "lucide-react";
+import { CreditCard, ShieldCheck, Info, Store, Truck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +32,8 @@ type CheckoutApiResponse = {
     uploadUrl?: string;
     objectKey?: string;
     imageUrl?: string;
+    order_number?: string;
+    payment_reference?: string;
   };
   error?: string;
 };
@@ -40,10 +42,20 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, hasHydrated, getSubtotal, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState("kpay");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<"delivery" | "pickup">("delivery");
+  const [createdOrder, setCreatedOrder] = useState<{ id: string; order_number?: string; payment_reference: string } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [storefrontSettings, setStorefrontSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) router.replace("/sign-up?redirect=%2Fcheckout");
+      else setCheckingAuth(false);
+    });
+  }, [router]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -71,16 +83,18 @@ export default function CheckoutPage() {
     [storefrontSettings],
   );
 
-  const deliveryFee = items.length > 0 ? 3000 : 0;
+  const deliveryFee = fulfillmentMethod === "delivery" && items.length > 0 ? 3000 : 0;
   const subtotal = getSubtotal();
-  const total = subtotal >= 100000 ? subtotal : subtotal + deliveryFee;
+  const total = fulfillmentMethod === "pickup" || subtotal >= 100000 ? subtotal : subtotal + deliveryFee;
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
+    defaultValues: { fulfillment_method: "delivery" },
   });
 
   const getAuthHeaders = async (): Promise<Record<string, string>> => {
@@ -142,11 +156,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!paymentProof) {
-      setSubmitError("Validation error: please upload your payment proof screenshot before placing the order.");
-      return;
-    }
-
     if (!paymentMethods.some((method) => method.id === paymentMethod)) {
       setSubmitError("Validation error: no valid payment account is selected. Please refresh and try again.");
       return;
@@ -159,14 +168,6 @@ export default function CheckoutPage() {
       if (!("Authorization" in authHeaders)) {
         throw new Error("Please sign in before placing your order.");
       }
-      if (!paymentProof.type.startsWith("image/")) {
-        throw new Error("Payment proof must be an image file.");
-      }
-      if (paymentProof.size > 10 * 1024 * 1024) {
-        throw new Error("Payment proof must be smaller than 10 MB.");
-      }
-
-      const uploadedProof = await uploadPaymentProof(paymentProof, authHeaders);
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -179,6 +180,7 @@ export default function CheckoutPage() {
             color: item.color || null,
           })),
           full_name: data.full_name,
+          fulfillment_method: fulfillmentMethod,
           email: data.email,
           phone: data.phone,
           address: data.address,
@@ -200,12 +202,37 @@ export default function CheckoutPage() {
         throw new Error("Order creation failed: the server did not return an order ID.");
       }
 
+      if (!order.payment_reference) throw new Error("Order creation failed: no payment reference was returned.");
+      setCreatedOrder({ id: order.id, order_number: order.order_number, payment_reference: order.payment_reference });
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const completePayment = async () => {
+    setSubmitError(null);
+    if (!createdOrder || !paymentProof) {
+      setSubmitError("Please upload your payment screenshot before completing checkout.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const authHeaders = await getAuthHeaders();
+      if (!("Authorization" in authHeaders)) throw new Error("Your session expired. Please sign in again.");
+      if (!paymentProof.type.startsWith("image/") || paymentProof.size > 10 * 1024 * 1024) {
+        throw new Error("Payment proof must be an image smaller than 10 MB.");
+      }
+      const uploadedProof = await uploadPaymentProof(paymentProof, authHeaders);
+
       const paymentResponse = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
-          order_id: order.id,
+          order_id: createdOrder.id,
           method: paymentMethod,
+          transaction_id: createdOrder.payment_reference,
           payment_image: uploadedProof.imageUrl,
           payment_object_key: uploadedProof.objectKey,
         }),
@@ -216,7 +243,7 @@ export default function CheckoutPage() {
       }
 
       clearCart();
-      router.push("/order-success");
+      router.push(`/order-success?order=${encodeURIComponent(createdOrder.order_number ?? "")}&reference=${createdOrder.payment_reference}`);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
     } finally {
@@ -224,7 +251,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!hasHydrated) {
+  if (!hasHydrated || checkingAuth) {
     return <div className="container mx-auto min-h-[50vh] px-4 py-16 text-center text-muted-foreground" role="status">Loading checkout…</div>;
   }
 
@@ -250,8 +277,27 @@ export default function CheckoutPage() {
             {/* Shipping Information */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Shipping Information</h2>
+                <h2 className="text-lg font-semibold mb-4">Fulfillment &amp; Contact</h2>
+                <input type="hidden" {...register("fulfillment_method")} />
+                <RadioGroup
+                  value={fulfillmentMethod}
+                  disabled={Boolean(createdOrder)}
+                  onValueChange={(value) => {
+                    const method = value as "delivery" | "pickup";
+                    setFulfillmentMethod(method);
+                    setValue("fulfillment_method", method, { shouldValidate: true });
+                  }}
+                  className="mb-5 grid gap-3 sm:grid-cols-2"
+                >
+                  <Label htmlFor="delivery" className="flex cursor-pointer items-center gap-3 rounded-lg border p-4">
+                    <RadioGroupItem id="delivery" value="delivery" /><Truck className="h-5 w-5" /> Delivery
+                  </Label>
+                  <Label htmlFor="pickup" className="flex cursor-pointer items-center gap-3 rounded-lg border p-4">
+                    <RadioGroupItem id="pickup" value="pickup" /><Store className="h-5 w-5" /> Store pickup
+                  </Label>
+                </RadioGroup>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {fulfillmentMethod === "delivery" && <>
                   <div className="md:col-span-2">
                     <Label htmlFor="full_name">Full Name *</Label>
                     <Input id="full_name" {...register("full_name")} placeholder="Enter your full name" />
@@ -291,6 +337,12 @@ export default function CheckoutPage() {
                     <Label htmlFor="zip">ZIP Code</Label>
                     <Input id="zip" {...register("zip")} placeholder="Optional" />
                   </div>
+                  </>}
+                  {fulfillmentMethod === "pickup" && (
+                    <div className="md:col-span-2 rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
+                      No delivery fee or address is required. We will contact you when the order is ready to collect.
+                    </div>
+                  )}
                   <div className="md:col-span-2">
                     <Label htmlFor="notes">Order Notes</Label>
                     <Textarea id="notes" {...register("notes")} placeholder="Special instructions (optional)" />
@@ -306,13 +358,13 @@ export default function CheckoutPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Transfer to one of our accounts and upload the payment screenshot
                 </p>
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} disabled={Boolean(createdOrder)} className="space-y-3">
                   {paymentMethods.map((method) => (
                     <div key={method.id} className="flex items-center justify-between p-4 rounded-lg border has-[[data-state=checked]]:border-primary">
                       <div className="flex items-center gap-3">
                         <RadioGroupItem value={method.id} id={method.id} />
                         <Label htmlFor={method.id} className="font-medium cursor-pointer">
-                          {method.name}
+                          {method.name} (Min Khant Kyaw)
                         </Label>
                       </div>
                       <span className="text-sm text-muted-foreground">{method.number}</span>
@@ -325,22 +377,31 @@ export default function CheckoutPage() {
                   )}
                 </RadioGroup>
 
+                {createdOrder && (
+                  <div className="mt-6 rounded-lg border-2 border-primary bg-primary/5 p-5 text-center">
+                    <p className="text-sm font-medium">Use this exact code in your KPay payment note</p>
+                    <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em]">{createdOrder.payment_reference}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">This reference is saved with your order.</p>
+                  </div>
+                )}
+
                 <div className="mt-6 p-4 bg-white rounded-lg">
                   <div className="flex items-start gap-3">
                     <Info className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                     <div className="text-sm text-muted-foreground">
                       <p className="font-medium text-foreground mb-1">Payment Instructions:</p>
                       <ol className="list-decimal list-inside space-y-1">
+                        <li>{createdOrder ? `Enter ${createdOrder.payment_reference} in the payment note` : "Continue to generate your payment reference"}</li>
                         <li>Transfer the total amount to the selected account</li>
                         <li>Take a screenshot of the payment confirmation</li>
-                        <li>Upload the screenshot below before placing your order</li>
+                        <li>Upload the screenshot below</li>
                         <li>Admin will verify and confirm your order</li>
                       </ol>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 space-y-2">
+                {createdOrder && <div className="mt-6 space-y-2">
                   <Label htmlFor="payment_proof">Payment Proof Screenshot *</Label>
                   <Input
                     id="payment_proof"
@@ -351,7 +412,7 @@ export default function CheckoutPage() {
                   <p className="text-xs text-muted-foreground">
                     Upload a clear JPG, PNG, or other image up to 10 MB.
                   </p>
-                </div>
+                </div>}
               </CardContent>
             </Card>
           </div>
@@ -397,10 +458,10 @@ export default function CheckoutPage() {
                     <span>{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delivery Fee</span>
+                    <span className="text-muted-foreground">{fulfillmentMethod === "pickup" ? "Pickup" : "Delivery Fee"}</span>
                     <span>{deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}</span>
                   </div>
-                  {subtotal >= 100000 && (
+                  {fulfillmentMethod === "delivery" && subtotal >= 100000 && (
                     <div className="flex justify-between text-green-600">
                       <span>Free Delivery</span>
                       <span>-{formatPrice(deliveryFee)}</span>
@@ -414,7 +475,8 @@ export default function CheckoutPage() {
                 </div>
 
                 <Button
-                  type="submit"
+                  type={createdOrder ? "button" : "submit"}
+                  onClick={createdOrder ? completePayment : undefined}
                   size="lg"
                   className="w-full mt-6 text-base"
                   disabled={isSubmitting}
@@ -424,7 +486,7 @@ export default function CheckoutPage() {
                   ) : (
                     <>
                       <CreditCard className="mr-2 h-5 w-5" />
-                      Place Order
+                      {createdOrder ? "Submit Payment Proof" : "Continue to Payment"}
                     </>
                   )}
                 </Button>

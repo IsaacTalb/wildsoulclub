@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { order_id, method, transaction_id, payment_image, payment_object_key } = body;
+    const { order_id, method, payment_image, payment_object_key } = body;
 
     if (!order_id || !method || !payment_image || !payment_object_key) {
       return NextResponse.json(
@@ -18,10 +18,13 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    if (!["kpay", "wave", "ayapay", "cbpay"].includes(method)) {
+      return NextResponse.json({ success: false, error: "Invalid payment method" }, { status: 400 });
+    }
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select("id, user_id, total")
+      .select("id, user_id, total, payment_reference")
       .eq("id", order_id)
       .eq("user_id", user.id)
       .single();
@@ -33,12 +36,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const { data: existingPayment } = await supabaseAdmin.from("payments").select("id").eq("order_id", order_id).maybeSingle();
+    if (existingPayment) return NextResponse.json({ success: false, error: "Payment proof already exists for this order" }, { status: 409 });
+
     const { data, error } = await supabaseAdmin
       .from("payments")
       .insert({
         order_id,
         method,
-        transaction_id: transaction_id || null,
+        transaction_id: order.payment_reference,
         payment_image,
         payment_object_key,
         amount: order.total,
@@ -50,7 +56,7 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     return NextResponse.json({ success: true, data }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: "Failed to create payment" },
       { status: 500 }

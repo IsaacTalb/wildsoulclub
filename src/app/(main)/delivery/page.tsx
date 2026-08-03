@@ -7,7 +7,7 @@ const info = [
   {
     icon: Truck,
     title: "Delivery Areas",
-    desc: "We deliver nationwide across Myanmar. Major cities like Yangon, Mandalay, and Naypyidaw typically receive orders within 2-3 business days. Other regions may take 5-7 business days.",
+    desc: "We deliver nationwide across Myanmar. Major cities like Yangon, Mandalay, and Taunggyi typically receive orders within 3-7 business days. Other regions may take 1 week to 2 weeks.",
   },
   {
     icon: Clock,
@@ -17,12 +17,12 @@ const info = [
   {
     icon: Package,
     title: "Delivery Fees",
-    desc: "Yangon area: 3,000 MMK. Other regions: calculated at checkout based on location. Free delivery for orders over 100,000 MMK.",
+    desc: "Yangon area: 7,000 MMK (might differ based on location) Other regions: calculated at checkout based on location. Free delivery for orders over 100,000 MMK.",
   },
   {
     icon: ShieldCheck,
     title: "Tracking",
-    desc: "Once your order is shipped, you will receive a tracking number via SMS and email. You can also track your order in your account dashboard.",
+    desc: "Once your order is shipped, you will receive a tracking number via email or Phone Call. You can also track your order in your account dashboard.",
   },
   {
     icon: MapPin,
@@ -61,7 +61,7 @@ export default function DeliveryPage() {
           <li>Delivery times are estimates and may vary due to weather or road conditions.</li>
           <li>Please ensure your shipping address is correct. We are not responsible for incorrect addresses.</li>
           <li>If you are not available at the time of delivery, the courier will attempt to contact you.</li>
-          <li>For any delivery concerns, contact us at hello@wildsoulclub.com</li>
+          <li>For any delivery concerns, contact us at wildsoulclubonline@gmail.com or via phone at +959 767 676 114.</li>
         </ul>
       </div>
     </div>

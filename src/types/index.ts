@@ -127,6 +127,8 @@ export interface Order {
   state: string;
   zip?: string;
   notes?: string;
+  payment_reference: string;
+  fulfillment_method: "delivery" | "pickup";
   subtotal: number;
   delivery_fee: number;
   total: number;

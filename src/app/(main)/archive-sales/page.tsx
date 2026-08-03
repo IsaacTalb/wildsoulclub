@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { FloatingProductCanvas, FloatingProductSkeleton, chunkFloatingProducts } from "@/components/products/floating-product-canvas";
 import type { ArchiveSaleProduct } from "@/types/product";
 
@@ -31,7 +32,20 @@ export default function ArchiveSalesPage() {
         {loading ? <FloatingProductSkeleton /> : error ? <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">{error}. Please try again later.</div> : groups.length ? groups.map((group, index) => <FloatingProductCanvas key={index} products={group} groupIndex={index} />) : <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">There are no archive-sale pieces available right now.</div>}
       </section>
       <footer className="flex min-h-[34vh] items-end justify-center pb-8 pt-16 text-center sm:pb-12">
-        <p className="text-[clamp(2.5rem,10vw,9rem)] font-black leading-[0.78] tracking-[-0.08em] text-foreground" aria-label="Wild Soul Club">WILD SOUL<br />CLUB</p>
+        <div className="flex flex-col items-center">
+          <div className="relative h-20 w-40 overflow-hidden sm:h-32 sm:w-64">
+            <Image
+              src="/images/logo-black.png"
+              alt="Wild Soul Club"
+              fill
+              sizes="(min-width: 640px) 256px, 224px"
+              className="object-cover"
+            />
+          </div>
+          <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.16em] text-foreground sm:mt-3 sm:text-sm sm:tracking-[0.2em]">
+            Wild Soul Club&apos;s Archives
+          </p>
+        </div>
       </footer>
     </div>
   );

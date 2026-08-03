@@ -19,6 +19,10 @@ type OrderRow = {
   total: number;
   status: OrderStatus;
   payment_status: "pending" | "approved" | "rejected" | "expired";
+  payment_reference: string;
+  fulfillment_method: "delivery" | "pickup";
+  notes?: string | null;
+  payments?: Array<{ payment_image: string }>;
   courier?: string | null;
   tracking_number?: string | null;
   order_items?: unknown[];
@@ -120,7 +124,7 @@ export default function AdminOrdersPage() {
   const filtered = useMemo(() => orders.filter((order) => {
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     const term = search.toLowerCase().trim();
-    const matchesSearch = !term || order.order_number.toLowerCase().includes(term) || order.full_name.toLowerCase().includes(term);
+    const matchesSearch = !term || order.order_number.toLowerCase().includes(term) || order.payment_reference?.toLowerCase().includes(term) || order.full_name.toLowerCase().includes(term);
     return matchesStatus && matchesSearch;
   }), [orders, search, statusFilter]);
 
@@ -135,7 +139,7 @@ export default function AdminOrdersPage() {
           <div className="p-4 pb-0 flex flex-wrap gap-3">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search order number or customer..." className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} />
+              <Input placeholder="Search order, reference, or customer..." className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} />
             </div>
             <Select value={statusFilter || undefined} onValueChange={(value) => setStatusFilter(value || "all")}>
               <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
@@ -150,6 +154,7 @@ export default function AdminOrdersPage() {
               <tr className="border-b text-left">
                 <th className="pb-3 pt-4 px-4 font-medium">Order ID</th>
                 <th className="pb-3 pt-4 px-4 font-medium">Customer</th>
+                <th className="pb-3 pt-4 px-4 font-medium">Payment Ref.</th>
                 <th className="pb-3 pt-4 px-4 font-medium">Date</th>
                 <th className="pb-3 pt-4 px-4 font-medium">Items</th>
                 <th className="pb-3 pt-4 px-4 font-medium">Total</th>
@@ -160,7 +165,7 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td className="py-8 px-4 text-muted-foreground" colSpan={9}>Loading orders…</td></tr> : filtered.map((order) => {
+              {loading ? <tr><td className="py-8 px-4 text-muted-foreground" colSpan={10}>Loading orders…</td></tr> : filtered.map((order) => {
                 const draft = shippingDrafts[order.id] ?? { courier: order.courier ?? "", trackingNumber: order.tracking_number ?? "" };
                 const isUpdating = updatingOrderId === order.id;
 
@@ -168,6 +173,7 @@ export default function AdminOrdersPage() {
                   <tr key={order.id} className="border-b last:border-0 align-top">
                     <td className="py-3 px-4 font-mono text-xs">{order.order_number}</td>
                     <td className="py-3 px-4">{order.full_name}</td>
+                    <td className="py-3 px-4"><div className="font-mono font-semibold tracking-wider">{order.payment_reference}</div><div className="mt-1 text-xs text-muted-foreground">{order.fulfillment_method}</div>{order.notes && <div className="mt-1 max-w-48 text-xs text-muted-foreground">Note: {order.notes}</div>}</td>
                     <td className="py-3 px-4 text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</td>
                     <td className="py-3 px-4">{order.order_items?.length ?? 0}</td>
                     <td className="py-3 px-4 font-medium">{formatPrice(Number(order.total))}</td>
@@ -187,11 +193,11 @@ export default function AdminOrdersPage() {
                         </div>
                       ) : <span className="text-muted-foreground">Set fulfillment to shipped to add courier and tracking.</span>}
                     </td>
-                    <td className="py-3 px-4"><Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button></td>
+                    <td className="py-3 px-4">{order.payments?.[0]?.payment_image ? <Button variant="ghost" size="icon" asChild><a href={order.payments[0].payment_image} target="_blank" rel="noreferrer" aria-label="View payment screenshot"><Eye className="h-4 w-4" /></a></Button> : <span className="text-xs text-muted-foreground">No proof</span>}</td>
                   </tr>
                 );
               })}
-              {!loading && filtered.length === 0 ? <tr><td className="py-8 px-4 text-muted-foreground" colSpan={9}>No orders found.</td></tr> : null}
+              {!loading && filtered.length === 0 ? <tr><td className="py-8 px-4 text-muted-foreground" colSpan={10}>No orders found.</td></tr> : null}
             </tbody>
           </table>
         </CardContent>

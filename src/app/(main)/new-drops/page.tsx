@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
-import { ArrowRight, CalendarDays, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, RefreshCw, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Drop } from "@/types/product";
 import { FloatingProductCanvas, chunkFloatingProducts } from "@/components/products/floating-product-canvas";
@@ -112,7 +112,7 @@ export default function NewDropsPage() {
 
   return (
     <div
-      className="bg-white pt-[var(--site-header-height)]"
+      className="bg-white]"
       aria-busy={loading}
     >
       {loading
@@ -137,6 +137,7 @@ export default function NewDropsPage() {
             <section
               className={`relative isolate min-h-[calc(100svh-var(--site-header-height))] overflow-hidden bg-white ${drop.banner_image_url ? "text-white" : "text-foreground [&_h1]:!text-foreground [&_p]:!text-foreground [&_span]:!text-foreground"}`}
               aria-labelledby={`drop-${drop.id}`}
+              style={{ height: "100vh" }}
             >
               {drop.banner_image_url ? (
                 <Image
@@ -150,7 +151,7 @@ export default function NewDropsPage() {
                   className="-z-20 object-cover"
                 />
               ) : null}
-              {drop.banner_image_url ? <div className="absolute inset-0 -z-10 bg-black/50" /> : null}
+              {drop.banner_image_url ? <div className="absolute inset-0 -z-10 bg-black/18" /> : null}
 
               <div className="flex min-h-[calc(100svh-var(--site-header-height))] items-center justify-center px-5 py-10 text-center sm:px-10 lg:px-[max(4rem,8vw)]">
                 <div className="mx-auto max-w-3xl">
@@ -170,13 +171,43 @@ export default function NewDropsPage() {
                   </p> */}
 
                 </div>
+                {/* Scroll Down Button */}
+                <div className="absolute inset-x-0 bottom-4 flex justify-center p-4 sm:bottom-8">
+                  <button
+                    onClick={() => {
+                      const nextSection = document.getElementById(`drop-${drop.id}-products`);
+                      nextSection?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="group flex flex-col items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] opacity-80 transition-opacity hover:opacity-100"
+                    aria-label="Scroll down to next section"
+                  >
+                    <span>explore</span>
+                    <ChevronDown className="h-5 w-5 animate-bounce transition-transform group-hover:translate-y-1" />
+                  </button>
+                </div>
               </div>
             </section>
             {(drop.products ?? []).length > 0 && (
-              <section className="bg-white px-3 sm:px-4 md:px-8" aria-label={`${drop.name} products`}>
+              <section id={`drop-${drop.id}-products`} className="bg-white px-3 sm:px-4 md:px-8" aria-label={`${drop.name} products`}>
                 {chunkFloatingProducts(drop.products ?? []).map((products, groupIndex) => (
                   <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} fullViewport />
                 ))}
+                <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
+                  <div className="flex flex-col items-center">
+                    <div className="relative h-20 w-40 overflow-hidden sm:h-32 sm:w-64">
+                      <Image
+                        src="/images/logo-black.png"
+                        alt="Wild Soul Club"
+                        fill
+                        sizes="(min-width: 640px) 256px, 224px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.16em] text-foreground sm:mt-3 sm:text-sm sm:tracking-[0.2em]">
+                      {drop.collections?.name || "Latest collection"}
+                    </p>
+                  </div>
+                </footer>
               </section>
             )}
             </Fragment>

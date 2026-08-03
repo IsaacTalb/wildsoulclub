@@ -17,7 +17,7 @@ type PaymentRow = {
   status: "pending" | "approved" | "rejected" | "expired";
   payment_image: string;
   created_at: string;
-  orders?: { order_number?: string; full_name?: string } | null;
+  orders?: { order_number?: string; full_name?: string; payment_reference?: string; fulfillment_method?: string } | null;
 };
 
 async function readJson(response: Response) {
@@ -73,7 +73,7 @@ export default function AdminPaymentsPage() {
   const filtered = useMemo(() => payments.filter((payment) => {
     const matchesStatus = filter === "all" || payment.status === filter;
     const term = search.toLowerCase().trim();
-    const matchesSearch = !term || payment.id.toLowerCase().includes(term) || payment.orders?.order_number?.toLowerCase().includes(term) || payment.orders?.full_name?.toLowerCase().includes(term);
+    const matchesSearch = !term || payment.id.toLowerCase().includes(term) || payment.orders?.order_number?.toLowerCase().includes(term) || payment.orders?.payment_reference?.toLowerCase().includes(term) || payment.orders?.full_name?.toLowerCase().includes(term);
     return matchesStatus && matchesSearch;
   }), [filter, payments, search]);
 
@@ -105,7 +105,7 @@ export default function AdminPaymentsPage() {
               {loading ? <tr><td className="py-8 px-4 text-muted-foreground" colSpan={7}>Loading payments…</td></tr> : filtered.map((payment) => (
                 <tr key={payment.id} className="border-b last:border-0">
                   <td className="py-3 px-4 font-mono text-xs">{payment.id.slice(0, 8)}</td>
-                  <td className="py-3 px-4 font-mono text-xs">{payment.orders?.order_number ?? payment.order_id}</td>
+                  <td className="py-3 px-4"><div className="font-mono text-xs">{payment.orders?.order_number ?? payment.order_id}</div><div className="font-mono text-xs font-semibold tracking-wider">Ref: {payment.orders?.payment_reference ?? "—"}</div></td>
                   <td className="py-3 px-4 uppercase">{payment.method}</td>
                   <td className="py-3 px-4 font-medium">{formatPrice(Number(payment.amount))}</td>
                   <td className="py-3 px-4 text-muted-foreground">{new Date(payment.created_at).toLocaleDateString()}</td>

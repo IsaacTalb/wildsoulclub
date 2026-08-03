@@ -16,7 +16,7 @@ export default function CartPage() {
   const [deliveryNotice, setDeliveryNotice] = useState(
     "Delivery timing is confirmed after your order is placed.",
   );
-  const deliveryFee = items.length > 0 ? 3000 : 0;
+  const deliveryFee = items.length > 0 ? 7000 : 0;
   const subtotal = getSubtotal();
   const total = subtotal + deliveryFee;
 

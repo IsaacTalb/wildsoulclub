@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -16,12 +18,18 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const getSafeRedirect = () => {
+    const redirect = new URLSearchParams(window.location.search).get("redirect");
+    return redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : "/";
+  };
+
   // Check for error in URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlError = urlParams.get('error');
     if (urlError) {
-      setError(decodeURIComponent(urlError));
+      const timeout = window.setTimeout(() => setError(decodeURIComponent(urlError)), 0);
+      return () => window.clearTimeout(timeout);
     }
   }, []);
 
@@ -38,7 +46,7 @@ export default function SignUpPage() {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
       },
     });
 
@@ -46,6 +54,8 @@ export default function SignUpPage() {
       setError(error.message);
     } else if (data?.user?.identities?.length === 0) {
       setError("This email is already registered. Please sign in instead.");
+    } else if (data.session) {
+      router.replace(getSafeRedirect());
     } else {
       setMessage("Check your email for the confirmation link!");
     }
@@ -59,7 +69,7 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
       },
     });
 
@@ -76,7 +86,7 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/api/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
       },
     });
 

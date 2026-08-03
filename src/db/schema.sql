@@ -251,6 +251,8 @@ CREATE TABLE orders (
   state TEXT NOT NULL,
   zip TEXT,
   notes TEXT,
+  payment_reference TEXT UNIQUE NOT NULL DEFAULT upper(substr(replace(uuid_generate_v4()::TEXT, '-', ''), 1, 6)),
+  fulfillment_method TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfillment_method IN ('delivery', 'pickup')),
   subtotal DECIMAL(10, 2) NOT NULL,
   delivery_fee DECIMAL(10, 2) DEFAULT 0,
   total DECIMAL(10, 2) NOT NULL,

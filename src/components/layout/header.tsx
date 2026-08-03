@@ -40,10 +40,10 @@ const leftLinks = [
 ];
 
 const mobileLinks = [
-  { href: "/new-drops", label: "New Drop" },
+  { href: "/new-drops", label: "Collections" },
   { href: "/archive-sales", label: "Archive Sale" },
   { href: "/about", label: "About Us" },
-  { href: "/collections", label: "Collections" },
+  // { href: "/collections", label: "Collections" },
 ];
 
 type Category = { id: string; name: string };
@@ -127,16 +127,16 @@ export function Header() {
   return (
     <header
       className={cn(
-        "top-0 z-50 h-[var(--site-header-height)] w-full px-0 pt-[max(0.25rem,env(safe-area-inset-top))] sm:px-0 fixed",
+        "top-0 z-50 h-[var(--site-header-height)] w-full px-0 sm:px-0 fixed",
         usesFixedHeader ? "fixed" : "sticky",
-        isHomepage && "text-white",
+        isHomepage && "text-black",
       )}
     >
       <div
         className={cn(
-          "header-liquid-glass relative grid h-13 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center px-2.5 sm:px-4 xl:flex xl:justify-between",
+          "header-liquid-glass relative grid h-12 w-full max-w-none grid-cols-[1fr_auto_1fr] items-center px-2.5 sm:px-4 xl:flex xl:justify-between",
           isHomepage &&
-            "header-liquid-glass-dark !text-white [&_a]:!text-white [&_button]:!text-white",
+            "header-liquid-glass-dark !text-black [&_a]:!text-black [&_button]:!text-black",
         )}
       >
         {/* Mobile navigation */}
@@ -232,13 +232,6 @@ export function Header() {
                           aria-label="Shop categories"
                           className="ml-3 border-l pl-2"
                         >
-                          <Link
-                            href="/products"
-                            className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
-                            onClick={() => setIsOpen(false)}
-                          >
-                            Shop all
-                          </Link>
                           {categories.map((category) => (
                             <Link
                               key={category.id}
@@ -249,6 +242,13 @@ export function Header() {
                               {category.name}
                             </Link>
                           ))}
+                          <Link
+                            href="/products"
+                            className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            Shop all
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -378,7 +378,7 @@ export function Header() {
                 : "text-muted-foreground",
             )}
           >
-            New Drop
+            Collections
           </Link>
           {leftLinks.slice(1).map((link) => (
             <Link
@@ -399,18 +399,19 @@ export function Header() {
         {/* Center: Logo */}
         <Link
           href="/"
-          className="relative z-10 col-start-2 flex min-w-0 items-center justify-self-center xl:absolute xl:left-1/2 xl:-translate-x-1/2"
+          className="relative color-red z-10 col-start-2 flex min-w-0 items-center justify-self-center xl:absolute xl:left-1/2 xl:-translate-x-1/2"
         >
           <Image
-            src="/images/wildsoulclub.svg"
+            src="/images/wildsoulclub-official.svg"
             alt="Wild Soul Club"
             width={140}
             height={32}
-            unoptimized
-            className={cn(
-              "h-8 w-auto max-w-[8.75rem] object-contain",
-              isHomepage && "invert",
-            )}
+            color="red"
+            // unoptimized
+            // className={cn(
+            //   "h-8 w-auto max-w-[8.75rem] object-contain",
+            //   isHomepage && "invert",
+            // )}
             preload
           />
         </Link>
@@ -472,7 +473,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="liquid-pill relative h-10 w-10 border-0"
+              className=" relative h-10 w-10 border-0"
               aria-label={`Cart with ${cartCount} ${cartCount === 1 ? "item" : "items"}`}
             >
               <ShoppingCart className="h-5 w-5" />

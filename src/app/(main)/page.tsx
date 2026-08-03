@@ -803,8 +803,8 @@ export default function HomePage() {
                 {slide.image ? (
                   <>
                     <div className="absolute inset-0 bg-black/25" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/65" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_5%,rgba(0,0,0,0.42)_100%)]" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-black/4 to-black/25" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,rgba(0, 0, 0, 0.01)_100%)]" />
                   </>
                 ) : null}
 

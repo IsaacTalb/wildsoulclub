@@ -15,7 +15,7 @@ export async function GET() {
 
     const { data, error } = await supabaseAdmin
       .from("payments")
-      .select("*, orders(order_number, full_name, status)")
+      .select("*, orders(order_number, full_name, status, payment_reference, fulfillment_method)")
       .order("created_at", { ascending: false });
 
     if (error) throw error;

@@ -36,14 +36,10 @@ export default function ProfilePage() {
       
       setLoadingOrders(true);
       try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select("*, order_items(*)")
-          .eq("user_id", session.user.id)
-          .order("created_at", { ascending: false });
-        
-        if (error) throw error;
-        setOrders(data || []);
+        const response = await fetch("/api/orders", { headers: { Authorization: `Bearer ${session.access_token}` } });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error ?? "Unable to load orders");
+        setOrders(result.data || []);
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {
@@ -182,7 +178,8 @@ export default function ProfilePage() {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <p className="font-medium">Order #{order.id}</p>
+                        <p className="font-medium">Order {order.order_number}</p>
+                        <p className="mt-1 font-mono text-xs font-semibold tracking-widest">Payment ref: {order.payment_reference}</p>
                         <p className="text-sm text-muted-foreground">
                           {new Date(order.created_at).toLocaleDateString("en-US", {
                             year: "numeric",
@@ -192,7 +189,7 @@ export default function ProfilePage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-lg">${Number(order.total).toFixed(2)}</p>
+                        <p className="font-bold text-lg">{Number(order.total).toLocaleString()} MMK</p>
                         <Badge variant={order.status === "pending" ? "outline" : "default"}>
                           {order.status}
                         </Badge>
@@ -207,8 +204,10 @@ export default function ProfilePage() {
                       ))}
                       <div className="flex justify-between font-bold border-t pt-2 mt-2">
                         <span>Total</span>
-                        <span>${Number(order.total).toFixed(2)}</span>
+                        <span>{Number(order.total).toLocaleString()} MMK</span>
                       </div>
+                      <p className="text-sm text-muted-foreground">{order.fulfillment_method === "pickup" ? "Store pickup" : "Delivery"} · Payment {order.payment_status}</p>
+                      {order.payments?.[0]?.payment_image && <a className="inline-block text-sm font-medium underline" href={order.payments[0].payment_image} target="_blank" rel="noreferrer">View payment screenshot</a>}
                     </div>
                   </CardContent>
                 </Card>

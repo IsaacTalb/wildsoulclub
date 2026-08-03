@@ -73,15 +73,21 @@ export type CollectionFormData = z.infer<typeof collectionSchema>;
 // ==========================================
 
 export const checkoutSchema = z.object({
+  fulfillment_method: z.enum(["delivery", "pickup"]),
   full_name: z.string().min(2, "Full name is required"),
   email: z.string().email("Invalid email"),
   phone: z.string().min(7, "Valid phone number is required"),
-  address: z.string().min(5, "Address is required"),
-  township: z.string().min(1, "Township is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
+  address: z.string().optional(),
+  township: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
   zip: z.string().optional(),
   notes: z.string().optional(),
+}).superRefine((data, context) => {
+  if (data.fulfillment_method !== "delivery") return;
+  for (const field of ["address", "township", "city", "state"] as const) {
+    if (!data[field]?.trim()) context.addIssue({ code: "custom", path: [field], message: `${field[0].toUpperCase()}${field.slice(1)} is required` });
+  }
 });
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
