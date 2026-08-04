@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getSafeRedirect, getSignInRedirectUrl } from "@/lib/auth-redirect";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -16,41 +17,56 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const getSafeRedirect = () => {
-    const redirect = new URLSearchParams(window.location.search).get("redirect");
-
-    if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
-      return "/";
-    }
-
-    return redirect;
-  };
-
-  // Handle OAuth/error query params and preserve the intended destination.
+  // Complete both Supabase implicit redirects (#access_token) and PKCE
+  // redirects (?code), including recovery from the legacy callback route.
   useEffect(() => {
     const handleAuthRedirect = async () => {
       const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const urlError = urlParams.get("error");
+      const hashError = hashParams.get("error_description") ?? hashParams.get("error");
       const authCode = urlParams.get("code");
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
 
-      if (urlError) {
-        setError(decodeURIComponent(urlError));
+      if (hashError) {
+        setError(hashError);
         return;
       }
 
-      if (!authCode) return;
-
-      setLoading(true);
-      const { error } = await supabase.auth.exchangeCodeForSession(authCode);
-
-      if (error) {
-        setError(error.message);
-        setLoading(false);
+      if (accessToken && refreshToken) {
+        setLoading(true);
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
+        router.replace(getSafeRedirect());
+        router.refresh();
         return;
       }
 
-      router.replace(getSafeRedirect());
-      router.refresh();
+      if (authCode) {
+        setLoading(true);
+        const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+        if (error) {
+          setError(error.message);
+          setLoading(false);
+          return;
+        }
+        router.replace(getSafeRedirect());
+        router.refresh();
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.replace(getSafeRedirect());
+        router.refresh();
+      } else if (urlError && urlError !== "auth_code_missing") {
+        setError(urlError);
+      }
     };
 
     handleAuthRedirect();
@@ -82,7 +98,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
+        redirectTo: getSignInRedirectUrl(),
       },
     });
 
@@ -99,7 +115,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
+        redirectTo: getSignInRedirectUrl(),
       },
     });
 

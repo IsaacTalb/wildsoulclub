@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getSafeRedirect, getSignInRedirectUrl } from "@/lib/auth-redirect";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -17,11 +18,6 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-
-  const getSafeRedirect = () => {
-    const redirect = new URLSearchParams(window.location.search).get("redirect");
-    return redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : "/";
-  };
 
   // Check for error in URL params
   useEffect(() => {
@@ -46,7 +42,7 @@ export default function SignUpPage() {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
+        emailRedirectTo: getSignInRedirectUrl(),
       },
     });
 
@@ -69,7 +65,7 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
+        redirectTo: getSignInRedirectUrl(),
       },
     });
 
@@ -86,7 +82,7 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "facebook",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/sign-in?redirect=${encodeURIComponent(getSafeRedirect())}`,
+        redirectTo: getSignInRedirectUrl(),
       },
     });
 

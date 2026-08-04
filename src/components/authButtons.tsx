@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Settings, UserRound } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import Link from "next/link";
+import { getSignInRedirectUrl } from "@/lib/auth-redirect";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function SignInButton() {
@@ -16,7 +17,7 @@ export function SignInButton() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: getSignInRedirectUrl(`${window.location.pathname}${window.location.search}`),
       },
     });
     if (error) {

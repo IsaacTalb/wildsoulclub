@@ -51,17 +51,19 @@ export default function CheckoutPage() {
   const [storefrontSettings, setStorefrontSettings] = useState<Record<string, string>>({});
 
   const getValidSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) return null;
     if (!session) return null;
-    const { error: userError } = await supabase.auth.getUser(session.access_token);
+    const { error: userError } = await supabase.auth.getUser();
     if (!userError) return session;
-    const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
+    const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) return null;
     return refreshedSession;
   };
 
   useEffect(() => {
     getValidSession().then((session) => {
-      if (!session) router.replace("/sign-up?redirect=%2Fcheckout");
+      if (!session) router.replace("/sign-in?redirect=%2Fcheckout");
       else setCheckingAuth(false);
     });
   }, [router]);
