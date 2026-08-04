@@ -53,11 +53,17 @@ type DatabaseError = {
 };
 
 <<<<<<< ours
+<<<<<<< ours
 =======
+=======
+>>>>>>> theirs
 function isMissingCheckoutRpc(error: DatabaseError) {
   return error.code === "PGRST202" || error.code === "42883";
 }
 
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 function databaseErrorResponse(error: DatabaseError) {
   console.error("Order database operation failed", {
@@ -128,6 +134,7 @@ export async function POST(req: Request) {
       return validationError("Delivery address is required");
     }
 <<<<<<< ours
+<<<<<<< ours
 =======
 
     // Older Auth accounts can predate the auth.users -> public.users trigger.
@@ -140,6 +147,19 @@ export async function POST(req: Request) {
     }, { onConflict: "id" });
     if (userSyncError) return databaseErrorResponse(userSyncError);
 
+=======
+
+    // Older Auth accounts can predate the auth.users -> public.users trigger.
+    // Ensure the foreign-key target exists before create_order inserts the order.
+    const { error: userSyncError } = await supabaseAdmin.from("users").upsert({
+      id: user.id,
+      email: user.email ?? orderInput.email,
+      full_name: orderInput.full_name,
+      phone: orderInput.phone,
+    }, { onConflict: "id" });
+    if (userSyncError) return databaseErrorResponse(userSyncError);
+
+>>>>>>> theirs
     const customer = {
       full_name: orderInput.full_name,
       email: orderInput.email,
@@ -152,6 +172,9 @@ export async function POST(req: Request) {
       notes: orderInput.notes || null,
     };
 
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     let savedOrder: Record<string, unknown> | null = null;
     let lastError: DatabaseError | null = null;
@@ -159,6 +182,7 @@ export async function POST(req: Request) {
       const paymentReference = createPaymentReference();
       const { data: order, error } = await supabaseAdmin.rpc("create_checkout_order", {
         p_user_id: user.id,
+<<<<<<< ours
 <<<<<<< ours
         p_customer: {
           full_name: orderInput.full_name,
@@ -174,6 +198,9 @@ export async function POST(req: Request) {
 =======
         p_customer: customer,
 >>>>>>> theirs
+=======
+        p_customer: customer,
+>>>>>>> theirs
         p_items: orderInput.items,
         p_fulfillment_method: orderInput.fulfillment_method,
         p_payment_reference: paymentReference,
@@ -182,7 +209,10 @@ export async function POST(req: Request) {
       if (!error && order?.id) savedOrder = order;
       else if (error?.code === "23505") lastError = error;
 <<<<<<< ours
+<<<<<<< ours
 =======
+=======
+>>>>>>> theirs
       else if (error && isMissingCheckoutRpc(error)) {
         // Deployments can briefly run new application code before migrations
         // finish. Fall back to the existing transactional inventory RPC rather
@@ -216,10 +246,16 @@ export async function POST(req: Request) {
           if (finalizeError) return databaseErrorResponse(finalizeError);
           savedOrder = finalizedOrder;
         }
+<<<<<<< ours
       }
 >>>>>>> theirs
       else if (error) return databaseErrorResponse(error);
       else {
+=======
+      } else if (error) {
+        return databaseErrorResponse(error);
+      } else {
+>>>>>>> theirs
         console.error("Order RPC returned no order", { order });
         return NextResponse.json({ success: false, error: "The order could not be created. Please try again." }, { status: 500 });
       }

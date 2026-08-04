@@ -19,13 +19,19 @@ BEGIN
   END IF;
 
 <<<<<<< ours
+<<<<<<< ours
   IF p_payment_reference IS NULL OR p_payment_reference !~ '^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]{6}$' THEN
 =======
+=======
+>>>>>>> theirs
   IF p_payment_reference IS NULL
      OR length(p_payment_reference) <> 6
      OR p_payment_reference !~ '^[A-Z0-9]+$'
      OR p_payment_reference !~ '[A-Z]'
      OR p_payment_reference !~ '[0-9]' THEN
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     RAISE EXCEPTION 'Invalid payment reference';
   END IF;
