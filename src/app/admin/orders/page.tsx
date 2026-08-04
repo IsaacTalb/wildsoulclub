@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { CheckCircle2, Eye, Mail, MapPin, Phone, Search, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/utils";
 
 type OrderStatus = "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled";
@@ -76,6 +78,7 @@ export default function AdminOrdersPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(true);
   const [updatingKey, setUpdatingKey] = useState<string | null>(null);
+  const [proofViewer, setProofViewer] = useState<{ src: string; orderNumber: string } | null>(null);
 
   const loadOrders = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -234,7 +237,7 @@ export default function AdminOrdersPage() {
                         <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
                         <SelectContent>{orderStatuses.map((status) => <SelectItem key={status} value={status}>{status === "shipped" ? "On the way" : status}</SelectItem>)}</SelectContent>
                       </Select>
-                      {payment?.payment_image ? <Button variant="outline" asChild><a href={payment.payment_image} target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />View proof</a></Button> : null}
+                      {payment?.payment_image ? <Button variant="outline" type="button" onClick={() => setProofViewer({ src: payment.payment_image, orderNumber: order.order_number })}><Eye className="mr-2 h-4 w-4" />View proof</Button> : null}
                     </div>
 
                     {payment?.status === "pending" ? (
@@ -250,6 +253,20 @@ export default function AdminOrdersPage() {
           })}
         </div>
       )}
+
+      <Dialog open={Boolean(proofViewer)} onOpenChange={(open) => { if (!open) setProofViewer(null); }}>
+        <DialogContent className="max-h-[92vh] max-w-4xl overflow-hidden p-4 sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Payment proof · {proofViewer?.orderNumber}</DialogTitle>
+            <DialogDescription>Review the customer&apos;s payment screenshot without leaving this page.</DialogDescription>
+          </DialogHeader>
+          {proofViewer && (
+            <div className="relative min-h-[50vh] overflow-auto rounded-lg bg-black/90">
+              <Image src={proofViewer.src} alt={`Payment proof for ${proofViewer.orderNumber}`} width={1400} height={1800} unoptimized className="mx-auto max-h-[75vh] h-auto w-auto object-contain" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

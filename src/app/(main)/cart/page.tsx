@@ -6,7 +6,6 @@ import Image from "next/image";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
@@ -16,9 +15,7 @@ export default function CartPage() {
   const [deliveryNotice, setDeliveryNotice] = useState(
     "Delivery timing is confirmed after your order is placed.",
   );
-  const deliveryFee = items.length > 0 ? 0 :  0;
   const subtotal = getSubtotal();
-  const total = subtotal + deliveryFee;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -140,20 +137,9 @@ export default function CartPage() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Delivery Fee (Might differ based on location)</span>
-                  <span>{deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}</span>
-                </div>
-                {subtotal >= 100000 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Free Delivery Discount</span>
-                    <span>-{formatPrice(deliveryFee)}</span>
-                  </div>
-                )}
-                <Separator />
                 <div className="flex justify-between font-semibold text-base">
                   <span>Total</span>
-                  <span>{formatPrice(subtotal >= 100000 ? subtotal : total)}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
               </div>
 
@@ -170,7 +156,8 @@ export default function CartPage() {
               <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-black/5 bg-muted/45 p-3 text-sm">
                 <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div>
-                  <p className="font-medium">Delivery note</p>
+                  <p className="font-medium">Delivery charge paid on arrival</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">The cart total covers products only. Pay any delivery charge separately to the delivery person when the order arrives.</p>
                   <span className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{deliveryNotice}</span>
                   <a href="/delivery" className="text-xs px-1 underline">Read More</a>.
                 </div>

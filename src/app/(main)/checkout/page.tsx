@@ -94,9 +94,8 @@ export default function CheckoutPage() {
     [storefrontSettings],
   );
 
-  const deliveryFee = fulfillmentMethod === "delivery" && items.length > 0 ? 3000 : 0;
   const subtotal = getSubtotal();
-  const total = fulfillmentMethod === "pickup" || subtotal >= 100000 ? subtotal : subtotal + deliveryFee;
+  const total = subtotal;
 
   const {
     register,
@@ -358,6 +357,12 @@ export default function CheckoutPage() {
                     <Label htmlFor="notes">Order Notes</Label>
                     <Textarea id="notes" {...register("notes")} placeholder="Special instructions (optional)" />
                   </div>
+                  {fulfillmentMethod === "delivery" && (
+                    <div className="md:col-span-2 rounded-lg border border-primary/30 bg-primary/5 p-4">
+                      <p className="font-semibold">Delivery charge is paid on arrival</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Checkout covers products only. Pay any delivery charge separately to the delivery person when your order arrives.</p>
+                    </div>
+                  )}
                   <div className="md:col-span-2 rounded-lg border-2 border-red-500 bg-red-50 p-4 text-red-950">
                     <p className="text-sm font-bold">KPay payment-note code</p>
                     {createdOrder ? (
@@ -476,21 +481,12 @@ export default function CheckoutPage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{fulfillmentMethod === "pickup" ? "Pickup" : "Delivery Fee"}</span>
-                    <span>{deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}</span>
-                  </div>
-                  {fulfillmentMethod === "delivery" && subtotal >= 100000 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Free Delivery</span>
-                      <span>-{formatPrice(deliveryFee)}</span>
-                    </div>
-                  )}
                   <Separator />
                   <div className="flex justify-between font-semibold text-base">
                     <span>Total</span>
                     <span>{formatPrice(total)}</span>
                   </div>
+                  {fulfillmentMethod === "delivery" && <p className="rounded-lg bg-muted/60 p-3 text-xs leading-relaxed text-muted-foreground">This total covers products only. Pay the separate delivery charge to the delivery person when the order arrives.</p>}
                 </div>
 
                 <Button

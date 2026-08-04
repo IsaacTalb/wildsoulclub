@@ -174,7 +174,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ success: false, error: "The order could not be created. Please try again." }, { status: 500 });
         }
 
-        if (orderInput.fulfillment_method === "delivery" && legacyOrder.payment_reference) {
+        if (orderInput.fulfillment_method === "delivery" && legacyOrder.payment_reference && Number(legacyOrder.delivery_fee) === 0) {
           savedOrder = legacyOrder;
         } else {
           const { data: finalizedOrder, error: finalizeError } = await supabaseAdmin
@@ -182,9 +182,8 @@ export async function POST(req: Request) {
             .update({
               payment_reference: paymentReference,
               fulfillment_method: orderInput.fulfillment_method,
-              ...(orderInput.fulfillment_method === "pickup"
-                ? { delivery_fee: 0, total: Number(legacyOrder.subtotal) }
-                : {}),
+              delivery_fee: 0,
+              total: Number(legacyOrder.subtotal),
             })
             .eq("id", legacyOrder.id)
             .select()

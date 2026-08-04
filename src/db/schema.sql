@@ -852,8 +852,8 @@ BEGIN
   UPDATE orders
   SET payment_reference = p_payment_reference,
       fulfillment_method = p_fulfillment_method,
-      delivery_fee = CASE WHEN p_fulfillment_method = 'pickup' THEN 0 ELSE delivery_fee END,
-      total = CASE WHEN p_fulfillment_method = 'pickup' THEN subtotal ELSE total END,
+      delivery_fee = 0,
+      total = subtotal,
       updated_at = NOW()
   WHERE id = v_order_id
   RETURNING * INTO v_saved_order;
