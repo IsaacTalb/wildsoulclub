@@ -1,66 +1,71 @@
 "use client";
 
-import { Search, Ban, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Mail, Phone, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { supabase } from "@/lib/supabase";
 import { formatDate, getInitials } from "@/lib/utils";
 
-const users = [
-  { id: "1", name: "Thaw Thaw", email: "thaw@example.com", orders: 5, joined: new Date("2026-01-15"), status: "active" },
-  { id: "2", name: "Aung Ko", email: "aung@example.com", orders: 3, joined: new Date("2026-02-20"), status: "active" },
-  { id: "3", name: "Su Su", email: "su@example.com", orders: 8, joined: new Date("2025-12-01"), status: "active" },
-  { id: "4", name: "Min Khant", email: "min@example.com", orders: 1, joined: new Date("2026-06-10"), status: "banned" },
-];
+type UserRow = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  created_at: string;
+  order_count: number;
+};
 
 export default function AdminUsersPage() {
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadUsers = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Your session has expired.");
+      const response = await fetch("/api/admin/people", { headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "Unable to load users");
+      setUsers(result.data?.users ?? []);
+      setError("");
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load users");
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => void loadUsers(), 0);
+    const refresh = () => void loadUsers(false);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearTimeout(timeout); window.removeEventListener("focus", refresh); };
+  }, [loadUsers]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return users.filter((user) => !term || [user.full_name, user.email, user.phone].some((value) => value?.toLowerCase().includes(term)));
+  }, [search, users]);
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Users</h1>
-      <Card>
-        <CardContent className="p-0">
-          <div className="p-4 pb-0">
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search users..." className="pl-10" />
-            </div>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="pb-3 pt-4 px-4 font-medium">User</th>
-                <th className="pb-3 pt-4 px-4 font-medium">Orders</th>
-                <th className="pb-3 pt-4 px-4 font-medium">Joined</th>
-                <th className="pb-3 pt-4 px-4 font-medium">Status</th>
-                <th className="pb-3 pt-4 px-4 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-b last:border-0">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8"><AvatarFallback className="text-xs">{getInitials(u.name)}</AvatarFallback></Avatar>
-                      <div><p className="font-medium">{u.name}</p><p className="text-xs text-muted-foreground">{u.email}</p></div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">{u.orders}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{formatDate(u.joined)}</td>
-                  <td className="py-3 px-4"><Badge variant={u.status === "active" ? "default" : "destructive"}>{u.status}</Badge></td>
-                  <td className="py-3 px-4">
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon"><Ban className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-red-600"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+    <div className="space-y-5">
+      <div><h1 className="text-2xl font-bold md:text-3xl">Users</h1><p className="text-sm text-muted-foreground">All registered storefront accounts from live data.</p></div>
+      {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+      <Card><CardContent className="p-4"><div className="relative max-w-md"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, email, or phone" className="pl-10" /></div></CardContent></Card>
+      {loading ? <p className="py-12 text-center text-muted-foreground">Loading users…</p> : filtered.length === 0 ? <Card><CardContent className="p-10 text-center text-muted-foreground">No users found.</CardContent></Card> : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {filtered.map((user) => <Card key={user.id}><CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3"><Avatar><AvatarFallback>{getInitials(user.full_name || user.email)}</AvatarFallback></Avatar><div className="min-w-0"><p className="truncate font-medium">{user.full_name || "Unnamed user"}</p><a href={`mailto:${user.email}`} className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-foreground"><Mail className="h-3 w-3" />{user.email}</a>{user.phone && <a href={`tel:${user.phone}`} className="mt-1 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><Phone className="h-3 w-3" />{user.phone}</a>}</div></div>
+            <div className="flex items-center justify-between gap-4 sm:block sm:text-right"><Badge variant="outline">Registered</Badge><p className="mt-1 text-sm font-medium">{Number(user.order_count)} orders</p><p className="text-xs text-muted-foreground">Joined {formatDate(new Date(user.created_at))}</p></div>
+          </CardContent></Card>)}
+        </div>
+      )}
     </div>
   );
 }
