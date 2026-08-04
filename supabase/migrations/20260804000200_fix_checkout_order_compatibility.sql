@@ -1,6 +1,5 @@
--- Keep order creation, inventory consumption, fulfillment pricing, and payment
--- reference assignment in one transaction. Calling create_order from this RPC
--- remains atomic because nested PostgreSQL functions share the caller's transaction.
+-- Re-apply the checkout RPC with PostgreSQL-compatible payment-reference
+-- validation for databases that already ran the original checkout migration.
 CREATE OR REPLACE FUNCTION create_checkout_order(
   p_user_id UUID,
   p_customer JSONB,
@@ -18,15 +17,11 @@ BEGIN
     RAISE EXCEPTION 'Invalid fulfillment method';
   END IF;
 
-<<<<<<< ours
-  IF p_payment_reference IS NULL OR p_payment_reference !~ '^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]{6}$' THEN
-=======
   IF p_payment_reference IS NULL
      OR length(p_payment_reference) <> 6
      OR p_payment_reference !~ '^[A-Z0-9]+$'
      OR p_payment_reference !~ '[A-Z]'
      OR p_payment_reference !~ '[0-9]' THEN
->>>>>>> theirs
     RAISE EXCEPTION 'Invalid payment reference';
   END IF;
 

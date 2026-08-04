@@ -52,6 +52,13 @@ type DatabaseError = {
   hint?: string | null;
 };
 
+<<<<<<< ours
+=======
+function isMissingCheckoutRpc(error: DatabaseError) {
+  return error.code === "PGRST202" || error.code === "42883";
+}
+
+>>>>>>> theirs
 function databaseErrorResponse(error: DatabaseError) {
   console.error("Order database operation failed", {
     code: error.code,
@@ -83,7 +90,7 @@ function databaseErrorResponse(error: DatabaseError) {
   if (error.code === "23514") {
     return validationError("The order contains a value that is no longer accepted. Refresh and try again.");
   }
-  if (error.code === "PGRST202" || error.code === "42703") {
+  if (["PGRST202", "42703", "42883", "42P01"].includes(error.code ?? "")) {
     return NextResponse.json(
       { success: false, error: "Checkout database setup is out of date. Please contact store support." },
       { status: 503 },
@@ -120,12 +127,39 @@ export async function POST(req: Request) {
       (!orderInput.address || !orderInput.township || !orderInput.city || !orderInput.state)) {
       return validationError("Delivery address is required");
     }
+<<<<<<< ours
+=======
+
+    // Older Auth accounts can predate the auth.users -> public.users trigger.
+    // Ensure the foreign-key target exists before create_order inserts the order.
+    const { error: userSyncError } = await supabaseAdmin.from("users").upsert({
+      id: user.id,
+      email: user.email ?? orderInput.email,
+      full_name: orderInput.full_name,
+      phone: orderInput.phone,
+    }, { onConflict: "id" });
+    if (userSyncError) return databaseErrorResponse(userSyncError);
+
+    const customer = {
+      full_name: orderInput.full_name,
+      email: orderInput.email,
+      phone: orderInput.phone,
+      address: orderInput.address || "Store pickup",
+      township: orderInput.township || "Store pickup",
+      city: orderInput.city || "Store pickup",
+      state: orderInput.state || "Store pickup",
+      zip: orderInput.zip || null,
+      notes: orderInput.notes || null,
+    };
+
+>>>>>>> theirs
     let savedOrder: Record<string, unknown> | null = null;
     let lastError: DatabaseError | null = null;
     for (let attempt = 0; attempt < 5 && !savedOrder; attempt += 1) {
       const paymentReference = createPaymentReference();
       const { data: order, error } = await supabaseAdmin.rpc("create_checkout_order", {
         p_user_id: user.id,
+<<<<<<< ours
         p_customer: {
           full_name: orderInput.full_name,
           email: orderInput.email,
@@ -137,6 +171,9 @@ export async function POST(req: Request) {
           zip: orderInput.zip || null,
           notes: orderInput.notes || null,
         },
+=======
+        p_customer: customer,
+>>>>>>> theirs
         p_items: orderInput.items,
         p_fulfillment_method: orderInput.fulfillment_method,
         p_payment_reference: paymentReference,
@@ -144,6 +181,43 @@ export async function POST(req: Request) {
 
       if (!error && order?.id) savedOrder = order;
       else if (error?.code === "23505") lastError = error;
+<<<<<<< ours
+=======
+      else if (error && isMissingCheckoutRpc(error)) {
+        // Deployments can briefly run new application code before migrations
+        // finish. Fall back to the existing transactional inventory RPC rather
+        // than making checkout unavailable during that window.
+        const { data: legacyOrder, error: legacyError } = await supabaseAdmin.rpc("create_order", {
+          p_user_id: user.id,
+          p_customer: customer,
+          p_items: orderInput.items,
+        });
+        if (legacyError) return databaseErrorResponse(legacyError);
+        if (!legacyOrder?.id) {
+          console.error("Legacy order RPC returned no order", { legacyOrder });
+          return NextResponse.json({ success: false, error: "The order could not be created. Please try again." }, { status: 500 });
+        }
+
+        if (orderInput.fulfillment_method === "delivery" && legacyOrder.payment_reference) {
+          savedOrder = legacyOrder;
+        } else {
+          const { data: finalizedOrder, error: finalizeError } = await supabaseAdmin
+            .from("orders")
+            .update({
+              payment_reference: paymentReference,
+              fulfillment_method: orderInput.fulfillment_method,
+              ...(orderInput.fulfillment_method === "pickup"
+                ? { delivery_fee: 0, total: Number(legacyOrder.subtotal) }
+                : {}),
+            })
+            .eq("id", legacyOrder.id)
+            .select()
+            .single();
+          if (finalizeError) return databaseErrorResponse(finalizeError);
+          savedOrder = finalizedOrder;
+        }
+      }
+>>>>>>> theirs
       else if (error) return databaseErrorResponse(error);
       else {
         console.error("Order RPC returned no order", { order });
