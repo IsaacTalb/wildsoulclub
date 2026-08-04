@@ -53,7 +53,7 @@ type DatabaseError = {
 };
 
 function isMissingCheckoutRpc(error: DatabaseError) {
-  return error.code === "PGRST202" || error.code === "42883";
+  return ["PGRST202", "42703", "42883", "42P01"].includes(error.code ?? "");
 }
 
 function databaseErrorResponse(error: DatabaseError) {
@@ -162,7 +162,7 @@ export async function POST(req: Request) {
       if (!error && order?.id) savedOrder = order;
       else if (error?.code === "23505") lastError = error;
       else if (error && isMissingCheckoutRpc(error)) {
-        // Fall back while the new checkout migration is still being deployed.
+        // Fall back while the checkout RPC or its cached schema is still being deployed.
         const { data: legacyOrder, error: legacyError } = await supabaseAdmin.rpc("create_order", {
           p_user_id: user.id,
           p_customer: customer,
