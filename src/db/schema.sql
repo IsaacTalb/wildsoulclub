@@ -402,7 +402,7 @@ BEGIN
     order_number, user_id, full_name, email, phone, address, township, city,
     state, zip, notes, subtotal, delivery_fee, total, status, payment_status
   ) VALUES (
-    'WSC-' || upper(substr(replace(uuid_generate_v4()::TEXT, '-', ''), 1, 16)),
+    'WSC-' || upper(substr(replace(extensions.uuid_generate_v4()::TEXT, '-', ''), 1, 16)),
     p_user_id, trim(p_customer->>'full_name'), trim(p_customer->>'email'),
     trim(p_customer->>'phone'), trim(p_customer->>'address'), trim(p_customer->>'township'),
     trim(p_customer->>'city'), trim(p_customer->>'state'), NULLIF(trim(p_customer->>'zip'), ''),
@@ -448,7 +448,7 @@ EXCEPTION
   WHEN invalid_text_representation OR numeric_value_out_of_range THEN
     RAISE EXCEPTION 'Invalid order items';
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions;
 
 -- Called only while the order row is locked and before it is marked cancelled.
 CREATE OR REPLACE FUNCTION restock_order_inventory(p_order_id UUID, p_actor_user_id UUID)
