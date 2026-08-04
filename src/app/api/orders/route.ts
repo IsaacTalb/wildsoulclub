@@ -45,6 +45,58 @@ function validationError(message: string) {
   return NextResponse.json({ success: false, error: message }, { status: 400 });
 }
 
+type DatabaseError = {
+  code?: string;
+  message?: string;
+  details?: string | null;
+  hint?: string | null;
+};
+
+function databaseErrorResponse(stage: "create" | "finalize", error: DatabaseError) {
+  console.error("Order database operation failed", {
+    stage,
+    code: error.code,
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+  });
+
+  const message = error.message?.trim() ?? "";
+  const normalized = message.toLowerCase();
+  const customerSafeRpcError = error.code === "P0001" || [
+    "invalid",
+    "inactive",
+    "variant",
+    "insufficient",
+    "price",
+    "stock",
+    "required",
+  ].some((term) => normalized.includes(term));
+
+  if (customerSafeRpcError && message) return validationError(message);
+
+  if (error.code === "23503") {
+    return validationError("A product or account record is no longer available. Refresh your cart and try again.");
+  }
+  if (error.code === "23505") {
+    return NextResponse.json({ success: false, error: "An order reference conflict occurred. Please try again." }, { status: 409 });
+  }
+  if (error.code === "23514") {
+    return validationError("The order contains a value that is no longer accepted. Refresh and try again.");
+  }
+  if (error.code === "PGRST202" || error.code === "42703") {
+    return NextResponse.json(
+      { success: false, error: "Checkout database setup is out of date. Please contact store support." },
+      { status: 503 },
+    );
+  }
+
+  return NextResponse.json(
+    { success: false, error: `Unable to ${stage === "create" ? "create" : "finalize"} the order. Please try again.` },
+    { status: 500 },
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const user = await getAuthUser();
@@ -85,12 +137,10 @@ export async function POST(req: Request) {
       p_items: orderInput.items,
     });
 
-    if (error) {
-      const expectedError = ["invalid", "inactive", "variant", "insufficient", "price", "stock"].some((term) =>
-        error.message.toLowerCase().includes(term)
-      );
-      if (expectedError) return validationError(error.message);
-      throw error;
+    if (error) return databaseErrorResponse("create", error);
+    if (!order?.id) {
+      console.error("Order RPC returned no order", { order });
+      return NextResponse.json({ success: false, error: "The order could not be created. Please try again." }, { status: 500 });
     }
 
     let savedOrder = order;
@@ -113,7 +163,7 @@ export async function POST(req: Request) {
         savedOrder = updatedOrder;
         referenceSaved = true;
       } else if (updateError.code !== "23505") {
-        throw updateError;
+        return databaseErrorResponse("finalize", updateError);
       }
     }
     if (!referenceSaved) throw new Error("Unable to generate a unique payment reference");
@@ -122,9 +172,10 @@ export async function POST(req: Request) {
       { success: true, data: savedOrder },
       { status: 201 }
     );
-  } catch {
+  } catch (error) {
+    console.error("Unexpected order creation failure", error);
     return NextResponse.json(
-      { success: false, error: "Failed to create order" },
+      { success: false, error: "Unable to create the order. Please try again." },
       { status: 500 }
     );
   }

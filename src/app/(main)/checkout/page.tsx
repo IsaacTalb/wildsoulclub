@@ -204,7 +204,7 @@ export default function CheckoutPage() {
       });
 
       if (!orderResponse.ok) {
-        throw new Error(`Order creation failed: ${await readErrorMessage(orderResponse, "Unable to create your order. Please try again.")}`);
+        throw new Error(await readErrorMessage(orderResponse, "Unable to create your order. Please try again."));
       }
 
       const orderResult = await readJson(orderResponse, "Order creation failed.");
