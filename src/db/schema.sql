@@ -547,21 +547,13 @@ BEGIN
     RETURN;
   END IF;
 
-  SELECT * INTO v_payment
-  FROM payments
-  WHERE id = p_payment_id
-  FOR UPDATE;
-
+  SELECT * INTO v_payment FROM payments WHERE id = p_payment_id FOR UPDATE;
   IF NOT FOUND THEN
     RETURN QUERY SELECT false, 'Payment not found', NULL::JSONB;
     RETURN;
   END IF;
 
-  SELECT * INTO v_order
-  FROM orders
-  WHERE id = v_payment.order_id
-  FOR UPDATE;
-
+  SELECT * INTO v_order FROM orders WHERE id = v_payment.order_id FOR UPDATE;
   IF NOT FOUND THEN
     RETURN QUERY SELECT false, 'Order not found for payment', NULL::JSONB;
     RETURN;
@@ -577,36 +569,38 @@ BEGIN
     RETURN;
   END IF;
 
-  IF v_order.status <> 'pending' THEN
-    RETURN QUERY SELECT false, format('Order status is %s and cannot accept a payment review', v_order.status), NULL::JSONB;
+  IF v_order.status = 'cancelled' THEN
+    RETURN QUERY SELECT false, 'A cancelled order cannot accept a payment review', NULL::JSONB;
     RETURN;
   END IF;
 
-  v_order_status := CASE WHEN p_status = 'approved' THEN 'paid' ELSE 'cancelled' END;
+  IF p_status IN ('rejected', 'expired') AND v_order.status IN ('shipped', 'delivered') THEN
+    RETURN QUERY SELECT false, 'A dispatched order cannot have its payment rejected or expired', NULL::JSONB;
+    RETURN;
+  END IF;
+
+  v_order_status := CASE
+    WHEN p_status = 'approved' AND v_order.status = 'pending' THEN 'paid'
+    WHEN p_status = 'approved' THEN v_order.status
+    ELSE 'cancelled'
+  END;
 
   IF v_order_status = 'cancelled' THEN
     PERFORM restock_order_inventory(v_order.id, p_reviewed_by);
   END IF;
 
   UPDATE payments
-  SET
-    status = p_status,
-    admin_notes = p_admin_notes,
-    reviewed_by = p_reviewed_by,
-    updated_at = NOW()
+  SET status = p_status, admin_notes = p_admin_notes, reviewed_by = p_reviewed_by, updated_at = NOW()
   WHERE id = p_payment_id
   RETURNING * INTO v_payment;
 
   UPDATE orders
-  SET
-    payment_status = p_status,
-    status = v_order_status,
-    updated_at = NOW()
+  SET payment_status = p_status, status = v_order_status, updated_at = NOW()
   WHERE id = v_payment.order_id;
 
   RETURN QUERY SELECT true, NULL::TEXT, to_jsonb(v_payment);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, extensions;
 
 -- ==========================================
 -- DELIVERY ADDRESSES

@@ -34,7 +34,7 @@ export async function PATCH(req: Request) {
     const adminUserId = await requireAdmin();
 
     const body = await req.json();
-    const { orderId, status, courier, tracking_number } = body;
+    const { orderId, status } = body;
 
     if (!orderId || !status) {
       return NextResponse.json(
@@ -53,8 +53,8 @@ export async function PATCH(req: Request) {
     const { data, error } = await supabaseAdmin.rpc("update_order_status", {
       p_order_id: orderId,
       p_status: status,
-      p_courier: typeof courier === "string" ? courier : null,
-      p_tracking_number: typeof tracking_number === "string" ? tracking_number : null,
+      p_courier: null,
+      p_tracking_number: null,
       p_actor_user_id: adminUserId,
     });
 

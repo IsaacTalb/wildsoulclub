@@ -75,8 +75,8 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
+  const loadDashboard = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -103,7 +103,14 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     const timeout = window.setTimeout(() => void loadDashboard(), 0);
-    return () => window.clearTimeout(timeout);
+    const interval = window.setInterval(() => void loadDashboard(false), 15000);
+    const refresh = () => void loadDashboard(false);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+    };
   }, [loadDashboard]);
 
   return (
