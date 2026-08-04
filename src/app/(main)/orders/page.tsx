@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, Clock3, Eye, Package, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/utils";
 
 type PaymentStatus = "pending" | "approved" | "rejected" | "expired";
@@ -36,6 +38,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [proofViewer, setProofViewer] = useState<{ src: string; orderNumber: string } | null>(null);
 
   const loadOrders = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -90,10 +93,16 @@ export default function OrdersPage() {
               <div className="flex items-start gap-3"><PaymentIcon className="mt-0.5 h-5 w-5 shrink-0" /><div><Badge variant={presentation.variant}>{presentation.label}</Badge><p className="mt-2 text-sm text-muted-foreground">{presentation.detail}</p></div></div>
               <div className="mt-4 flex flex-col gap-2 border-t pt-3 text-sm sm:flex-row sm:items-center sm:justify-between"><span className="text-muted-foreground">Reference</span><strong className="font-mono tracking-widest">{order.payment_reference}</strong></div>
             </div>
-            {payment?.payment_image && <Button className="w-full sm:w-auto" variant="outline" size="sm" asChild><a href={payment.payment_image} target="_blank" rel="noreferrer"><Eye className="mr-2 h-4 w-4" />View submitted screenshot</a></Button>}
+            {payment?.payment_image && <Button type="button" className="w-full sm:w-auto" variant="outline" size="sm" onClick={() => setProofViewer({ src: payment.payment_image, orderNumber: order.order_number })}><Eye className="mr-2 h-4 w-4" />View submitted screenshot</Button>}
           </CardContent></Card>
         );
       })}</div>}
+      <Dialog open={Boolean(proofViewer)} onOpenChange={(open) => { if (!open) setProofViewer(null); }}>
+        <DialogContent className="max-h-[92vh] max-w-4xl overflow-hidden p-4 sm:max-w-4xl">
+          <DialogHeader><DialogTitle>Payment screenshot · {proofViewer?.orderNumber}</DialogTitle><DialogDescription>Your submitted payment proof.</DialogDescription></DialogHeader>
+          {proofViewer && <div className="relative min-h-[50vh] overflow-auto rounded-lg bg-black/90"><Image src={proofViewer.src} alt={`Payment screenshot for ${proofViewer.orderNumber}`} width={1400} height={1800} unoptimized className="mx-auto h-auto max-h-[75vh] w-auto object-contain" /></div>}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
+import { couponSchema } from "@/schemas";
 
 const resources = {
   products: { table: "products", orderBy: "created_at", fields: ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"] },
@@ -23,9 +24,11 @@ function config(resource: string) {
 }
 
 function payload(resource: ResourceName, value: Record<string, unknown>) {
-  return Object.fromEntries(resources[resource].fields
+  const result = Object.fromEntries(resources[resource].fields
     .filter((field) => field in value)
     .map((field) => [field, normalizeValue(field, value[field])]));
+  if (resource === "coupons" && typeof result.code === "string") result.code = result.code.trim().toUpperCase();
+  return result;
 }
 
 function normalizeValue(field: string, value: unknown) {
@@ -100,7 +103,8 @@ export async function POST(request: Request, { params }: ResourceContext) {
     const adminUserId = await requireAdmin();
     const { resource, resourceConfig } = await getResource(params);
     const json = await request.json();
-    const body = payload(resource, json);
+    const validated = resource === "coupons" ? couponSchema.parse(json) : json;
+    const body = payload(resource, validated);
     const { data, error } = await supabaseAdmin.from(resourceConfig.table).insert(body).select().single();
     if (error) throw error;
     if (resource === "products") {
@@ -109,7 +113,7 @@ export async function POST(request: Request, { params }: ResourceContext) {
       await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: data.id, action: "create", after: data });
     }
     return NextResponse.json({ success: true, data }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false, error: "Unable to create resource" }, { status: 400 });
   }
 }
@@ -124,7 +128,8 @@ export async function PATCH(request: Request, { params }: ResourceContext) {
       ? await supabaseAdmin.from(resourceConfig.table).select("*").eq("id", id).single()
       : { data: null, error: null };
     if (beforeError) throw beforeError;
-    const { data, error } = await supabaseAdmin.from(resourceConfig.table).update(payload(resource, values)).eq("id", id).select().single();
+    const validated = resource === "coupons" ? couponSchema.partial().parse(values) : values;
+    const { data, error } = await supabaseAdmin.from(resourceConfig.table).update(payload(resource, validated)).eq("id", id).select().single();
     if (error) throw error;
     if (resource === "products") {
       await appendProductImages(id, values.images);

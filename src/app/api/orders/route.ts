@@ -38,6 +38,7 @@ const createOrderSchema = z.object({
   state: z.string().trim().optional().nullable(),
   zip: z.string().trim().optional().nullable(),
   notes: z.string().trim().optional().nullable(),
+  coupon_code: z.string().trim().max(64).optional().nullable(),
   items: z.array(orderItemSchema).min(1),
 });
 
@@ -157,11 +158,13 @@ export async function POST(req: Request) {
         p_items: orderInput.items,
         p_fulfillment_method: orderInput.fulfillment_method,
         p_payment_reference: paymentReference,
+        p_coupon_code: orderInput.coupon_code || null,
       });
 
       if (!error && order?.id) savedOrder = order;
       else if (error?.code === "23505") lastError = error;
       else if (error && isMissingCheckoutRpc(error)) {
+        if (orderInput.coupon_code) return databaseErrorResponse(error);
         // Fall back while the checkout RPC or its cached schema is still being deployed.
         const { data: legacyOrder, error: legacyError } = await supabaseAdmin.rpc("create_order", {
           p_user_id: user.id,

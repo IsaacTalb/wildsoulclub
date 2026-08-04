@@ -34,6 +34,10 @@ type CheckoutApiResponse = {
     imageUrl?: string;
     order_number?: string;
     payment_reference?: string;
+    code?: string;
+    description?: string | null;
+    discount?: number;
+    total?: number;
   };
   error?: string;
 };
@@ -49,6 +53,9 @@ export default function CheckoutPage() {
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [storefrontSettings, setStorefrontSettings] = useState<Record<string, string>>({});
+  const [couponCode, setCouponCode] = useState(() => typeof window === "undefined" ? "" : sessionStorage.getItem("wsc-checkout-coupon") ?? "");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; description?: string | null } | null>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const getValidSession = async () => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -95,7 +102,7 @@ export default function CheckoutPage() {
   );
 
   const subtotal = getSubtotal();
-  const total = subtotal;
+  const total = Math.max(0, subtotal - (appliedCoupon?.discount ?? 0));
 
   const {
     register,
@@ -158,6 +165,34 @@ export default function CheckoutPage() {
     return { objectKey, imageUrl };
   };
 
+  const applyCoupon = async () => {
+    setSubmitError(null);
+    if (!couponCode.trim()) {
+      setAppliedCoupon(null);
+      setSubmitError("Enter a coupon code first.");
+      return;
+    }
+    setApplyingCoupon(true);
+    try {
+      const response = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode, subtotal }),
+      });
+      const result = await readJson(response, "Unable to validate coupon.");
+      if (!response.ok || !result.data?.code || result.data.discount == null) throw new Error(result.error ?? "Unable to apply coupon.");
+      setCouponCode(result.data.code);
+      sessionStorage.setItem("wsc-checkout-coupon", result.data.code);
+      setAppliedCoupon({ code: result.data.code, discount: Number(result.data.discount), description: result.data.description });
+    } catch (error) {
+      setAppliedCoupon(null);
+      sessionStorage.removeItem("wsc-checkout-coupon");
+      setSubmitError(error instanceof Error ? error.message : "Unable to apply coupon.");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
   const onSubmit = async (data: CheckoutFormData) => {
     setSubmitError(null);
 
@@ -199,6 +234,7 @@ export default function CheckoutPage() {
           state: data.state,
           zip: data.zip,
           notes: data.notes,
+          coupon_code: appliedCoupon?.code ?? null,
         }),
       });
 
@@ -253,6 +289,7 @@ export default function CheckoutPage() {
       }
 
       clearCart();
+      sessionStorage.removeItem("wsc-checkout-coupon");
       router.push(`/order-success?order=${encodeURIComponent(createdOrder.order_number ?? "")}&reference=${createdOrder.payment_reference}`);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
@@ -476,11 +513,21 @@ export default function CheckoutPage() {
 
                 <Separator className="mb-4" />
 
+                {!createdOrder && <div className="mb-4 space-y-2">
+                  <Label htmlFor="coupon_code">Coupon code</Label>
+                  <div className="flex gap-2">
+                    <Input id="coupon_code" value={couponCode} onChange={(event) => { setCouponCode(event.target.value.toUpperCase()); setAppliedCoupon(null); }} placeholder="Enter coupon code" />
+                    <Button type="button" variant="outline" disabled={applyingCoupon} onClick={() => void applyCoupon()}>{applyingCoupon ? "Checking…" : "Apply"}</Button>
+                  </div>
+                  {appliedCoupon && <p className="text-xs text-green-700">{appliedCoupon.code} applied: -{formatPrice(appliedCoupon.discount)}{appliedCoupon.description ? ` · ${appliedCoupon.description}` : ""}</p>}
+                </div>}
+
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
                   </div>
+                  {appliedCoupon && <div className="flex justify-between text-green-700"><span>Coupon ({appliedCoupon.code})</span><span>-{formatPrice(appliedCoupon.discount)}</span></div>}
                   <Separator />
                   <div className="flex justify-between font-semibold text-base">
                     <span>Total</span>

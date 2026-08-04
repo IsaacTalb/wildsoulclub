@@ -1,2 +1,15 @@
 import { ResourceManager } from "@/components/admin/resource-manager";
-export default function Page() { return <ResourceManager title="Coupons" resource="coupons" fields={[{ key: "code", label: "Code", required: true }, { key: "discount_type", label: "Discount type", type: "select", options: ["percentage", "fixed"], required: true }, { key: "discount_value", label: "Discount value", type: "number", required: true }, { key: "description", label: "Description", type: "textarea" }, { key: "usage_limit", label: "Usage limit", type: "number" }, { key: "expires_at", label: "Expires at", type: "datetime-local" }, { key: "is_active", label: "Active", type: "boolean" }]} />; }
+
+export default function Page() {
+  return <ResourceManager title="Coupons" resource="coupons" fields={[
+    { key: "code", label: "Code", required: true },
+    { key: "discount_type", label: "Discount type", type: "select", options: ["percentage", "fixed"], required: true },
+    { key: "discount_value", label: "Discount value", type: "number", required: true },
+    { key: "min_order_amount", label: "Minimum order amount", type: "number" },
+    { key: "max_discount", label: "Maximum discount", type: "number" },
+    { key: "description", label: "Description", type: "textarea" },
+    { key: "usage_limit", label: "Usage limit", type: "number" },
+    { key: "expires_at", label: "Expires at", type: "datetime-local" },
+    { key: "is_active", label: "Active", type: "boolean", defaultValue: true },
+  ]} />;
+}

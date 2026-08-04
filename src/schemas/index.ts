@@ -159,7 +159,7 @@ export type DeliveryRegionFormData = z.infer<typeof deliveryRegionSchema>;
 
 export const couponSchema = z.object({
   code: z.string().min(3, "Coupon code must be at least 3 characters"),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   discount_type: z.enum(["percentage", "fixed"]),
   discount_value: z.coerce.number().positive("Discount value must be positive"),
   min_order_amount: z.coerce.number().positive().optional().nullable(),
