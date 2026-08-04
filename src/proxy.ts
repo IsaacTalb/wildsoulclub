@@ -43,8 +43,9 @@ function isPublicRoute(pathname: string): boolean {
     // handlers. They must not be redirected by the cookie-based page guard.
     "/api/orders(.*)",
     "/api/payments(.*)",
-    // Let admin pages load so the client-side Supabase session can be verified
-    // by src/app/admin/layout.tsx.
+    // Supabase browser sessions are stored client-side, so admin pages must load
+    // before src/app/admin/layout.tsx can verify the user. This is only a UI
+    // gate; every admin API request is independently protected by requireAdmin().
     "/admin(.*)",
     // Let admin route handlers receive Bearer tokens from the browser; each
     // /api/admin route still enforces admin access server-side.
@@ -63,10 +64,9 @@ function redirectToSignIn(req: NextRequest) {
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  // Public/admin-page routes must return before Supabase cookie checks. Supabase
-  // browser auth stores sessions client-side in this app, so /admin pages are
-  // authorized by the admin layout after hydration. /api/admin routes are not
-  // public and remain protected by their route handlers.
+  // These routes either contain public UI or perform their own Bearer-token
+  // authorization. In particular, /admin is gated by the client layout while
+  // /api/admin handlers enforce the actual server-side security boundary.
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }

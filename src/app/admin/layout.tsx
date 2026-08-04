@@ -36,6 +36,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import type { Session } from "@supabase/supabase-js";
 
 const sidebarLinks = [
   {
@@ -135,6 +136,30 @@ const sidebarLinks = [
   },
 ];
 
+const ADMIN_CACHE_KEY = "wsc-admin-access";
+const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000;
+
+type AdminAccessCache = { userId: string; verifiedAt: number };
+
+function readAdminAccessCache(): AdminAccessCache | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(ADMIN_CACHE_KEY) ?? "null") as AdminAccessCache | null;
+    if (!cached?.userId || Date.now() - cached.verifiedAt > ADMIN_CACHE_TTL_MS) {
+      sessionStorage.removeItem(ADMIN_CACHE_KEY);
+      return null;
+    }
+    return cached;
+  } catch {
+    sessionStorage.removeItem(ADMIN_CACHE_KEY);
+    return null;
+  }
+}
+
+function clearAdminAccessCache() {
+  if (typeof window !== "undefined") sessionStorage.removeItem(ADMIN_CACHE_KEY);
+}
+
 export default function AdminLayout({
   children,
 }: {
@@ -142,51 +167,68 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [checkingAccess, setCheckingAccess] = useState(() => !readAdminAccessCache());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Verify admin access once per browser session/user. Client-side navigation
-  // between /admin tabs reuses this layout, so we avoid repeating the admin
-  // database check on every sidebar click.
+  // The cache only avoids a blocking loading screen. It never authorizes admin
+  // data: every /api/admin request independently enforces requireAdmin().
   useEffect(() => {
-    const verifyAdmin = async (force = false) => {
-      setCheckingAccess(true);
-      const { data: { session } } = await supabase.auth.getSession();
+    let active = true;
+
+    const verifyAdmin = async (blockWhileChecking = true, knownSession?: Session | null) => {
+      if (blockWhileChecking) setCheckingAccess(true);
+      const session = knownSession === undefined
+        ? (await supabase.auth.getSession()).data.session
+        : knownSession;
 
       if (!session) {
-        sessionStorage.removeItem("wsc-admin-user");
-        router.replace(`/sign-in?redirect=${encodeURIComponent(pathname)}`);
+        clearAdminAccessCache();
+        router.replace(`/sign-in?redirect=${encodeURIComponent(window.location.pathname)}`);
         return;
       }
 
-      if (!force && sessionStorage.getItem("wsc-admin-user") === session.user.id) {
-        setCheckingAccess(false);
-        return;
-      }
+      const cached = readAdminAccessCache();
+      const hasVerifiedCache = cached?.userId === session.user.id;
+      if (hasVerifiedCache && active) setCheckingAccess(false);
 
       const response = await fetch("/api/admin/me", {
         headers: { Authorization: `Bearer ${session.access_token}` },
+        cache: "no-store",
       });
 
       if (!response.ok) {
-        sessionStorage.removeItem("wsc-admin-user");
+        clearAdminAccessCache();
         router.replace("/");
         return;
       }
 
-      sessionStorage.setItem("wsc-admin-user", session.user.id);
-      setCheckingAccess(false);
+      sessionStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify({ userId: session.user.id, verifiedAt: Date.now() } satisfies AdminAccessCache));
+      if (active) setCheckingAccess(false);
     };
 
-    verifyAdmin();
+    const cached = readAdminAccessCache();
+    void verifyAdmin(!cached);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      () => {
-        verifyAdmin(true);
+      (event, session) => {
+        if (event === "SIGNED_OUT" || !session) {
+          clearAdminAccessCache();
+          router.replace(`/sign-in?redirect=${encodeURIComponent(window.location.pathname)}`);
+          return;
+        }
+
+        const verified = readAdminAccessCache();
+        if (event === "SIGNED_IN" && verified?.userId !== session.user.id) {
+          clearAdminAccessCache();
+          void verifyAdmin(true, session);
+        }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   if (checkingAccess) {
