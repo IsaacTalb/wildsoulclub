@@ -16,7 +16,7 @@ export default function CartPage() {
   const [deliveryNotice, setDeliveryNotice] = useState(
     "Delivery timing is confirmed after your order is placed.",
   );
-  const deliveryFee = items.length > 0 ? 7000 : 0;
+  const deliveryFee = items.length > 0 ? 0 :  0;
   const subtotal = getSubtotal();
   const total = subtotal + deliveryFee;
 
@@ -141,7 +141,7 @@ export default function CartPage() {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Delivery Fee</span>
+                  <span className="text-muted-foreground">Delivery Fee (Might differ based on location)</span>
                   <span>{deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}</span>
                 </div>
                 {subtotal >= 100000 && (
@@ -171,7 +171,8 @@ export default function CartPage() {
                 <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <div>
                   <p className="font-medium">Delivery note</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{deliveryNotice}</p>
+                  <span className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{deliveryNotice}</span>
+                  <a href="/delivery" className="text-xs px-1 underline">Read More</a>.
                 </div>
               </div>
 

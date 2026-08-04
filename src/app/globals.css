@@ -76,7 +76,9 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-helvetica), Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, monospace;
+  --font-compressed: var(--font-helvetica-compressed), "Arial Narrow", sans-serif;
+  --font-rounded: var(--font-helvetica-rounded), Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-helvetica), Helvetica, Arial, sans-serif;
 }
 
 @layer base {
@@ -85,7 +87,15 @@
   }
   body {
     @apply bg-white text-foreground;
-    margin: 0; 
+    font-family: var(--font-helvetica), Helvetica, Arial, sans-serif;
+    margin: 0;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
   }
 }
 

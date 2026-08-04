@@ -9,7 +9,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col [--site-header-height:calc(4rem+max(0.25rem,env(safe-area-inset-top)))]">
+    <div className="flex min-h-screen flex-col font-sans [--site-header-height:calc(4rem+max(0.25rem,env(safe-area-inset-top)))]">
       <CartHydration />
       <Header />
       <main className="flex-1 relative">{children}</main>

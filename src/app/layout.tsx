@@ -5,12 +5,45 @@ import "./globals.css";
 
 const helvetica = localFont({
   src: [
-    { path: "../../public/fonts/helvetica-255/Helvetica.ttf", weight: "400", style: "normal" },
-    { path: "../../public/fonts/helvetica-255/helvetica-light-587ebe5a59211.ttf", weight: "300", style: "normal" },
-    { path: "../../public/fonts/helvetica-255/Helvetica-Bold.ttf", weight: "700", style: "normal" },
-    { path: "../../public/fonts/helvetica-255/Helvetica-Oblique.ttf", weight: "400", style: "italic" },
+    {
+      path: "../../public/fonts/helvetica-255-webfont/helvetica-light-587ebe5a59211.woff",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/helvetica-255-webfont/Helvetica.woff",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/helvetica-255-webfont/Helvetica-Oblique.woff",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../../public/fonts/helvetica-255-webfont/Helvetica-Bold.woff",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/helvetica-255-webfont/Helvetica-BoldOblique.woff",
+      weight: "700",
+      style: "italic",
+    },
   ],
   variable: "--font-helvetica",
+  display: "swap",
+});
+
+const helveticaCompressed = localFont({
+  src: "../../public/fonts/helvetica-255-webfont/helvetica-compressed-5871d14b6903a.woff",
+  variable: "--font-helvetica-compressed",
+  display: "swap",
+});
+
+const helveticaRounded = localFont({
+  src: "../../public/fonts/helvetica-255-webfont/helvetica-rounded-bold-5871d05ead8de.woff",
+  variable: "--font-helvetica-rounded",
   display: "swap",
 });
 
@@ -20,6 +53,10 @@ const metadataBase = new URL(
 
 export const metadata: Metadata = {
   metadataBase,
+  icons: {
+    icon: "/images/logo-black.png",
+    shortcut: "/images/logo-black.png",
+  },
   title: {
     default: "Wild Soul Club - Myanmar Streetwear Brand",
     template: "%s | Wild Soul Club",
@@ -40,8 +77,8 @@ export const metadata: Metadata = {
     siteName: "Wild Soul Club",
     images: [
       {
-        url: "/images/wsc-logo.svg",
-        alt: "Wild Soul Club logo",
+        url: "/images/logo-white.png",
+        alt: "Wild Soul Club",
       },
     ],
   },
@@ -57,10 +94,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en" className={helvetica.variable}>
-        <body className="flex min-h-full flex-col bg-white font-sans text-foreground">
-          <Providers>{children}</Providers>
-        </body>
-      </html>
+    <html
+      lang="en"
+      className={`${helvetica.variable} ${helveticaCompressed.variable} ${helveticaRounded.variable}`}
+    >
+      <body className="flex min-h-full flex-col bg-white text-foreground">
+        <Providers>{children}</Providers>
+      </body>
+    </html>
   );
 }
