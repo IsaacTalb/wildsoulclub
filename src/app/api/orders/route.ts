@@ -52,9 +52,8 @@ type DatabaseError = {
   hint?: string | null;
 };
 
-function databaseErrorResponse(stage: "create" | "finalize", error: DatabaseError) {
+function databaseErrorResponse(error: DatabaseError) {
   console.error("Order database operation failed", {
-    stage,
     code: error.code,
     message: error.message,
     details: error.details,
@@ -92,7 +91,7 @@ function databaseErrorResponse(stage: "create" | "finalize", error: DatabaseErro
   }
 
   return NextResponse.json(
-    { success: false, error: `Unable to ${stage === "create" ? "create" : "finalize"} the order. Please try again.` },
+    { success: false, error: "Unable to create the order. Please try again." },
     { status: 500 },
   );
 }
@@ -121,52 +120,37 @@ export async function POST(req: Request) {
       (!orderInput.address || !orderInput.township || !orderInput.city || !orderInput.state)) {
       return validationError("Delivery address is required");
     }
-    const { data: order, error } = await supabaseAdmin.rpc("create_order", {
-      p_user_id: user.id,
-      p_customer: {
-        full_name: orderInput.full_name,
-        email: orderInput.email,
-        phone: orderInput.phone,
-        address: orderInput.address || "Store pickup",
-        township: orderInput.township || "Store pickup",
-        city: orderInput.city || "Store pickup",
-        state: orderInput.state || "Store pickup",
-        zip: orderInput.zip || null,
-        notes: orderInput.notes || null,
-      },
-      p_items: orderInput.items,
-    });
-
-    if (error) return databaseErrorResponse("create", error);
-    if (!order?.id) {
-      console.error("Order RPC returned no order", { order });
-      return NextResponse.json({ success: false, error: "The order could not be created. Please try again." }, { status: 500 });
-    }
-
-    let savedOrder = order;
-    let referenceSaved = false;
-    for (let attempt = 0; attempt < 5 && !referenceSaved; attempt += 1) {
+    let savedOrder: Record<string, unknown> | null = null;
+    let lastError: DatabaseError | null = null;
+    for (let attempt = 0; attempt < 5 && !savedOrder; attempt += 1) {
       const paymentReference = createPaymentReference();
-      const pickup = orderInput.fulfillment_method === "pickup";
-      const { data: updatedOrder, error: updateError } = await supabaseAdmin
-        .from("orders")
-        .update({
-          payment_reference: paymentReference,
-          fulfillment_method: orderInput.fulfillment_method,
-          ...(pickup ? { delivery_fee: 0, total: Number(order.subtotal) } : {}),
-        })
-        .eq("id", order.id)
-        .select()
-        .single();
+      const { data: order, error } = await supabaseAdmin.rpc("create_checkout_order", {
+        p_user_id: user.id,
+        p_customer: {
+          full_name: orderInput.full_name,
+          email: orderInput.email,
+          phone: orderInput.phone,
+          address: orderInput.address || "Store pickup",
+          township: orderInput.township || "Store pickup",
+          city: orderInput.city || "Store pickup",
+          state: orderInput.state || "Store pickup",
+          zip: orderInput.zip || null,
+          notes: orderInput.notes || null,
+        },
+        p_items: orderInput.items,
+        p_fulfillment_method: orderInput.fulfillment_method,
+        p_payment_reference: paymentReference,
+      });
 
-      if (!updateError) {
-        savedOrder = updatedOrder;
-        referenceSaved = true;
-      } else if (updateError.code !== "23505") {
-        return databaseErrorResponse("finalize", updateError);
+      if (!error && order?.id) savedOrder = order;
+      else if (error?.code === "23505") lastError = error;
+      else if (error) return databaseErrorResponse(error);
+      else {
+        console.error("Order RPC returned no order", { order });
+        return NextResponse.json({ success: false, error: "The order could not be created. Please try again." }, { status: 500 });
       }
     }
-    if (!referenceSaved) throw new Error("Unable to generate a unique payment reference");
+    if (!savedOrder) return databaseErrorResponse(lastError ?? { message: "Unable to generate a unique payment reference" });
 
     return NextResponse.json(
       { success: true, data: savedOrder },
