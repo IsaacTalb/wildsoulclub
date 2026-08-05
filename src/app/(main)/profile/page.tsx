@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { Mail, MapPin, Package, Pencil, Phone, Plus, Trash2, User } from "lucide-react";
+import Link from "next/link";
+import { LockKeyhole, Mail, MapPin, Package, Pencil, Phone, Plus, ShoppingBag, Trash2, User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -180,7 +181,26 @@ export default function ProfilePage() {
   }
 
   if (!authReady) return <div className="container mx-auto px-4 py-12 text-left text-muted-foreground">Loading profile…</div>;
-  if (!session) return <div className="container mx-auto px-4 py-12 text-left">Please sign in to view your profile.</div>;
+  if (!session) return (
+    <div className="flex min-h-[calc(100vh-var(--site-header-height))] items-center bg-gradient-to-b from-muted/30 via-background to-background px-4 py-12">
+      <Card className="mx-auto w-full max-w-md overflow-hidden rounded-3xl border-black/5 text-center shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+        <div className="h-2 bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
+        <CardContent className="px-6 py-10 sm:px-10">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
+            <LockKeyhole className="h-7 w-7" aria-hidden="true" />
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Your account</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight">Sign in to view your profile</h1>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">Access your personal details, saved addresses, wishlist, and complete order history.</p>
+          <div className="mt-7 grid gap-3">
+            <Link href="/sign-in?redirect=%2Fprofile"><Button className="h-11 w-full">Sign In</Button></Link>
+            <Link href="/products"><Button variant="outline" className="h-11 w-full"><ShoppingBag className="mr-2 h-4 w-4" />Continue Shopping</Button></Link>
+          </div>
+          <p className="mt-6 text-xs text-muted-foreground">New to Wild Soul Club? <Link href="/sign-up?redirect=%2Fprofile" className="font-medium text-foreground underline underline-offset-4 hover:text-primary">Create an account</Link></p>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   const user = session.user;
   const fullName = String(user.user_metadata.full_name ?? `${firstName} ${lastName}`.trim() ?? user.email?.split("@")[0] ?? "User");
@@ -190,25 +210,21 @@ export default function ProfilePage() {
       <div className="container mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:py-10">
       <div className="mb-5 overflow-hidden rounded-2xl border border-black/5 bg-background shadow-sm sm:mb-7 sm:rounded-3xl">
         <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent sm:h-24" />
-        <div className="flex flex-col gap-4 px-4 pb-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:pb-6">
+        <div className="px-4 pb-5 sm:px-6 sm:pb-6">
           <div className="-mt-9 flex min-w-0 items-end gap-3 text-left sm:-mt-10 sm:gap-4">
             <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-2xl border-4 border-background bg-primary text-xl font-bold text-primary-foreground shadow-md sm:h-20 sm:w-20 sm:rounded-3xl">{getInitials(fullName || user.email || "User")}</div>
             <div className="min-w-0 pb-1"><p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">My account</p><h1 className="truncate text-xl font-bold sm:text-2xl">{fullName}</h1><p className="truncate text-sm text-muted-foreground">{user.email}</p></div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:min-w-52">
-            <div className="rounded-xl bg-muted/60 px-3 py-2 text-left"><p className="text-lg font-bold">{orders.length}</p><p className="text-xs text-muted-foreground">Orders</p></div>
-            <div className="rounded-xl bg-muted/60 px-3 py-2 text-left"><p className="text-lg font-bold">{addresses.length}</p><p className="text-xs text-muted-foreground">Addresses</p></div>
           </div>
         </div>
       </div>
 
       {message && <div role="status" className={`mb-5 rounded-md p-3 text-left text-sm ${message.type === "success" ? "bg-green-100 text-green-800" : "bg-destructive/10 text-destructive"}`}>{message.text}</div>}
 
-      <Tabs defaultValue="profile" className="w-full gap-5 text-left lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-7">
-        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl border bg-background p-1.5 shadow-sm lg:sticky lg:top-[calc(var(--site-header-height)+1.5rem)] lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:rounded-2xl lg:p-2">
-          <TabsTrigger value="profile" className="h-10 min-w-0 px-2 lg:h-12 lg:w-full lg:justify-start lg:px-3"><User className="h-4 w-4 shrink-0" /><span className="truncate">Profile</span></TabsTrigger>
-          <TabsTrigger value="orders" className="h-10 min-w-0 px-2 lg:h-12 lg:w-full lg:justify-start lg:px-3"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Orders</span><span className="ml-auto hidden rounded-full bg-muted px-2 py-0.5 text-[11px] lg:inline">{orders.length}</span></TabsTrigger>
-          <TabsTrigger value="addresses" className="h-10 min-w-0 px-2 lg:h-12 lg:w-full lg:justify-start lg:px-3"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">Addresses</span><span className="ml-auto hidden rounded-full bg-muted px-2 py-0.5 text-[11px] lg:inline">{addresses.length}</span></TabsTrigger>
+      <Tabs defaultValue="profile" className="!grid w-full grid-cols-1 items-start gap-5 text-left lg:!grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-7">
+        <TabsList className="!grid !h-auto !w-full grid-cols-3 gap-1 rounded-xl border bg-background p-1 shadow-sm lg:sticky lg:top-[calc(var(--site-header-height)+1.5rem)] lg:col-start-1 lg:row-start-1 lg:!flex lg:!h-auto lg:!w-full lg:flex-col lg:rounded-2xl lg:p-2">
+          <TabsTrigger value="profile" className="!h-11 min-w-0 !px-1 text-xs sm:!px-2 sm:text-sm lg:!h-12 lg:!w-full lg:!flex-none lg:!justify-start lg:!px-3"><User className="h-4 w-4 shrink-0" /><span className="truncate">Profile</span></TabsTrigger>
+          <TabsTrigger value="orders" className="!h-11 min-w-0 !px-1 text-xs sm:!px-2 sm:text-sm lg:!h-12 lg:!w-full lg:!flex-none lg:!justify-start lg:!px-3"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Orders</span></TabsTrigger>
+          <TabsTrigger value="addresses" className="!h-11 min-w-0 !px-1 text-xs sm:!px-2 sm:text-sm lg:!h-12 lg:!w-full lg:!flex-none lg:!justify-start lg:!px-3"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">Addresses</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-0 min-w-0 lg:col-start-2 lg:row-start-1">
