@@ -1,5 +1,7 @@
 import "server-only";
 
+import { publicImageUrl } from "@/lib/server/public-image-url";
+
 export type PublicProductImageRow = {
   id?: string | null;
   image_url?: string | null;
@@ -61,11 +63,6 @@ export const PUBLIC_PRODUCT_SELECT = `
   categories(id, name, slug), collections(id, name, slug)
 `;
 
-function publicImageUrl(imageUrl?: string | null, objectKey?: string | null) {
-  if (imageUrl?.startsWith("http") || imageUrl?.startsWith("/")) return imageUrl;
-  const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
-  return publicBaseUrl && objectKey ? `${publicBaseUrl}/${objectKey}` : null;
-}
 
 function stockQuantity(value?: number | null) {
   const quantity = Number(value ?? 0);
