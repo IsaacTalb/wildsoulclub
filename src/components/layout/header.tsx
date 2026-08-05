@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { SignInButton, UserButton } from "@/components/authButtons";
 import {
   ChevronDown,
+  Heart,
   LogIn,
   LogOut,
   Menu,
@@ -25,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,6 +111,7 @@ export function Header() {
   }, []);
   const { getItemCount } = useCart();
   const cartCount = getItemCount();
+  const wishlistCount = useWishlist((state) => state.items.length);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -467,6 +470,26 @@ export function Header() {
               <SignInButton />
             )}
           </div>
+
+          {/* Wishlist */}
+          <Link href="/wishlist">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-10 w-10 border-0"
+              aria-label={`Wishlist with ${wishlistCount} ${wishlistCount === 1 ? "item" : "items"}`}
+            >
+              <Heart className="h-5 w-5" />
+              {wishlistCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0 text-xs"
+                >
+                  {wishlistCount}
+                </Badge>
+              )}
+            </Button>
+          </Link>
 
           {/* Cart */}
           <Link href="/cart">

@@ -11,15 +11,27 @@ import {
   Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
 import type { Product, ProductVariant } from "@/types";
 
 import styles from "./product-gallery.module.css";
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
+
+const SIZE_CHART = {
+  S: { Length: "25.5", Chest: "19", Shoulder: "18.5", Sleeve: "8.5" },
+  M: { Length: "26.5", Chest: "20.5", Shoulder: "19.5", Sleeve: "9" },
+  L: { Length: "27.5", Chest: "22", Shoulder: "20.5", Sleeve: "9.5" },
+  XL: { Length: "28.5", Chest: "24", Shoulder: "21", Sleeve: "10" },
+} as const;
+
+type ChartSize = keyof typeof SIZE_CHART;
+type Measurement = keyof (typeof SIZE_CHART)[ChartSize];
+const CHART_SIZE_ORDER: ChartSize[] = ["S", "M", "L", "XL"];
+const MEASUREMENTS: Measurement[] = ["Length", "Chest", "Shoulder", "Sleeve"];
 
 interface PublicProductImage {
   id?: string | null;
@@ -90,13 +102,9 @@ function wrapIndex(index: number, length: number) {
 function LoopingProductGallery({
   images,
   productName,
-  price,
-  salePrice,
 }: {
   images: DisplayImage[];
   productName: string;
-  price: number;
-  salePrice?: number | null;
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
@@ -160,11 +168,6 @@ function LoopingProductGallery({
     event.preventDefault();
     moveGallery(distanceX > 0 ? 1 : -1);
   };
-
-  const discountPercent =
-    salePrice && price > 0
-      ? Math.round(((price - salePrice) / price) * 100)
-      : null;
 
   return (
     <section
@@ -311,6 +314,8 @@ function LoopingProductGallery({
 export default function ProductDetailPage() {
   const params = useParams();
   const { addItem } = useCart();
+  const wishlistItems = useWishlist((state) => state.items);
+  const toggleWishlistItem = useWishlist((state) => state.toggleItem);
   const [product, setProduct] = useState<DisplayProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -398,6 +403,12 @@ export default function ProductDetailPage() {
       ? Math.max(0, Number(selectedVariant.stock))
       : null
     : Math.max(0, Number(product?.stock ?? 0));
+  const isWishlisted = Boolean(
+    product && wishlistItems.some((item) => item.id === product.id),
+  );
+  const chartSizes = CHART_SIZE_ORDER.filter((size) =>
+    product?.sizes.some((productSize) => productSize.trim().toUpperCase() === size),
+  );
   const isSizeAvailable = (size: string) =>
     activeVariants.some(
       (variant) =>
@@ -483,6 +494,18 @@ export default function ProductDetailPage() {
     );
   };
 
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    toggleWishlistItem({
+      id: product.id,
+      name: product.name,
+      slug: product.slug ?? "",
+      price: product.price,
+      salePrice: product.sale_price ?? undefined,
+      thumbnailUrl: product.images[0]?.src ?? product.thumbnail_url ?? undefined,
+    });
+  };
+
   if (loading)
     return (
       <div className="container mx-auto px-4 py-8">Loading product...</div>
@@ -501,8 +524,6 @@ export default function ProductDetailPage() {
             key={product.id}
             images={product.images}
             productName={product.name}
-            price={product.price}
-            salePrice={product.sale_price}
           />
 
           {/* Product Info */}
@@ -669,11 +690,14 @@ export default function ProductDetailPage() {
                 <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
               </Button>
               <Button
-                variant="liquid"
+                variant={isWishlisted ? "liquid-primary" : "liquid"}
                 size="touch"
                 className="w-full sm:w-auto"
+                onClick={handleToggleWishlist}
+                aria-pressed={isWishlisted}
               >
-                <Heart className="mr-2 h-5 w-5" /> Wishlist
+                <Heart className={`mr-2 h-5 w-5 ${isWishlisted ? "fill-current" : ""}`} />
+                {isWishlisted ? "Wishlisted" : "Wishlist"}
               </Button>
             </div>
 
@@ -717,11 +741,29 @@ export default function ProductDetailPage() {
                   className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${sizeChartOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
                 >
                   <div className="min-w-0 overflow-hidden">
-                    {product.sizes.length > 0 ? (
+                    {chartSizes.length > 0 ? (
                       <div className="mb-2 overflow-x-auto rounded-lg border border-foreground/10">
-                        <table className="w-full min-w-[18rem] border-collapse text-left text-sm">
-                          <thead className="bg-foreground/5"><tr><th scope="col" className="px-3 py-2 font-semibold">Size</th><th scope="col" className="px-3 py-2 font-semibold">Availability</th></tr></thead>
-                          <tbody>{product.sizes.map((size) => <tr key={size} className="border-t border-foreground/10"><th scope="row" className="px-3 py-2 font-medium">{size}</th><td className="px-3 py-2 text-muted-foreground">{hasVariants ? (isSizeAvailable(size) ? "In stock" : "Out of stock") : "Available"}</td></tr>)}</tbody>
+                        <table className="w-full min-w-[22rem] border-collapse text-right text-sm">
+                          <thead className="bg-foreground/5">
+                            <tr>
+                              <th scope="col" className="whitespace-nowrap px-3 py-2 text-left font-semibold">Measurement (inches)</th>
+                              {chartSizes.map((size) => (
+                                <th key={size} scope="col" className="px-3 py-2 font-semibold">
+                                  {size}{size === "S" ? <span className="block text-[10px] font-normal text-muted-foreground">Estimated</span> : null}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {MEASUREMENTS.map((measurement) => (
+                              <tr key={measurement} className="border-t border-foreground/10">
+                                <th scope="row" className="px-3 py-2 text-left font-medium">{measurement}</th>
+                                {chartSizes.map((size) => (
+                                  <td key={size} className="px-3 py-2 tabular-nums text-muted-foreground">{SIZE_CHART[size][measurement]}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
                         </table>
                       </div>
                     ) : (
