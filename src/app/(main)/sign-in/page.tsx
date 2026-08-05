@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +12,13 @@ import { useRouter } from "next/navigation";
 import { getSafeRedirect, getSignInRedirectUrl } from "@/lib/auth-redirect";
 
 export default function SignInPage() {
+  const captchaRef = useRef<HCaptcha>(null);
+  const captchaSiteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const router = useRouter();
 
   // Complete both Supabase implicit redirects (#access_token) and PKCE
@@ -74,13 +78,23 @@ export default function SignInPage() {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA challenge.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: { captchaToken },
     });
+
+    captchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
 
     if (error) {
       setError(error.message);
@@ -162,7 +176,25 @@ export default function SignInPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            {captchaSiteKey ? (
+              <div className="flex justify-center overflow-hidden">
+                <HCaptcha
+                  ref={captchaRef}
+                  sitekey={captchaSiteKey}
+                  onVerify={setCaptchaToken}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => {
+                    setCaptchaToken(null);
+                    setError("CAPTCHA could not load. Please refresh and try again.");
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                CAPTCHA is not configured. Set NEXT_PUBLIC_HCAPTCHA_SITE_KEY.
+              </div>
+            )}
+            <Button type="submit" className="w-full" disabled={loading || !captchaToken || !captchaSiteKey}>
               {loading ? "Signing in..." : "Sign In with Email"}
             </Button>
           </form>

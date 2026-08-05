@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { getSafeRedirect, getSignInRedirectUrl } from "@/lib/auth-redirect";
 
 export default function SignUpPage() {
+  const captchaRef = useRef<HCaptcha>(null);
+  const captchaSiteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +21,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // Check for error in URL params
   useEffect(() => {
@@ -31,6 +35,12 @@ export default function SignUpPage() {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA challenge.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setMessage(null);
@@ -43,8 +53,12 @@ export default function SignUpPage() {
           full_name: fullName,
         },
         emailRedirectTo: getSignInRedirectUrl(),
+        captchaToken,
       },
     });
+
+    captchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
 
     if (error) {
       setError(error.message);
@@ -146,7 +160,25 @@ export default function SignUpPage() {
                 minLength={6}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            {captchaSiteKey ? (
+              <div className="flex justify-center overflow-hidden">
+                <HCaptcha
+                  ref={captchaRef}
+                  sitekey={captchaSiteKey}
+                  onVerify={setCaptchaToken}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => {
+                    setCaptchaToken(null);
+                    setError("CAPTCHA could not load. Please refresh and try again.");
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                CAPTCHA is not configured. Set NEXT_PUBLIC_HCAPTCHA_SITE_KEY.
+              </div>
+            )}
+            <Button type="submit" className="w-full" disabled={loading || !captchaToken || !captchaSiteKey}>
               {loading ? "Creating account..." : "Sign Up with Email"}
             </Button>
           </form>
