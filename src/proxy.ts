@@ -40,10 +40,11 @@ function isPublicRoute(pathname: string): boolean {
     "/sign-up",
     "/api/auth(.*)",
     "/api/upload",
-    // Checkout APIs authenticate the Supabase Bearer token in their route
+    // Customer APIs authenticate the Supabase Bearer token in their route
     // handlers. They must not be redirected by the cookie-based page guard.
     "/api/orders(.*)",
     "/api/payments(.*)",
+    "/api/profile(.*)",
     // Supabase browser sessions are stored client-side, so admin pages must load
     // before src/app/admin/layout.tsx can verify the user. This is only a UI
     // gate; every admin API request is independently protected by requireAdmin().
