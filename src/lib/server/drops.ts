@@ -1,6 +1,7 @@
 import "server-only";
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { publicImageUrl } from "@/lib/server/public-image-url";
 import type { Drop } from "@/types/product";
 
 const PRODUCT_SELECT =
@@ -29,12 +30,6 @@ type DropRow = {
   products?: ProductRow[] | null;
   [key: string]: unknown;
 };
-
-function publicImageUrl(imageUrl?: string | null, objectKey?: string | null) {
-  if (imageUrl?.startsWith("http") || imageUrl?.startsWith("/")) return imageUrl;
-  const base = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
-  return base && objectKey ? `${base}/${objectKey}` : imageUrl || objectKey || null;
-}
 
 function normalizeProduct(product: ProductRow) {
   const images = [...(product.product_images ?? [])]
