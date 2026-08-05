@@ -186,42 +186,55 @@ export default function ProfilePage() {
   const fullName = String(user.user_metadata.full_name ?? `${firstName} ${lastName}`.trim() ?? user.email?.split("@")[0] ?? "User");
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-6 sm:py-8">
-      <div className="mb-6 flex items-center gap-4 text-left sm:mb-8">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/20 font-semibold text-primary sm:h-16 sm:w-16">{getInitials(fullName || user.email || "User")}</div>
-        <div className="min-w-0"><h1 className="truncate text-xl font-bold sm:text-2xl">{fullName}</h1><p className="truncate text-sm text-muted-foreground">{user.email}</p></div>
+    <div className="min-h-[calc(100vh-var(--site-header-height))] bg-gradient-to-b from-muted/30 via-background to-background">
+      <div className="container mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:py-10">
+      <div className="mb-5 overflow-hidden rounded-2xl border border-black/5 bg-background shadow-sm sm:mb-7 sm:rounded-3xl">
+        <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent sm:h-24" />
+        <div className="flex flex-col gap-4 px-4 pb-5 sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:pb-6">
+          <div className="-mt-9 flex min-w-0 items-end gap-3 text-left sm:-mt-10 sm:gap-4">
+            <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-2xl border-4 border-background bg-primary text-xl font-bold text-primary-foreground shadow-md sm:h-20 sm:w-20 sm:rounded-3xl">{getInitials(fullName || user.email || "User")}</div>
+            <div className="min-w-0 pb-1"><p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">My account</p><h1 className="truncate text-xl font-bold sm:text-2xl">{fullName}</h1><p className="truncate text-sm text-muted-foreground">{user.email}</p></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:min-w-52">
+            <div className="rounded-xl bg-muted/60 px-3 py-2 text-left"><p className="text-lg font-bold">{orders.length}</p><p className="text-xs text-muted-foreground">Orders</p></div>
+            <div className="rounded-xl bg-muted/60 px-3 py-2 text-left"><p className="text-lg font-bold">{addresses.length}</p><p className="text-xs text-muted-foreground">Addresses</p></div>
+          </div>
+        </div>
       </div>
 
       {message && <div role="status" className={`mb-5 rounded-md p-3 text-left text-sm ${message.type === "success" ? "bg-green-100 text-green-800" : "bg-destructive/10 text-destructive"}`}>{message.text}</div>}
 
-      <Tabs defaultValue="profile" className="w-full text-left">
-        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:max-w-xl">
-          <TabsTrigger value="profile" className="min-w-0"><User className="mr-1.5 h-4 w-4 shrink-0" /><span className="truncate">Profile</span></TabsTrigger>
-          <TabsTrigger value="orders" className="min-w-0"><Package className="mr-1.5 h-4 w-4 shrink-0" /><span className="truncate">Orders</span></TabsTrigger>
-          <TabsTrigger value="addresses" className="min-w-0"><MapPin className="mr-1.5 h-4 w-4 shrink-0" /><span className="truncate">Addresses</span></TabsTrigger>
+      <Tabs defaultValue="profile" className="w-full gap-5 text-left lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-7">
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl border bg-background p-1.5 shadow-sm lg:sticky lg:top-[calc(var(--site-header-height)+1.5rem)] lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:rounded-2xl lg:p-2">
+          <TabsTrigger value="profile" className="h-10 min-w-0 px-2 lg:h-12 lg:w-full lg:justify-start lg:px-3"><User className="h-4 w-4 shrink-0" /><span className="truncate">Profile</span></TabsTrigger>
+          <TabsTrigger value="orders" className="h-10 min-w-0 px-2 lg:h-12 lg:w-full lg:justify-start lg:px-3"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Orders</span><span className="ml-auto hidden rounded-full bg-muted px-2 py-0.5 text-[11px] lg:inline">{orders.length}</span></TabsTrigger>
+          <TabsTrigger value="addresses" className="h-10 min-w-0 px-2 lg:h-12 lg:w-full lg:justify-start lg:px-3"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">Addresses</span><span className="ml-auto hidden rounded-full bg-muted px-2 py-0.5 text-[11px] lg:inline">{addresses.length}</span></TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="mt-5">
-          <Card><CardHeader><CardTitle className="text-lg">Personal Information</CardTitle></CardHeader><CardContent>
+        <TabsContent value="profile" className="mt-0 min-w-0 lg:col-start-2 lg:row-start-1">
+          <div className="mb-4"><h2 className="text-xl font-bold">Personal information</h2><p className="mt-1 text-sm text-muted-foreground">Manage the contact details attached to your account.</p></div>
+          <Card className="overflow-hidden rounded-2xl shadow-sm"><CardHeader className="border-b bg-muted/20"><CardTitle className="text-base">Account details</CardTitle></CardHeader><CardContent className="p-4 sm:p-6">
             <form onSubmit={handleUpdateProfile} className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="first-name">First Name</Label><Input id="first-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} required /></div><div className="space-y-2"><Label htmlFor="last-name">Last Name</Label><Input id="last-name" value={lastName} onChange={(event) => setLastName(event.target.value)} /></div></div>
               <div className="space-y-2"><Label htmlFor="profile-email">Email</Label><div className="relative"><Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="profile-email" value={user.email ?? ""} readOnly className="pl-10" /></div></div>
               <div className="space-y-2"><Label htmlFor="profile-phone">Phone</Label><div className="relative"><Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="profile-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="pl-10" /></div></div>
-              <Button type="submit" disabled={savingProfile}>{savingProfile ? "Saving…" : "Save Changes"}</Button>
+              <div className="flex justify-end border-t pt-5"><Button type="submit" disabled={savingProfile} className="w-full sm:w-auto sm:min-w-36">{savingProfile ? "Saving…" : "Save Changes"}</Button></div>
             </form>
           </CardContent></Card>
         </TabsContent>
 
-        <TabsContent value="orders" className="mt-5">
+        <TabsContent value="orders" className="mt-0 min-w-0 lg:col-start-2 lg:row-start-1">
+          <div className="mb-4"><h2 className="text-xl font-bold">Order history</h2><p className="mt-1 text-sm text-muted-foreground">Review your purchases, payments, and fulfillment status.</p></div>
           {loadingOrders ? <p className="py-10 text-left text-muted-foreground">Loading orders…</p> : orders.length === 0 ? <Card><CardContent className="p-8 text-left text-muted-foreground"><Package className="mb-3 h-10 w-10 opacity-50" /><p className="font-medium text-foreground">No orders yet</p><p className="text-sm">Your order history will appear here.</p></CardContent></Card> : <div className="space-y-4">{orders.map((order) => <Card key={order.id}><CardContent className="p-4 sm:p-6"><div className="flex flex-col items-start justify-between gap-3 sm:flex-row"><div><p className="font-medium">Order {order.order_number}</p>{order.payment_reference && <p className="mt-1 break-all font-mono text-xs font-semibold">Payment ref: {order.payment_reference}</p>}<p className="mt-1 text-sm text-muted-foreground">{new Date(order.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p></div><div className="text-left sm:text-right"><p className="text-lg font-bold">{formatPrice(Number(order.total))}</p><Badge variant={order.status === "pending" ? "outline" : "default"}>{order.status}</Badge></div></div><div className="mt-4 space-y-2 border-t pt-4">{order.order_items?.map((item) => <div key={item.id} className="flex flex-col justify-between gap-1 text-sm min-[420px]:flex-row"><span>{item.quantity} × {item.products?.name || "Product"}</span><span>{formatPrice(Number(item.price ?? 0))}</span></div>)}<p className="border-t pt-3 text-sm text-muted-foreground">{order.fulfillment_method === "pickup" ? "Store pickup" : "Delivery"} · Payment {order.payment_status}</p></div></CardContent></Card>)}</div>}
         </TabsContent>
 
-        <TabsContent value="addresses" className="mt-5 space-y-4">
+        <TabsContent value="addresses" className="mt-0 min-w-0 space-y-4 lg:col-start-2 lg:row-start-1">
           <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"><div><h2 className="text-lg font-semibold">Saved Addresses</h2><p className="text-sm text-muted-foreground">Checkout delivery addresses are saved automatically and remain editable here.</p></div><Button type="button" onClick={() => { if (showAddressForm && !editingAddressId) { closeAddressForm(); return; } setEditingAddressId(null); setAddressForm({ ...emptyAddress, fullName, phone }); setShowAddressForm(true); }}><Plus className="mr-2 h-4 w-4" />Add Address</Button></div>
           {showAddressForm && <Card><CardHeader><CardTitle className="text-lg">{editingAddressId ? "Edit Address" : "New Address"}</CardTitle></CardHeader><CardContent><form onSubmit={handleAddAddress} className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="address-name">Full Name</Label><Input id="address-name" value={addressForm.fullName} onChange={(event) => setAddressForm({ ...addressForm, fullName: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="address-phone">Phone</Label><Input id="address-phone" type="tel" value={addressForm.phone} onChange={(event) => setAddressForm({ ...addressForm, phone: event.target.value })} required /></div><div className="space-y-2 sm:col-span-2"><Label htmlFor="street-address">Address</Label><Input id="street-address" value={addressForm.address} onChange={(event) => setAddressForm({ ...addressForm, address: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="township">Township</Label><Input id="township" value={addressForm.township} onChange={(event) => setAddressForm({ ...addressForm, township: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="city">City</Label><Input id="city" value={addressForm.city} onChange={(event) => setAddressForm({ ...addressForm, city: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="state">State/Region</Label><Input id="state" value={addressForm.state} onChange={(event) => setAddressForm({ ...addressForm, state: event.target.value })} required /></div><div className="space-y-2"><Label htmlFor="zip">Postal Code</Label><Input id="zip" value={addressForm.zip} onChange={(event) => setAddressForm({ ...addressForm, zip: event.target.value })} /></div><label className="flex items-center gap-2 text-sm sm:col-span-2"><Checkbox checked={addressForm.isDefault} onCheckedChange={(checked) => setAddressForm({ ...addressForm, isDefault: checked === true })} />Make this my default address</label><div className="flex flex-wrap gap-2 sm:col-span-2"><Button type="submit" disabled={savingAddress}>{savingAddress ? "Saving…" : editingAddressId ? "Update Address" : "Save Address"}</Button><Button type="button" variant="outline" onClick={closeAddressForm}>Cancel</Button></div></form></CardContent></Card>}
           {loadingAddresses ? <p className="py-8 text-left text-muted-foreground">Loading addresses…</p> : addresses.length === 0 ? <Card><CardContent className="p-8 text-left text-muted-foreground"><MapPin className="mb-3 h-10 w-10 opacity-50" /><p className="font-medium text-foreground">No saved addresses</p><p className="text-sm">Add an address or place a delivery order to save one automatically.</p></CardContent></Card> : <div className="grid gap-4 md:grid-cols-2">{addresses.map((address) => <Card key={address.id}><CardContent className="p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{address.full_name}</p>{address.is_default && <Badge>Default</Badge>}</div><p className="mt-2 break-words text-sm">{address.address}</p><p className="text-sm">{address.township}, {address.city}, {address.state}{address.zip ? ` ${address.zip}` : ""}</p><a href={`tel:${address.phone}`} className="mt-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><Phone className="h-3.5 w-3.5" />{address.phone}</a></div><div className="flex shrink-0"><Button type="button" variant="ghost" size="icon" className="text-muted-foreground" onClick={() => editAddress(address)} aria-label={`Edit address for ${address.full_name}`}><Pencil className="h-4 w-4" /></Button><Button type="button" variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => void removeAddress(address.id)} aria-label={`Remove address for ${address.full_name}`}><Trash2 className="h-4 w-4" /></Button></div></div></CardContent></Card>)}</div>}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
