@@ -203,6 +203,53 @@ export async function POST(req: Request) {
     }
     if (!savedOrder) return databaseErrorResponse(lastError ?? { message: "Unable to generate a unique payment reference" });
 
+    // Keep checkout contact details reusable in the customer profile. This is
+    // intentionally done after the transactional order succeeds so a profile
+    // sync problem can never cause a duplicate checkout retry.
+    const fullNameParts = orderInput.full_name.trim().split(/\s+/);
+    const firstName = fullNameParts.shift() ?? orderInput.full_name.trim();
+    const lastName = fullNameParts.join(" ");
+    const { error: authProfileError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      user_metadata: { ...user.user_metadata, full_name: orderInput.full_name, first_name: firstName, last_name: lastName, phone: orderInput.phone },
+    });
+    if (authProfileError) console.error("Order created but Auth profile sync failed", authProfileError);
+
+    if (orderInput.fulfillment_method === "delivery") {
+      const { data: savedAddresses, error: addressReadError } = await supabaseAdmin
+        .from("delivery_addresses")
+        .select("id, address, township, city, state, zip")
+        .eq("user_id", user.id);
+      if (addressReadError) {
+        console.error("Order created but saved address lookup failed", addressReadError);
+      } else {
+        const normalized = (value?: string | null) => (value ?? "").trim().toLowerCase();
+        const existing = savedAddresses?.find((address) =>
+          normalized(address.address) === normalized(orderInput.address) &&
+          normalized(address.township) === normalized(orderInput.township) &&
+          normalized(address.city) === normalized(orderInput.city) &&
+          normalized(address.state) === normalized(orderInput.state) &&
+          normalized(address.zip) === normalized(orderInput.zip),
+        );
+        if (existing) {
+          const { error } = await supabaseAdmin.from("delivery_addresses").update({ full_name: orderInput.full_name, phone: orderInput.phone }).eq("id", existing.id).eq("user_id", user.id);
+          if (error) console.error("Order created but saved address refresh failed", error);
+        } else {
+          const { error } = await supabaseAdmin.from("delivery_addresses").insert({
+            user_id: user.id,
+            full_name: orderInput.full_name,
+            phone: orderInput.phone,
+            address: orderInput.address,
+            township: orderInput.township,
+            city: orderInput.city,
+            state: orderInput.state,
+            zip: orderInput.zip || null,
+            is_default: (savedAddresses?.length ?? 0) === 0,
+          });
+          if (error) console.error("Order created but checkout address save failed", error);
+        }
+      }
+    }
+
     return NextResponse.json(
       { success: true, data: savedOrder },
       { status: 201 }
