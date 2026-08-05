@@ -79,8 +79,8 @@ jobs:
 
       - name: Apply pending migrations using database URL
         if: steps.target.outputs.mode == 'db-url'
-        run: supabase db push --db-url "$SUPABASE_DB_URL" --include-all
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --include-all --yes
 
       - name: Apply pending migrations using linked project
         if: steps.target.outputs.mode == 'linked'
-        run: supabase db push --linked --include-all
+        run: supabase db push --linked --include-all --yes
