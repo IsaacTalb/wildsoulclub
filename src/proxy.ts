@@ -18,6 +18,7 @@ function isPublicRoute(pathname: string): boolean {
     "/products(.*)",
     "/collections(.*)",
     "/cart",
+    "/wishlist",
     "/contact",
     "/checkout",
     "/order-success",
