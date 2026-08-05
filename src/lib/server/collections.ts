@@ -1,15 +1,12 @@
+import "server-only";
+
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { publicImageUrl } from "@/lib/server/public-image-url";
 import {
   normalizePublicProduct,
   PUBLIC_PRODUCT_SELECT,
   type PublicProductRow,
 } from "@/lib/server/public-product";
-
-function publicImageUrl(imageUrl?: string | null, objectKey?: string | null) {
-  if (imageUrl?.startsWith("http") || imageUrl?.startsWith("/")) return imageUrl;
-  const base = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
-  return base && objectKey ? `${base}/${objectKey}` : imageUrl || objectKey || null;
-}
 
 export async function getPublicCollectionBySlug(slug: string) {
   const { data: collection, error: collectionError } = await supabaseAdmin
