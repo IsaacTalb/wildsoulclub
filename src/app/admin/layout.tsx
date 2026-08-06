@@ -89,16 +89,16 @@ const sidebarLinks = [
     href: "/admin/coupons",
     icon: Percent,
   },
-  {
-    title: "Delivery Fee",
-    href: "/admin/delivery-fee",
-    icon: Truck,
-  },
-  {
-    title: "Townships",
-    href: "/admin/townships",
-    icon: MapPin,
-  },
+  // {
+  //   title: "Delivery Fee",
+  //   href: "/admin/delivery-fee",
+  //   icon: Truck,
+  // },
+  // {
+  //   title: "Townships",
+  //   href: "/admin/townships",
+  //   icon: MapPin,
+  // },
   // {
   //   title: "Banners",
   //   href: "/admin/banners",
