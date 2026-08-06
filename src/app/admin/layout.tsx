@@ -99,26 +99,26 @@ const sidebarLinks = [
     href: "/admin/townships",
     icon: MapPin,
   },
-  {
-    title: "Banners",
-    href: "/admin/banners",
-    icon: Image,
-  },
-  {
-    title: "Hero Slider",
-    href: "/admin/hero-slider",
-    icon: Sliders,
-  },
+  // {
+  //   title: "Banners",
+  //   href: "/admin/banners",
+  //   icon: Image,
+  // },
+  // {
+  //   title: "Hero Slider",
+  //   href: "/admin/hero-slider",
+  //   icon: Sliders,
+  // },
   {
     title: "Website Settings",
     href: "/admin/settings",
     icon: Settings,
   },
-  {
-    title: "Pages",
-    href: "/admin/pages",
-    icon: FileText,
-  },
+  // {
+  //   title: "Pages",
+  //   href: "/admin/pages",
+  //   icon: FileText,
+  // },
   {
     title: "Admins",
     href: "/admin/admins",
@@ -129,11 +129,11 @@ const sidebarLinks = [
     href: "/admin/users",
     icon: Users,
   },
-  {
-    title: "Analytics",
-    href: "/admin/analytics",
-    icon: BarChart3,
-  },
+  // {
+  //   title: "Analytics",
+  //   href: "/admin/analytics",
+  //   icon: BarChart3,
+  // },
 ];
 
 const ADMIN_CACHE_KEY = "wsc-admin-access";
@@ -314,12 +314,12 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative">
+            {/* <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
                 3
               </Badge>
-            </Button>
+            </Button> */}
             <DropdownMenu>
               <DropdownMenuTrigger
                 className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent transition-colors"

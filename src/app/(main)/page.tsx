@@ -282,11 +282,8 @@ function getCountdownStatus(
   ) {
     return {
       state: "live",
-      label: "Live Now · Ends In",
-      countdown: calculateTimeRemaining(
-        endDate!,
-        currentTime,
-      ),
+      label: "Live Now",
+      countdown: null,
     };
   }
 
@@ -360,16 +357,7 @@ function HeroCountdown({
   href: string;
 }) {
   if (currentTime === null) {
-    return (
-      <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150">
-        <div className="flex items-center justify-center gap-3">
-          <div className="h-8 w-12 animate-pulse rounded-lg bg-white/10" />
-          <div className="h-8 w-12 animate-pulse rounded-lg bg-white/10" />
-          <div className="h-8 w-12 animate-pulse rounded-lg bg-white/10" />
-          <div className="h-8 w-12 animate-pulse rounded-lg bg-white/10" />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const status = getCountdownStatus(
@@ -377,7 +365,11 @@ function HeroCountdown({
     endDate,
     currentTime,
   );
-  const countdown = status.countdown;
+  const countdown =
+    status.state === "upcoming"
+      ? status.countdown
+      : null;
+
   const showLiveCta = status.state === "live";
 
   if (!countdown && !showLiveCta) {
@@ -385,47 +377,90 @@ function HeroCountdown({
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div
+      className="
+        relative z-10
+        mx-auto flex w-full
+        flex-col items-center
+        gap-2.5 px-3
+        overflow-visible
+        min-[360px]:px-4
+        sm:max-w-xl sm:gap-4
+        md:max-w-2xl
+      "
+    >
       {countdown && (
-        <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-white/[0.09] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)] backdrop-blur-2xl backdrop-saturate-150 sm:px-6 sm:py-4">
+        <div
+          className="
+            relative w-full
+            max-w-[22rem]
+            overflow-hidden
+            rounded-2xl
+            border border-white/20
+            bg-white/[0.09]
+            px-2 py-2.5
+            shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_18px_60px_rgba(0,0,0,0.25)]
+            backdrop-blur-2xl
+            backdrop-saturate-150
+            min-[360px]:max-w-[24rem]
+            min-[360px]:px-3
+            min-[400px]:px-4
+            sm:max-w-[30rem]
+            sm:rounded-[24px]
+            sm:px-6 sm:py-4
+          "
+        >
           <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent"
-          />
-
-          <div className="relative flex flex-col items-center">
-            <div className="flex items-center justify-center divide-x divide-white/15">
-              <CountdownUnit
-                value={countdown.days}
-                label="Days"
-              />
-
-              <CountdownUnit
-                value={countdown.hours}
-                label="Hours"
-              />
-
-              <CountdownUnit
-                value={countdown.minutes}
-                label="Mins"
-              />
-
-              <CountdownUnit
-                value={countdown.seconds}
-                label="Secs"
-              />
-            </div>
+            className="
+              grid w-full
+              grid-cols-4
+              items-center
+              divide-x divide-white/15
+            "
+          >
+            <CountdownUnit value={countdown.days} label="Days" />
+            <CountdownUnit value={countdown.hours} label="Hours" />
+            <CountdownUnit value={countdown.minutes} label="Mins" />
+            <CountdownUnit value={countdown.seconds} label="Secs" />
           </div>
         </div>
       )}
 
       {showLiveCta && (
-        <Link
-          href={href}
-          className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/35 bg-white px-6 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-black shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
-        >
-          Live
-        </Link>
+        <div className="flex min-h-10 w-full items-center justify-center sm:min-h-11">
+          <Link
+            href={href}
+            className="
+              inline-flex min-h-9
+              items-center justify-center
+              rounded-full
+              border border-white/35
+              bg-white
+              px-4 py-2
+              text-[11px] font-bold
+              uppercase leading-none
+              tracking-[0.14em]
+              text-black
+              shadow-lg
+              transition-transform duration-300
+              hover:scale-105
+              focus-visible:outline-none
+              focus-visible:ring-2
+              focus-visible:ring-white
+              focus-visible:ring-offset-2
+              focus-visible:ring-offset-black
+              motion-reduce:transition-none
+              min-[360px]:px-5
+              min-[360px]:text-xs
+              sm:min-h-10
+              sm:px-7 sm:py-2.5
+              sm:text-sm
+              sm:tracking-[0.16em]
+            "
+          >
+            Live
+          </Link>
+        </div>
       )}
     </div>
   );
@@ -567,6 +602,10 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHeroInteractionActive, setIsHeroInteractionActive] =
     useState(false);
+
+  const [revealedHeroId, setRevealedHeroId] = useState<
+    string | null
+  >(null);
 
   const [homeProducts, setHomeProducts] = useState<
     HomeProduct[]
@@ -740,6 +779,10 @@ export default function HomePage() {
     }
   }, [currentSlide, heroSlides.length]);
 
+  useEffect(() => {
+    setRevealedHeroId(null);
+  }, [currentSlide]);
+
   return (
     <div className="bg-white">
       {/* ------------------------------------------------------------------ */}
@@ -764,21 +807,18 @@ export default function HomePage() {
         ) : (
           heroSlides.map((slide, index) => {
             const isActive = index === currentSlide;
+            const isHeroStatusVisible =
+              isActive && revealedHeroId === slide.id;
 
             return (
               <div
                 key={slide.id}
                 aria-hidden={!isActive}
-                aria-label={`${slide.subtitle} collection. Reveal countdown.`}
+                aria-label={`${slide.subtitle} collection`}
                 inert={!isActive}
-                tabIndex={isActive ? 0 : -1}
-                onPointerEnter={() => setIsHeroInteractionActive(true)}
-                onPointerLeave={() => setIsHeroInteractionActive(false)}
-                onFocus={() => setIsHeroInteractionActive(true)}
-                onBlur={() => setIsHeroInteractionActive(false)}
                 className={`absolute inset-0 bg-white transition-all duration-1000 ease-out ${!slide.image ? "[&_h1]:!text-foreground" : ""} ${
                   isActive
-                    ? "group visible scale-100 opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
+                    ? "visible scale-100 opacity-100"
                     : "pointer-events-none invisible scale-[1.03] opacity-0"
                 }`}
               >
@@ -811,45 +851,93 @@ export default function HomePage() {
                 {/* Center content */}
                 <div className="relative z-10 flex h-full items-center justify-center px-[env(safe-area-inset-left)] pb-[max(1rem,env(safe-area-inset-bottom))] pt-[var(--site-header-height)]">
                   <div className="container mx-auto px-4">
-                    <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-3 text-center landscape:gap-2 sm:gap-4">
-                      {/* Collection name */}
-                      <div
+                    <div
+                      className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-3 text-center landscape:gap-2 sm:gap-4"
+                      onPointerLeave={() => {
+                        setRevealedHeroId(null);
+                        setIsHeroInteractionActive(false);
+                      }}
+                      onFocusCapture={() => {
+                        setRevealedHeroId(slide.id);
+                        setIsHeroInteractionActive(true);
+                      }}
+                      onBlurCapture={(event) => {
+                        const nextFocusedElement =
+                          event.relatedTarget as Node | null;
+
+                        if (
+                          !event.currentTarget.contains(
+                            nextFocusedElement,
+                          )
+                        ) {
+                          setRevealedHeroId(null);
+                          setIsHeroInteractionActive(false);
+                        }
+                      }}
+                    >
+                      {/* Collection name: hover, focus, or tap to reveal status */}
+                      <button
+                        type="button"
+                        aria-label={`Reveal status for ${slide.title}`}
+                        aria-expanded={isHeroStatusVisible}
+                        onPointerEnter={() => {
+                          setRevealedHeroId(slide.id);
+                          setIsHeroInteractionActive(true);
+                        }}
+                        onClick={() => {
+                          setRevealedHeroId(slide.id);
+                          setIsHeroInteractionActive(true);
+                        }}
                         className={`
-                          relative overflow-hidden 
-                          rounded-2xl sm:rounded-3xl   /* was 28px → 16px (mobile), 36px → 24px (desktop) */
-                          border border-white/20 
-                          bg-white/[0.09] 
-                          px-4 py-4 sm:px-8 sm:py-6    /* was px-5 py-5 / sm:px-10 sm:py-7 – now smaller */
-                          shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_25px_80px_rgba(0,0,0,0.3)] 
-                          backdrop-blur-2xl backdrop-saturate-150 
-                          transition-all delay-100 duration-700 
-                          max-w-2xl mx-auto           /* optional – limits width and centres on large screens */
-                          ${isActive ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"}
+                          relative mx-auto max-w-2xl overflow-hidden
+                          rounded-2xl border border-white/20
+                          bg-white/[0.09] px-4 py-4
+                          shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_25px_80px_rgba(0,0,0,0.3)]
+                          backdrop-blur-2xl backdrop-saturate-150
+                          transition-all delay-100 duration-700
+                          hover:scale-[1.02]
+                          focus-visible:outline-none
+                          focus-visible:ring-2
+                          focus-visible:ring-white
+                          focus-visible:ring-offset-2
+                          focus-visible:ring-offset-black/40
+                          sm:rounded-3xl sm:px-8 sm:py-6
+                          ${
+                            isActive
+                              ? "translate-y-0 opacity-100"
+                              : "translate-y-5 opacity-0"
+                          }
                         `}
                       >
                         {/* Liquid glass reflection */}
-                        <div
+                        <span
                           aria-hidden="true"
                           className="pointer-events-none absolute -left-1/4 -top-1/2 h-full w-[150%] rotate-[-8deg] bg-gradient-to-b from-white/20 via-white/[0.03] to-transparent blur-2xl"
                         />
 
-                        <div
+                        <span
                           aria-hidden="true"
                           className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"
                         />
 
                         <h1 className="relative text-balance text-[clamp(1rem,3.5vmin,2.2rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
-                            {slide.title}
+                          {slide.title}
                         </h1>
-                      </div>
+                      </button>
 
-                      {/* Countdown */}
+                      {/* Upcoming = countdown. Live = Live button only. */}
                       <div
-                        className={`max-h-0 translate-y-2 overflow-hidden opacity-0 transition-all delay-100 duration-500 group-hover:max-h-32 group-hover:translate-y-0 group-hover:opacity-100 group-focus:max-h-32 group-focus:translate-y-0 group-focus:opacity-100 ${
-                          isActive
-                            ? ""
-                            : "!max-h-0 !opacity-0"
-                        }`}
+                        aria-hidden={!isHeroStatusVisible}
+                        inert={!isHeroStatusVisible}
+                        className={`
+                          overflow-hidden transition-all
+                          delay-100 duration-500
+                          ${
+                            isHeroStatusVisible
+                              ? "max-h-40 translate-y-0 opacity-100"
+                              : "pointer-events-none max-h-0 translate-y-2 opacity-0"
+                          }
+                        `}
                       >
                         <HeroCountdown
                           startDate={slide.startDate}
@@ -858,7 +946,6 @@ export default function HomePage() {
                           href={slide.href}
                         />
                       </div>
-
                     </div>
                   </div>
                 </div>
