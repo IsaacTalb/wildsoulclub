@@ -14,6 +14,8 @@ const r2RemotePattern = r2PublicBaseUrl
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [r2RemotePattern],
+    // R2 keys are UUID-versioned, so optimized variants can be retained safely.
+    minimumCacheTTL: 2_678_400,
   },
 };
 
