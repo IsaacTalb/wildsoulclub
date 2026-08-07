@@ -53,35 +53,78 @@ const metadataBase = new URL(
 
 export const metadata: Metadata = {
   metadataBase,
-  icons: {
-    icon: "/images/logo-black.png",
-    shortcut: "/images/logo-black.png",
-  },
+
   title: {
     default: "Wild Soul Club - Myanmar Streetwear Brand",
     template: "%s | Wild Soul Club",
   },
+
   description:
     "Premium streetwear clothing brand from Myanmar. Shop the latest collections of t-shirts, hoodies, and more.",
+
   keywords: [
     "wild soul club",
     "myanmar streetwear",
     "clothing brand myanmar",
     "streetwear myanmar",
   ],
+
+  icons: {
+    icon: [
+      {
+        url: "/images/favicon.ico",
+        sizes: "any",
+      },
+      {
+        url: "/images/favicon-16x16.png",
+        type: "image/png",
+        sizes: "16x16",
+      },
+      {
+        url: "/images/favicon-32x32.png",
+        type: "image/png",
+        sizes: "32x32",
+      },
+      {
+        url: "/images/icon-192.png",
+        type: "image/png",
+        sizes: "192x192",
+      },
+      {
+        url: "/images/icon-512.png",
+        type: "image/png",
+        sizes: "512x512",
+      },
+    ],
+
+    apple: [
+      {
+        url: "/images/apple-touch-icon.png",
+        type: "image/png",
+        sizes: "180x180",
+      },
+    ],
+
+    shortcut: "/images/favicon.ico",
+  },
+
   openGraph: {
     title: "Wild Soul Club",
     description: "Myanmar Streetwear Brand",
     type: "website",
     locale: "en_US",
     siteName: "Wild Soul Club",
+
     images: [
       {
-        url: "/images/logo-white.png",
+        url: "/images/logo-black.png",
+        width: 512,
+        height: 512,
         alt: "Wild Soul Club",
       },
     ],
   },
+
   robots: {
     index: true,
     follow: true,
@@ -97,8 +140,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${helvetica.variable} ${helveticaCompressed.variable} ${helveticaRounded.variable}`}
+      suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col bg-white text-foreground">
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>
