@@ -289,8 +289,8 @@ export function ProductManager() {
       });
       const uploadResult = await readJson(uploadResponse);
       if (!uploadResponse.ok) throw new Error(uploadResult.error ?? "Unable to prepare image upload");
-      const { uploadUrl, objectKey, imageUrl } = uploadResult.data;
-      const putResponse = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+      const { uploadUrl, uploadHeaders, objectKey, imageUrl } = uploadResult.data;
+      const putResponse = await fetch(uploadUrl, { method: "PUT", headers: uploadHeaders, body: file });
       if (!putResponse.ok) throw new Error("Unable to upload image to Cloudflare R2. Check R2 CORS for PUT requests.");
       uploadedImages.push({ image_url: imageUrl, object_key: objectKey, file_size: file.size, mime_type: file.type });
       setUploadProgress({ current: index + 1, total: fileList.length });

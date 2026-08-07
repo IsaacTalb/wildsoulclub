@@ -19,6 +19,20 @@ const r2Client = new S3Client({
 const BUCKET = process.env.R2_BUCKET_NAME || "wildsoulclub";
 const PUBLIC_URL = process.env.R2_PUBLIC_BASE_URL || "";
 
+// Public object names contain a UUID and are never overwritten. That makes them
+// safe to cache for a year; replacing an image creates a new URL instead.
+export const PUBLIC_IMAGE_CACHE_CONTROL =
+  "public, max-age=31536000, s-maxage=31536000, immutable";
+
+const PUBLIC_IMAGE_FOLDERS = new Set<UploadFolder>([
+  "products",
+  "hero",
+  "collections",
+  "banners",
+  "new-drops",
+  "archive-sales",
+]);
+
 export type UploadFolder =
   | "products"
   | "payments"
@@ -70,6 +84,9 @@ export async function uploadFile(
       Key: objectKey,
       Body: body,
       ContentType: mimeType,
+      ...(PUBLIC_IMAGE_FOLDERS.has(folder)
+        ? { CacheControl: PUBLIC_IMAGE_CACHE_CONTROL }
+        : {}),
     })
   );
 
@@ -114,6 +131,9 @@ export async function getSignedUploadUrl(
     Bucket: BUCKET,
     Key: objectKey,
     ContentType: contentType,
+    ...(PUBLIC_IMAGE_FOLDERS.has(folder)
+      ? { CacheControl: PUBLIC_IMAGE_CACHE_CONTROL }
+      : {}),
   });
 
   const url = await getSignedUrl(r2Client, command, { expiresIn: 3600 });

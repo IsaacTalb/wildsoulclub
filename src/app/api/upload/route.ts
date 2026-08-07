@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSignedUploadUrl } from "@/lib/upload";
+import { getSignedUploadUrl, PUBLIC_IMAGE_CACHE_CONTROL } from "@/lib/upload";
 import { getAuthUser, requireAdmin } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -31,10 +31,19 @@ export async function POST(req: Request) {
 
     const { url, objectKey } = await getSignedUploadUrl(folder, contentType, fileName);
     const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "") || "";
+    const isPublicImage = !["payments", "avatars", "blogs", "temp", "invoices"].includes(folder);
 
     return NextResponse.json({
       success: true,
-      data: { uploadUrl: url, objectKey, imageUrl: publicBaseUrl ? `${publicBaseUrl}/${objectKey}` : objectKey },
+      data: {
+        uploadUrl: url,
+        uploadHeaders: {
+          "Content-Type": contentType,
+          ...(isPublicImage ? { "Cache-Control": PUBLIC_IMAGE_CACHE_CONTROL } : {}),
+        },
+        objectKey,
+        imageUrl: publicBaseUrl ? `${publicBaseUrl}/${objectKey}` : objectKey,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to generate upload URL";
