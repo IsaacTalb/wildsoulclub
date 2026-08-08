@@ -996,7 +996,7 @@ export default function HomePage() {
             }
           `}
         >
-          <div
+          {/* <div
             className="
               mx-auto grid w-full
               grid-cols-1 items-end
@@ -1005,7 +1005,7 @@ export default function HomePage() {
               sm:gap-4
             "
           >
-            {/* Left */}
+            
             <div className="flex items-center justify-center sm:justify-start">
               <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-sm sm:h-10 sm:w-10">
                 <Image
@@ -1018,7 +1018,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Middle */}
+            
             <div className="text-center opacity-80">
               <span>
                 Myanmar streetwear offering original pieces,
@@ -1026,7 +1026,7 @@ export default function HomePage() {
               </span>
             </div>
 
-            {/* Right */}
+            
             <div className="flex items-center justify-center gap-3 sm:justify-end">
               <Link
                 href="/privacy"
@@ -1049,7 +1049,7 @@ export default function HomePage() {
                 Terms
               </Link>
             </div>
-          </div>
+          </div> */}
         </div>
       </section>
     </div>
