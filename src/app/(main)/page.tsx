@@ -842,7 +842,7 @@ export default function HomePage() {
                 {/* Dark image overlays */}
                 {slide.image ? (
                   <>
-                    <div className="absolute inset-0 bg-black/25" />
+                    {/* <div className="absolute inset-0 bg-black/25" /> */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-black/4 to-black/25" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,rgba(0, 0, 0, 0.01)_100%)]" />
                   </>
@@ -977,6 +977,80 @@ export default function HomePage() {
             ))}
           </div>
         )}
+
+        {/* ------------------------------------------------------------------ */}
+        {/*                       Hero bottom information                       */}
+        {/* ------------------------------------------------------------------ */}
+
+        <div
+          className={`
+            absolute bottom-0 left-0 right-0 z-30
+            px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]
+            text-[10px] font-medium tracking-[0.04em]
+            sm:px-6 sm:pb-4 sm:text-[11px]
+            md:px-8
+            ${
+              heroSlides.length > 0
+                ? "text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]"
+                : "text-neutral-700"
+            }
+          `}
+        >
+          <div
+            className="
+              mx-auto grid w-full
+              grid-cols-1 items-end
+              gap-1.5
+              sm:grid-cols-[1fr_2fr_1fr]
+              sm:gap-4
+            "
+          >
+            {/* Left */}
+            <div className="flex items-center justify-center sm:justify-start">
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white/90 shadow-sm sm:h-10 sm:w-10">
+                <Image
+                  src="/images/logo-black.png"
+                  alt="Wild Soul Club"
+                  width={162}
+                  height={162}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Middle */}
+            <div className="text-center opacity-80">
+              <span>
+                Myanmar streetwear offering original pieces,
+                limited collections and new drops.
+              </span>
+            </div>
+
+            {/* Right */}
+            <div className="flex items-center justify-center gap-3 sm:justify-end">
+              <Link
+                href="/privacy"
+                className="transition-opacity hover:opacity-60"
+              >
+                Privacy
+              </Link>
+
+              <span
+                aria-hidden="true"
+                className="opacity-40"
+              >
+                ·
+              </span>
+
+              <Link
+                href="/terms"
+                className="transition-opacity hover:opacity-60"
+              >
+                Terms
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );
