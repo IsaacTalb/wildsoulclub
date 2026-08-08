@@ -467,7 +467,9 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <SignInButton />
+              <Link href="/login" onClick={() => setIsOpen(false)}>
+                Sign In
+              </Link>
             )}
           </div>
 
