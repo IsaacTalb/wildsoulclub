@@ -44,7 +44,7 @@ Set these variables for Production and every Preview environment that should
 display R2 images, then redeploy (the image allowlist is read at build time):
 
 ```dotenv
-R2_PUBLIC_BASE_URL=https://images.example.com
+R2_PUBLIC_BASE_URL=https://images.wildsoulclub.com
 R2_ACCOUNT_ID=...
 R2_ACCESS_KEY_ID=...
 R2_SECRET_ACCESS_KEY=...
@@ -52,19 +52,18 @@ R2_BUCKET_NAME=wildsoulclub
 ```
 
 `R2_PUBLIC_BASE_URL` must contain only the origin—no bucket path and no trailing
-slash. Existing database rows that contain an `object_key` are automatically
-rendered with this hostname; no URL migration is required. Rows that contain
-only a stale absolute `image_url` should be repaired by restoring their R2
-`object_key`, since an arbitrary old URL cannot reliably be mapped back to an
-object.
+slash. Existing rows that contain an `object_key` are automatically rendered
+with this hostname. The legacy-host migration also repairs rows containing the
+known former Wild Soul Club `r2.dev` origin without touching other external
+URLs.
 
 ## Verify and troubleshoot
 
 Use a real object key in these commands:
 
 ```bash
-curl -I https://images.example.com/products/OBJECT.jpg
-curl -I 'https://example.com/_next/image?url=https%3A%2F%2Fimages.example.com%2Fproducts%2FOBJECT.jpg&w=640&q=75'
+curl -I https://images.wildsoulclub.com/products/OBJECT.jpg
+curl -I 'https://www.wildsoulclub.com/_next/image?url=https%3A%2F%2Fimages.wildsoulclub.com%2Fproducts%2FOBJECT.jpg&w=640&q=75'
 ```
 
 The direct response should be `200`, have the correct image `Content-Type`, and
@@ -76,10 +75,9 @@ If signed-in users see an image while signed-out users do not, inspect the
 failed image request rather than changing Supabase row-level security. A `403`
 from the image hostname means the R2 custom domain is not serving that bucket;
 a CORS browser error on `PUT` means the bucket CORS origins/headers are wrong;
-a `400` from `/_next/image` usually means `R2_PUBLIC_BASE_URL` was absent or
-different during the Vercel build. When the public base URL is deliberately
-unset, `/api/public/images/<key>` is the authenticated-server fallback and now
-streams a cacheable object instead of returning an expiring redirect.
+a `400` from `/_next/image` usually means `R2_PUBLIC_BASE_URL` differed during
+the Vercel build. Runtime image URL creation fails explicitly when that variable
+is absent, rather than persisting an invalid or legacy URL.
 
 Objects uploaded before this change may lack the cache metadata. They will
 still work, but either re-upload them (which creates a new UUID URL), copy them

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSignedUploadUrl, PUBLIC_IMAGE_CACHE_CONTROL } from "@/lib/upload";
 import { getAuthUser, requireAdmin } from "@/lib/auth";
+import { getR2PublicUrl } from "@/lib/server/public-image-url";
 
 export async function POST(req: Request) {
   try {
@@ -30,7 +31,6 @@ export async function POST(req: Request) {
     }
 
     const { url, objectKey } = await getSignedUploadUrl(folder, contentType, fileName);
-    const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "") || "";
     const isPublicImage = !["payments", "avatars", "blogs", "temp", "invoices"].includes(folder);
 
     return NextResponse.json({
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
           ...(isPublicImage ? { "Cache-Control": PUBLIC_IMAGE_CACHE_CONTROL } : {}),
         },
         objectKey,
-        imageUrl: publicBaseUrl ? `${publicBaseUrl}/${objectKey}` : objectKey,
+        imageUrl: getR2PublicUrl(objectKey),
       },
     });
   } catch (error) {

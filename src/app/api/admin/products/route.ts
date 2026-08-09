@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { deleteFiles } from "@/lib/upload";
 import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
 import { normalizeProductSlug } from "@/lib/product-slug";
+import { getR2PublicUrl, publicImageUrl } from "@/lib/server/public-image-url";
 
 type UploadedImage = { image_url?: string; object_key?: string; file_size?: number; mime_type?: string };
 type VariantInput = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sale_price?: number | string | null; sku?: string; is_active?: boolean; _delete?: boolean };
@@ -74,10 +75,10 @@ async function appendProductImages(productId: string, images: unknown) {
   const { count } = await supabaseAdmin.from("product_images").select("id", { count: "exact", head: true }).eq("product_id", productId);
   const startingOrder = count ?? 0;
   const rows = (images as UploadedImage[])
-    .filter((image) => image.image_url && image.object_key)
+    .filter((image) => image.object_key)
     .map((image, index) => ({
       product_id: productId,
-      image_url: image.image_url!,
+      image_url: getR2PublicUrl(image.object_key!),
       object_key: image.object_key!,
       file_size: image.file_size ?? null,
       mime_type: image.mime_type ?? null,
@@ -190,7 +191,7 @@ async function setThumbnail(productId: string, imageId: string) {
   if (clearError) throw clearError;
   const { error: setError } = await supabaseAdmin.from("product_images").update({ is_thumbnail: true }).eq("id", imageId);
   if (setError) throw setError;
-  const { error: productError } = await supabaseAdmin.from("products").update({ thumbnail_url: image.image_url, thumbnail_key: image.object_key, updated_at: new Date().toISOString() }).eq("id", productId);
+  const { error: productError } = await supabaseAdmin.from("products").update({ thumbnail_url: getR2PublicUrl(image.object_key), thumbnail_key: image.object_key, updated_at: new Date().toISOString() }).eq("id", productId);
   if (productError) throw productError;
 }
 
@@ -201,7 +202,7 @@ async function setTransparentAsset(productId: string, imageId: string, asset: un
   }
   const { data: current, error: fetchError } = await supabaseAdmin.from("product_images").select("transparent_object_key").eq("id", imageId).eq("product_id", productId).single();
   if (fetchError) throw fetchError;
-  const { error } = await supabaseAdmin.from("product_images").update({ transparent_url: uploaded.image_url, transparent_object_key: uploaded.object_key }).eq("id", imageId).eq("product_id", productId);
+  const { error } = await supabaseAdmin.from("product_images").update({ transparent_url: getR2PublicUrl(uploaded.object_key), transparent_object_key: uploaded.object_key }).eq("id", imageId).eq("product_id", productId);
   if (error) throw error;
   if (current.transparent_object_key && current.transparent_object_key !== uploaded.object_key) {
     await cleanupProductImageObjects([current.transparent_object_key], `product cutout replacement (${imageId})`);
@@ -216,6 +217,18 @@ async function reorderImages(productId: string, imageOrder: unknown) {
   }
 }
 
+function normalizeAdminProduct<T extends Record<string, any>>(product: T) {
+  return {
+    ...product,
+    thumbnail_url: publicImageUrl(product.thumbnail_url, product.thumbnail_key),
+    product_images: (product.product_images ?? []).map((image: Record<string, any>) => ({
+      ...image,
+      image_url: publicImageUrl(image.image_url, image.object_key),
+      transparent_url: publicImageUrl(image.transparent_url, image.transparent_object_key),
+    })),
+  };
+}
+
 export async function GET(req: Request) {
   try {
     await requireAdmin();
@@ -227,7 +240,7 @@ export async function GET(req: Request) {
     if (!includeDeleted) query = query.is("deleted_at", null);
     const { data, error } = await query.order("created_at", { ascending: false });
     if (error) throw error;
-    return NextResponse.json({ success: true, data: data ?? [] });
+    return NextResponse.json({ success: true, data: (data ?? []).map(normalizeAdminProduct) });
   } catch {
     return NextResponse.json({ success: false, error: "Failed to fetch products" }, { status: 500 });
   }
@@ -289,7 +302,7 @@ export async function PATCH(req: Request) {
     const { data, error: fetchError } = await supabaseAdmin.from("products").select("*, product_images(*), product_variants(*), categories(id, name), collections(id, name), drops(id, name, slug)").eq("id", id).single();
     if (fetchError) throw fetchError;
     await writeAuditLog({ actorUserId: adminUserId, entityType: "product", entityId: id, action: body.action === "restore" ? "restore" : imageAction ? `image_${imageAction}` : "update", before: beforeProduct, after: data });
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: normalizeAdminProduct(data) });
   } catch (error) {
     if (error instanceof VariantValidationError) return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     if (error instanceof ImageCleanupError) return NextResponse.json({ success: false, warning: error.message }, { status: 409 });

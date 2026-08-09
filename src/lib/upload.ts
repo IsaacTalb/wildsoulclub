@@ -6,6 +6,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
+import { getR2PublicUrl } from "@/lib/server/public-image-url";
 
 const r2Client = new S3Client({
   region: "auto",
@@ -17,7 +18,6 @@ const r2Client = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME || "wildsoulclub";
-const PUBLIC_URL = process.env.R2_PUBLIC_BASE_URL || "";
 
 // Public object names contain a UUID and are never overwritten. That makes them
 // safe to cache for a year; replacing an image creates a new URL instead.
@@ -92,7 +92,7 @@ export async function uploadFile(
 
   return {
     objectKey,
-    imageUrl: `${PUBLIC_URL}/${objectKey}`,
+    imageUrl: getR2PublicUrl(objectKey),
     fileSize: body.length,
     mimeType,
   };
