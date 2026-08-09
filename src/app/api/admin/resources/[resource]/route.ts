@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
 import { couponSchema } from "@/schemas";
+import { getR2PublicUrl, publicImageUrl } from "@/lib/server/public-image-url";
 
 const resources = {
   products: { table: "products", orderBy: "created_at", fields: ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "stock", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date", "meta_title", "meta_description"] },
@@ -19,6 +20,15 @@ const resources = {
 
 type ResourceName = keyof typeof resources;
 
+const resourceImageFields: Partial<Record<ResourceName, readonly [string, string]>> = {
+  categories: ["image_url", "object_key"],
+  collections: ["image_url", "object_key"],
+  drops: ["banner_image_url", "banner_object_key"],
+  products: ["thumbnail_url", "thumbnail_key"],
+  banners: ["image_url", "object_key"],
+  hero_sliders: ["image_url", "object_key"],
+};
+
 function config(resource: string) {
   return resources[resource as ResourceName];
 }
@@ -28,6 +38,13 @@ function payload(resource: ResourceName, value: Record<string, unknown>) {
     .filter((field) => field in value)
     .map((field) => [field, normalizeValue(field, value[field])]));
   if (resource === "coupons" && typeof result.code === "string") result.code = result.code.trim().toUpperCase();
+  const imageFields = resourceImageFields[resource];
+  if (imageFields) {
+    const [urlField, keyField] = imageFields;
+    if (typeof result[keyField] === "string" && result[keyField]) {
+      result[urlField] = getR2PublicUrl(result[keyField]);
+    }
+  }
   return result;
 }
 
@@ -56,10 +73,10 @@ async function appendProductImages(productId: string, images: unknown) {
 
   const startingOrder = count ?? 0;
   const rows = (images as UploadedProductImage[])
-    .filter((image) => image.image_url && image.object_key)
+    .filter((image) => image.object_key)
     .map((image, index) => ({
       product_id: productId,
-      image_url: image.image_url!,
+      image_url: getR2PublicUrl(image.object_key!),
       object_key: image.object_key!,
       file_size: image.file_size ?? null,
       mime_type: image.mime_type ?? null,
@@ -79,6 +96,24 @@ async function getResource(params: Promise<{ resource: string }>) {
   return { resource: resource as ResourceName, resourceConfig };
 }
 
+function normalizeResourceRow(resource: ResourceName, row: Record<string, any>) {
+  if (resource === "products") {
+    return {
+      ...row,
+      thumbnail_url: publicImageUrl(row.thumbnail_url, row.thumbnail_key),
+      product_images: (row.product_images ?? []).map((image: Record<string, any>) => ({
+        ...image,
+        image_url: publicImageUrl(image.image_url, image.object_key),
+        transparent_url: publicImageUrl(image.transparent_url, image.transparent_object_key),
+      })),
+    };
+  }
+  const imageFields = resourceImageFields[resource];
+  if (!imageFields) return row;
+  const [urlField, keyField] = imageFields;
+  return { ...row, [urlField]: publicImageUrl(row[urlField], row[keyField]) };
+}
+
 type ResourceContext = { params: Promise<{ resource: string }> };
 
 export async function GET(request: Request, { params }: ResourceContext) {
@@ -92,7 +127,7 @@ export async function GET(request: Request, { params }: ResourceContext) {
     if ("orderBy" in resourceConfig) query = query.order(resourceConfig.orderBy, { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
-    return NextResponse.json({ success: true, data: data ?? [] });
+    return NextResponse.json({ success: true, data: (data ?? []).map((row) => normalizeResourceRow(resource, row)) });
   } catch (error) {
     return NextResponse.json({ success: false, error: error instanceof Error && error.message === "Unknown resource" ? "Unknown resource" : "Unable to load resource" }, { status: 400 });
   }

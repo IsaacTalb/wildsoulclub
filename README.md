@@ -57,7 +57,7 @@ R2_ACCOUNT_ID=your_account_id
 R2_ACCESS_KEY_ID=your_access_key_id
 R2_SECRET_ACCESS_KEY=your_secret_access_key
 R2_BUCKET_NAME=wildsoulclub
-R2_PUBLIC_BASE_URL=your_public_r2_base_url
+R2_PUBLIC_BASE_URL=https://images.wildsoulclub.com
 S3_ENDPOINT=your_r2_s3_endpoint
 API_TOKEN=your_cloudflare_api_token
 
