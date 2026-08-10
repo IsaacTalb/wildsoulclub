@@ -229,8 +229,8 @@ function LoopingProductGallery({
                   : 0.08;
 
             const slideStyle: GallerySlideStyle = {
-              "--slide-x": `${visualOffset * 68}%`,
-              "--slide-y": `${visualOffset * 88}%`,
+              "--slide-x": `${visualOffset * 78}%`,
+              "--slide-y": `${visualOffset * 78}%`,
               "--slide-scale": slideScale,
               "--desktop-slide-scale": desktopSlideScale,
               "--slide-opacity": slideOpacity,
