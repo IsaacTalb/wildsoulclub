@@ -92,7 +92,9 @@ type GallerySlideStyle = CSSProperties & {
   "--slide-x": string;
   "--slide-y": string;
   "--slide-scale": number;
+  "--desktop-slide-scale": number;
   "--slide-opacity": number;
+  "--desktop-slide-opacity": number;
   "--slide-z": number;
 };
 
@@ -213,12 +215,26 @@ function LoopingProductGallery({
                 : distanceFromCenter === 1
                   ? 0.52
                   : 0.12;
+            const desktopSlideScale =
+              distanceFromCenter === 0
+                ? 1
+                : distanceFromCenter === 1
+                  ? 0.52
+                  : 0.3;
+            const desktopSlideOpacity =
+              distanceFromCenter === 0
+                ? 1
+                : distanceFromCenter === 1
+                  ? 0.38
+                  : 0.08;
 
             const slideStyle: GallerySlideStyle = {
               "--slide-x": `${visualOffset * 68}%`,
-              "--slide-y": `${visualOffset * 76}%`,
+              "--slide-y": `${visualOffset * 88}%`,
               "--slide-scale": slideScale,
+              "--desktop-slide-scale": desktopSlideScale,
               "--slide-opacity": slideOpacity,
+              "--desktop-slide-opacity": desktopSlideOpacity,
               "--slide-z": 10 - distanceFromCenter,
             };
 
@@ -249,7 +265,8 @@ function LoopingProductGallery({
                   }
                 }}
               >
-                <span className="relative block h-full w-full">
+                <span className={styles.galleryImageStage}>
+                  {/* Preserve source-asset whitespace; loose assets should be tightly cropped or supplied as transparent WebP/PNG files. */}
                   <Image
                     src={images[imageIndex].src}
                     alt={
@@ -262,7 +279,7 @@ function LoopingProductGallery({
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
-                    className={`${loadedImages.has(images[imageIndex].src) ? styles.galleryImageLoaded : styles.galleryImageLoading} ${images[imageIndex].isTransparent ? "rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4" : "rounded-lg object-cover"}`}
+                    className={`${loadedImages.has(images[imageIndex].src) ? styles.galleryImageLoaded : styles.galleryImageLoading} object-contain`}
                     onLoad={() => {
                       setLoadedImages((current) => {
                         if (current.has(images[imageIndex].src)) return current;
