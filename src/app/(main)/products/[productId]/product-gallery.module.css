@@ -23,6 +23,16 @@
 
 .gallerySlide[aria-disabled="true"] { cursor: default; }
 
+.galleryImageLoading {
+  background: linear-gradient(110deg, #f1f1f1 25%, #fafafa 42%, #f1f1f1 59%);
+  background-size: 220% 100%;
+  animation: gallery-image-loading 1.35s ease-in-out infinite;
+}
+
+.galleryImageLoaded {
+  background: transparent;
+}
+
 .gallerySlideMoving {
   transition: transform 620ms ease-in-out, opacity 620ms ease-in-out;
 }
@@ -36,4 +46,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .gallerySlideMoving { transition: none; }
+  .galleryImageLoading { animation: none; }
+}
+
+@keyframes gallery-image-loading {
+  to { background-position-x: -220%; }
 }

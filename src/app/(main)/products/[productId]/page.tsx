@@ -11,13 +11,13 @@ import {
   Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useWishlist } from "@/hooks/use-wishlist";
 import type { Product, ProductVariant } from "@/types";
 
 import styles from "./product-gallery.module.css";
+import { ProductDetailSkeleton } from "./product-detail-skeleton";
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
@@ -100,85 +100,6 @@ function wrapIndex(index: number, length: number) {
   return ((index % length) + length) % length;
 }
 
-function ProductDetailSkeleton() {
-  const skeletonClass = "motion-reduce:animate-none";
-
-  return (
-    <div
-      className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-8 md:pt-[calc(var(--site-header-height)+2rem)]"
-      role="status"
-      aria-label="Loading product"
-    >
-      <div className="mx-auto w-full">
-        <div className="grid grid-cols-1 items-start gap-7 lg:gap-12">
-          <Skeleton
-            className={`
-              ${skeletonClass}
-              aspect-[4/5]
-              min-h-[480px]
-              w-full
-              rounded-[1.75rem]
-              sm:min-h-[560px]
-              md:aspect-auto
-              md:h-[calc(100svh-var(--site-header-height)-4rem)]
-              md:min-h-[620px]
-              md:max-h-[1100px]
-            `}
-          />
-
-          <div className="relative z-20 mx-4 w-[calc(100%-2rem)] rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:p-5 md:mx-0 md:w-full md:max-w-[440px] md:justify-self-end md:p-5">
-            <Skeleton className={`${skeletonClass} mb-2 h-2.5 w-24`} />
-            <Skeleton className={`${skeletonClass} mb-2 h-7 w-4/5`} />
-            <Skeleton className={`${skeletonClass} mb-4 h-7 w-28`} />
-
-            <div className="mb-3">
-              <Skeleton className={`${skeletonClass} mb-2 h-4 w-14`} />
-              <div className="flex gap-2">
-                {["size-1", "size-2", "size-3", "size-4"].map((key) => (
-                  <Skeleton key={key} className={`${skeletonClass} h-11 w-12 rounded-xl`} />
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <Skeleton className={`${skeletonClass} mb-2 h-4 w-16`} />
-              <div className="flex gap-2">
-                {["color-1", "color-2", "color-3"].map((key) => (
-                  <Skeleton key={key} className={`${skeletonClass} h-11 w-20 rounded-xl`} />
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <Skeleton className={`${skeletonClass} mb-2 h-4 w-20`} />
-              <div className="flex items-center gap-2">
-                <Skeleton className={`${skeletonClass} h-11 w-11 rounded-xl`} />
-                <Skeleton className={`${skeletonClass} h-4 w-7`} />
-                <Skeleton className={`${skeletonClass} h-11 w-11 rounded-xl`} />
-                <Skeleton className={`${skeletonClass} ml-2 h-4 w-24`} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <Skeleton className={`${skeletonClass} h-11 w-full rounded-xl`} />
-              <Skeleton className={`${skeletonClass} h-11 w-full rounded-xl sm:w-32`} />
-            </div>
-
-            <div className="mt-3 border-t border-foreground/10">
-              {["description", "size-chart"].map((key) => (
-                <div key={key} className="flex min-h-12 items-center justify-between border-b border-foreground/10 py-3 last:border-b-0">
-                  <Skeleton className={`${skeletonClass} h-4 w-28`} />
-                  <Skeleton className={`${skeletonClass} h-4 w-4`} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function LoopingProductGallery({
   images,
   productName,
@@ -188,6 +109,7 @@ function LoopingProductGallery({
 }) {
   const [activeImage, setActiveImage] = useState(0);
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(() => new Set());
   const swipeStart = useRef<{ pointerId: number; x: number; y: number } | null>(
     null,
   );
@@ -273,7 +195,7 @@ function LoopingProductGallery({
       tabIndex={canLoop ? 0 : -1}
     >
 
-      <div className="relative aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:aspect-auto md:h-[calc(100svh-var(--site-header-height)-4rem)] md:min-h-[620px] md:max-h-[1100px] xl:max-h-[1250px] 2xl:max-h-[1400px]">
+      <div className="relative aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:aspect-auto md:h-[calc(100svh-var(--site-header-height)-2.5rem)] md:min-h-[640px] md:max-h-[1140px] xl:max-h-[1290px] 2xl:max-h-[1440px]">
         {images.length > 0 ? (
           slideOffsets.map((offset) => {
             const visualOffset = offset - direction;
@@ -294,7 +216,7 @@ function LoopingProductGallery({
 
             const slideStyle: GallerySlideStyle = {
               "--slide-x": `${visualOffset * 68}%`,
-              "--slide-y": `${visualOffset * 79}%`,
+              "--slide-y": `${visualOffset * 72}%`,
               "--slide-scale": slideScale,
               "--slide-opacity": slideOpacity,
               "--slide-z": 10 - distanceFromCenter,
@@ -340,7 +262,15 @@ function LoopingProductGallery({
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
-                    className={images[imageIndex].isTransparent ? "rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4" : "rounded-lg object-cover"}
+                    className={`${loadedImages.has(images[imageIndex].src) ? styles.galleryImageLoaded : styles.galleryImageLoading} ${images[imageIndex].isTransparent ? "rounded-lg object-contain p-2 drop-shadow-[0_30px_35px_rgba(0,0,0,0.13)] sm:p-3 md:p-4" : "rounded-lg object-cover"}`}
+                    onLoad={() => {
+                      setLoadedImages((current) => {
+                        if (current.has(images[imageIndex].src)) return current;
+                        const next = new Set(current);
+                        next.add(images[imageIndex].src);
+                        return next;
+                      });
+                    }}
                   />
                 </span>
               </button>
@@ -593,7 +523,7 @@ export default function ProductDetailPage() {
     return <div className="container mx-auto px-4 py-8">Product not found</div>;
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-8 md:pt-[calc(var(--site-header-height)+2rem)]">
+    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)]">
       <div className="container mx-auto max-w-[1300px]">
         <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:gap-12">
           {/* Image Gallery */}
