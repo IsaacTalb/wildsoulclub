@@ -45,14 +45,9 @@ const sidebarLinks = [
     icon: LayoutDashboard,
   },
   {
-    title: "Products",
-    href: "/admin/products",
-    icon: Package,
-  },
-  {
-    title: "New Drops",
-    href: "/admin/new-drops",
-    icon: Package,
+    title: "Categories",
+    href: "/admin/categories",
+    icon: Tag,
   },
   {
     title: "Collections",
@@ -60,9 +55,14 @@ const sidebarLinks = [
     icon: Layers,
   },
   {
-    title: "Categories",
-    href: "/admin/categories",
-    icon: Tag,
+    title: "New Drops",
+    href: "/admin/new-drops",
+    icon: Package,
+  },
+  {
+    title: "Products",
+    href: "/admin/products",
+    icon: Package,
   },
   {
     title: "Inventory",
