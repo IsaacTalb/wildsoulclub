@@ -1,7 +1,7 @@
 .galleryViewport {
   touch-action: pan-y pinch-zoom;
   overscroll-behavior: contain;
-  overflow: hidden;
+  overflow: visible;
   border: 0;
   border-radius: 0;
   outline: none;
