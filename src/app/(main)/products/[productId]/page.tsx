@@ -109,8 +109,8 @@ function ProductDetailSkeleton() {
       role="status"
       aria-label="Loading product"
     >
-      <div className="mx-auto w-full max-w-[1800px] 2xl:max-w-[2000px] min-[2200px]:max-w-[2400px]">
-        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-12">
+      <div className="mx-auto w-full">
+        <div className="grid grid-cols-1 items-start gap-7 lg:gap-12">
           <Skeleton
             className={`
               ${skeletonClass}
@@ -123,8 +123,6 @@ function ProductDetailSkeleton() {
               md:h-[calc(100svh-var(--site-header-height)-4rem)]
               md:min-h-[620px]
               md:max-h-[1100px]
-              xl:max-h-[1250px]
-              2xl:max-h-[1400px]
             `}
           />
 
@@ -338,7 +336,7 @@ function LoopingProductGallery({
                         : `${productName} image ${imageIndex + 1}`
                     }
                     fill
-                    sizes=" (min-width: 2200px) 1800px,(min-width: 1920px) 72vw, (min-width: 1536px) 70vw,(min-width: 1280px) 68vw, (min-width: 1024px) 65vw, (min-width: 768px) 60vw, 100vw"
+                    sizes="(min-width: 1280px) 58vw,(min-width: 1024px) 56vw,(min-width: 768px) 55vw,92vw"
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
@@ -596,8 +594,8 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-8 md:pt-[calc(var(--site-header-height)+2rem)]">
-      <div className="mx-auto w-full max-w-[1800px] 2xl:max-w-[2000px] min-[2200px]:max-w-[2400px]">
-        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-12">
+      <div className="container mx-auto max-w-[1300px]">
+        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:gap-12">
           {/* Image Gallery */}
           <LoopingProductGallery
             key={product.id}
