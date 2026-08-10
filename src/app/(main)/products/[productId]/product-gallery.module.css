@@ -39,10 +39,12 @@
   background: linear-gradient(110deg, #f1f1f1 25%, #fafafa 42%, #f1f1f1 59%);
   background-size: 220% 100%;
   animation: gallery-image-loading 1.35s ease-in-out infinite;
+  border-radius: 1.5rem;
 }
 
 .galleryImageLoaded {
   background: transparent;
+  border-radius: 1.5rem;
 }
 
 .gallerySlideMoving {
