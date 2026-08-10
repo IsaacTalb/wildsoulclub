@@ -195,7 +195,7 @@ function LoopingProductGallery({
       tabIndex={canLoop ? 0 : -1}
     >
 
-      <div className="relative aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:aspect-auto md:h-[calc(100svh-var(--site-header-height)-2.5rem)] md:min-h-[640px] md:max-h-[1140px] xl:max-h-[1290px] 2xl:max-h-[1440px]">
+      <div className="relative aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:aspect-auto md:h-[calc(100svh-var(--site-header-height)-5.5rem)] md:min-h-[580px] md:max-h-[1080px] xl:h-[calc(100svh-var(--site-header-height)-5rem)] xl:max-h-[1230px] 2xl:max-h-[1380px]">
         {images.length > 0 ? (
           slideOffsets.map((offset) => {
             const visualOffset = offset - direction;
@@ -216,7 +216,7 @@ function LoopingProductGallery({
 
             const slideStyle: GallerySlideStyle = {
               "--slide-x": `${visualOffset * 68}%`,
-              "--slide-y": `${visualOffset * 70}%`,
+              "--slide-y": `${visualOffset * 76}%`,
               "--slide-scale": slideScale,
               "--slide-opacity": slideOpacity,
               "--slide-z": 10 - distanceFromCenter,

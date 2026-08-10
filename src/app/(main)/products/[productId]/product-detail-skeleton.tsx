@@ -12,7 +12,7 @@ export function ProductDetailSkeleton() {
       <div className="container mx-auto max-w-[1300px]">
         <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:gap-12">
           <Skeleton
-            className={`${skeletonClass} aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:aspect-auto md:h-[calc(100svh-var(--site-header-height)-2.5rem)] md:min-h-[640px] md:max-h-[1140px] xl:max-h-[1290px] 2xl:max-h-[1440px]`}
+            className={`${skeletonClass} aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:aspect-auto md:h-[calc(100svh-var(--site-header-height)-5.5rem)] md:min-h-[580px] md:max-h-[1080px] xl:h-[calc(100svh-var(--site-header-height)-5rem)] xl:max-h-[1230px] 2xl:max-h-[1380px]`}
           />
 
           <div className="relative z-20 mx-4 w-[calc(100%-2rem)] rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:p-5 md:mx-0 md:w-full md:max-w-[440px] md:justify-self-end md:p-5">

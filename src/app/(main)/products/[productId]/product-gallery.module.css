@@ -40,6 +40,8 @@
 @media (min-width: 768px) {
   .galleryViewport { touch-action: pan-x pinch-zoom; }
   .gallerySlide {
+    inset-block: clamp(10px, 1.5svh, 18px);
+    height: auto;
     transform: translate3d(0, var(--slide-y), 0) scale(var(--slide-scale));
   }
 }
