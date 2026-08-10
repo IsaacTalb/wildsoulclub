@@ -279,7 +279,7 @@ function LoopingProductGallery({
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
-                    className={`${loadedImages.has(images[imageIndex].src) ? styles.galleryImageLoaded : styles.galleryImageLoading} object-cover`}
+                    className={`${loadedImages.has(images[imageIndex].src) ? styles.galleryImageLoaded : styles.galleryImageLoading} object-contain`}
                     onLoad={() => {
                       setLoadedImages((current) => {
                         if (current.has(images[imageIndex].src)) return current;
