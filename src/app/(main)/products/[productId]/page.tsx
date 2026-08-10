@@ -109,10 +109,23 @@ function ProductDetailSkeleton() {
       role="status"
       aria-label="Loading product"
     >
-      <div className="container mx-auto max-w-[1500px]">
-        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:gap-12">
+      <div className="mx-auto w-full max-w-[1800px] 2xl:max-w-[2000px] min-[2200px]:max-w-[2400px]">
+        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-12">
           <Skeleton
-            className={`${skeletonClass} aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:h-[min(76vh,760px)] md:min-h-[620px] md:aspect-auto`}
+            className={`
+              ${skeletonClass}
+              aspect-[4/5]
+              min-h-[480px]
+              w-full
+              rounded-[1.75rem]
+              sm:min-h-[560px]
+              md:aspect-auto
+              md:h-[calc(100svh-var(--site-header-height)-4rem)]
+              md:min-h-[620px]
+              md:max-h-[1100px]
+              xl:max-h-[1250px]
+              2xl:max-h-[1400px]
+            `}
           />
 
           <div className="relative z-20 mx-4 w-[calc(100%-2rem)] rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] sm:p-5 md:mx-0 md:w-full md:max-w-[440px] md:justify-self-end md:p-5">
@@ -262,7 +275,7 @@ function LoopingProductGallery({
       tabIndex={canLoop ? 0 : -1}
     >
 
-      <div className="relative aspect-[4/5] min-h-[480px] w-full sm:min-h-[560px] md:h-[min(76vh,760px)] md:min-h-[620px] md:aspect-auto rounded-[1.75rem]">
+      <div className="relative aspect-[4/5] min-h-[480px] w-full rounded-[1.75rem] sm:min-h-[560px] md:aspect-auto md:h-[calc(100svh-var(--site-header-height)-4rem)] md:min-h-[620px] md:max-h-[1100px] xl:max-h-[1250px] 2xl:max-h-[1400px]">
         {images.length > 0 ? (
           slideOffsets.map((offset) => {
             const visualOffset = offset - direction;
@@ -325,7 +338,7 @@ function LoopingProductGallery({
                         : `${productName} image ${imageIndex + 1}`
                     }
                     fill
-                    sizes="(min-width: 1024px) 58vw, (min-width: 768px) 55vw, 92vw"
+                    sizes=" (min-width: 2200px) 1800px,(min-width: 1920px) 72vw, (min-width: 1536px) 70vw,(min-width: 1280px) 68vw, (min-width: 1024px) 65vw, (min-width: 768px) 60vw, 100vw"
                     placeholder="blur"
                     blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                     preload={offset === 0}
@@ -583,8 +596,8 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-8 md:pt-[calc(var(--site-header-height)+2rem)]">
-      <div className="container mx-auto max-w-[1500px]">
-        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:gap-12">
+      <div className="mx-auto w-full max-w-[1800px] 2xl:max-w-[2000px] min-[2200px]:max-w-[2400px]">
+        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] lg:gap-12">
           {/* Image Gallery */}
           <LoopingProductGallery
             key={product.id}
