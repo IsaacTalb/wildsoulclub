@@ -70,7 +70,7 @@ export default function AboutPage() {
                     <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium">Email</p>
-                      <p className="text-sm text-muted-foreground">wildsoulclubonline@gmail.com</p>
+                      <p className="text-sm text-muted-foreground">wildsoulclubofficial@gmail.com</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">

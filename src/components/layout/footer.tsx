@@ -56,7 +56,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-3">Contact Us</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>wildsoulclubonline@gmail.com</li>
+              <li>wildsoulclubofficial@gmail.com</li>
               <li>09767676114</li>
               <li>Pannita Street, Hlaing Township, Yangon</li>
             </ul>
