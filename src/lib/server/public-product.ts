@@ -1,6 +1,7 @@
 import "server-only";
 
 import { publicImageUrl } from "@/lib/server/public-image-url";
+import type { SizeChart } from "@/lib/size-chart";
 
 export type PublicProductImageRow = {
   id?: string | null;
@@ -35,6 +36,7 @@ export type PublicProductRow = {
   stock?: number | null;
   sizes?: unknown;
   colors?: unknown;
+  size_chart?: SizeChart | null;
   thumbnail_url?: string | null;
   thumbnail_key?: string | null;
   is_active?: boolean | null;
@@ -54,7 +56,7 @@ export type PublicProductRow = {
 
 export const PUBLIC_PRODUCT_SELECT = `
   id, name, slug, description, price, sale_price, discount_percent,
-  category_id, collection_id, stock, sizes, colors, thumbnail_url,
+  category_id, collection_id, stock, sizes, colors, size_chart, thumbnail_url,
   thumbnail_key, is_active, is_archived, is_featured, is_best_seller,
   best_seller_rank, is_new_drop,
   is_archive_sale, new_drop_start_date, new_drop_end_date,
@@ -110,6 +112,7 @@ export function normalizePublicProduct(product: PublicProductRow) {
     stock: stockQuantity(product.stock),
     sizes: product.sizes,
     colors: product.colors,
+    size_chart: product.size_chart ?? null,
     thumbnail_url:
       publicImageUrl(product.thumbnail_url, product.thumbnail_key) ??
       productImages[0]?.url ??

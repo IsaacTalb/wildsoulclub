@@ -190,7 +190,7 @@ export default function NewDropsPage() {
             {(drop.products ?? []).length > 0 && (
               <section id={`drop-${drop.id}-products`} className="bg-white px-3 sm:px-4 md:px-8" aria-label={`${drop.name} products`}>
                 {chunkFloatingProducts(drop.products ?? []).map((products, groupIndex) => (
-                  <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} fullViewport />
+                  <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} fullViewport compactSparse />
                 ))}
                 <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
                   <div className="flex flex-col items-center">
