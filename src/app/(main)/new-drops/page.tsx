@@ -163,9 +163,9 @@ export default function NewDropsPage() {
                     </span>
                   </div>
                   {/* {index === 0 && <p className="mb-2 text-sm font-medium text-white/75">Newest release</p>} */}
-                  <h1 id={`drop-${drop.id}`} className="text-4xl font-bold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
+                  {/* <h1 id={`drop-${drop.id}`} className="text-4xl font-bold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
                     {drop.name}
-                  </h1>
+                  </h1> */}
                   {/* <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
                     {drop.description || "Discover the pieces in our latest curated release."}
                   </p> */}
