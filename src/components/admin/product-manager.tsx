@@ -13,6 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { normalizeProductSlug } from "@/lib/product-slug";
+import { SIZE_CHART_TEMPLATES, type SizeChart } from "@/lib/size-chart";
 
 type Option = { id: string; name: string };
 type ProductImage = { id: string; image_url: string; object_key: string; transparent_url?: string | null; transparent_object_key?: string | null; is_thumbnail: boolean; sort_order: number };
@@ -34,6 +35,7 @@ const blankProduct: ProductRow = {
   barcode: "",
   sizes: [],
   colors: [],
+  size_chart: null,
   thumbnail_url: "",
   thumbnail_key: "",
   is_active: true,
@@ -66,6 +68,25 @@ function formatInputDate(value?: string | null) {
 
 function listToText(value: unknown) {
   return Array.isArray(value) ? value.join(", ") : String(value ?? "");
+}
+
+function SizeChartEditor({ value, onChange }: { value?: SizeChart | null; onChange: (chart: SizeChart | null) => void }) {
+  function updateCell(rowIndex: number, columnIndex: number, cell: string) {
+    if (!value) return;
+    onChange({ ...value, rows: value.rows.map((row, index) => index === rowIndex ? row.map((current, cellIndex) => cellIndex === columnIndex ? cell : current) : row) });
+  }
+
+  return <div className="space-y-3 rounded-lg border p-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="space-y-1.5"><Label htmlFor="size-chart-template">Size chart</Label><select id="size-chart-template" className="flex h-10 rounded-md border bg-background px-3 text-sm" value={value ? "Custom" : "None"} onChange={(event) => { const template = SIZE_CHART_TEMPLATES[event.target.value]; onChange(event.target.value === "None" ? null : template ? structuredClone(template) : value ?? null); }}><option value="None">None</option>{Object.keys(SIZE_CHART_TEMPLATES).map((name) => <option key={name} value={name}>{name} template</option>)}{value && <option value="Custom">Custom table</option>}</select></div>
+      {value && <Button type="button" variant="outline" size="sm" onClick={() => onChange(null)}>Remove chart</Button>}
+    </div>
+    {!value ? <p className="text-xs text-muted-foreground">No size chart will appear on this product.</p> : <>
+      <div className="space-y-1.5"><Label>Table caption / unit</Label><Input value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} placeholder="Measurements (inches)" /></div>
+      <div className="overflow-x-auto rounded-lg border"><table className="w-full min-w-[640px] text-sm"><thead><tr className="border-b bg-muted/40">{value.columns.map((column, columnIndex) => <th key={columnIndex} className="min-w-32 p-2 align-top"><Input aria-label={`Column ${columnIndex + 1} heading`} value={column} onChange={(event) => onChange({ ...value, columns: value.columns.map((item, index) => index === columnIndex ? event.target.value : item) })} />{value.columns.length > 2 && <Button type="button" variant="ghost" size="sm" className="mt-1 h-7 text-xs text-destructive" onClick={() => onChange({ ...value, columns: value.columns.filter((_, index) => index !== columnIndex), rows: value.rows.map((row) => row.filter((_, index) => index !== columnIndex)) })}>Remove</Button>}</th>)}<th className="p-2"><span className="sr-only">Actions</span></th></tr></thead><tbody>{value.rows.map((row, rowIndex) => <tr key={rowIndex} className="border-b last:border-0">{row.map((cell, columnIndex) => <td key={columnIndex} className="p-2"><Input aria-label={`Row ${rowIndex + 1}, ${value.columns[columnIndex]}`} value={cell} onChange={(event) => updateCell(rowIndex, columnIndex, event.target.value)} /></td>)}<td className="p-2"><Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => onChange({ ...value, rows: value.rows.filter((_, index) => index !== rowIndex) })} disabled={value.rows.length === 1}>Remove</Button></td></tr>)}</tbody></table></div>
+      <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...value, columns: [...value.columns, `Measurement ${value.columns.length}`], rows: value.rows.map((row) => [...row, ""]) })} disabled={value.columns.length >= 12}><Plus className="mr-1 h-3 w-3" />Add column</Button><Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...value, rows: [...value.rows, Array(value.columns.length).fill("")] })} disabled={value.rows.length >= 30}><Plus className="mr-1 h-3 w-3" />Add row</Button></div>
+    </>}
+  </div>;
 }
 
 function SearchableSelect({
@@ -345,6 +366,7 @@ export function ProductManager() {
         barcode: form.get("barcode"),
         sizes: form.get("sizes"),
         colors: form.get("colors"),
+        size_chart: record.size_chart ?? null,
         is_active: form.get("is_active") === "on",
         is_archived: form.get("is_archived") === "on",
         is_featured: form.get("is_featured") === "on",
@@ -457,6 +479,8 @@ export function ProductManager() {
 
       <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[94vh] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto p-4 sm:w-[calc(100%-2rem)] sm:max-w-[calc(100%-2rem)] sm:p-6 lg:max-w-6xl xl:max-w-7xl"><DialogHeader><DialogTitle>{record.id ? "Edit product" : "Add product"}</DialogTitle></DialogHeader><form onSubmit={submit} className="space-y-6 pb-2">
         <div className="grid gap-4 md:grid-cols-2"><div className="space-y-1.5"><Label>Name</Label><Input name="name" value={record.name ?? ""} onChange={(event) => { const name = event.target.value; setRecord((current) => ({ ...current, name, ...(!slugEdited ? { slug: normalizeProductSlug(name) } : {}) })); }} required /></div><div className="space-y-1.5"><Label>Slug</Label><Input name="slug" value={record.slug ?? ""} onChange={(event) => { setSlugEdited(true); setRecord((current) => ({ ...current, slug: normalizeProductSlug(event.target.value) })); }} /></div><div className="space-y-1.5 md:col-span-2"><Label>Description</Label><Textarea name="description" defaultValue={record.description ?? ""} required /></div><div className="space-y-1.5"><Label>Price (MMK)</Label><Input name="price" type="number" defaultValue={record.price ?? ""} required /></div><div className="space-y-1.5"><Label>Sale price</Label><Input name="sale_price" type="number" defaultValue={record.sale_price ?? ""} /></div><div className="space-y-1.5"><Label>Discount percent</Label><Input name="discount_percent" type="number" defaultValue={record.discount_percent ?? 0} /></div><div className="space-y-1.5"><Label>Category</Label><SearchableSelect name="category_id" value={record.category_id ?? ""} options={categories} placeholder="Select category" searchPlaceholder="Search categories..." loading={optionsLoading} loadingText="Loading categories..." emptyText="No categories found" required error={fieldErrors.category_id} onChange={(value) => { setRecord((current) => ({ ...current, category_id: value })); setFieldErrors((current) => ({ ...current, category_id: "" })); }} /></div><div className="space-y-1.5"><Label>Collection</Label><SearchableSelect name="collection_id" value={record.collection_id ?? ""} options={collections} placeholder="No collection" searchPlaceholder="Search collections..." loading={optionsLoading} loadingText="Loading collections..." emptyText="No collections found" onChange={(value) => setRecord((current) => ({ ...current, collection_id: value }))} /></div><div className="space-y-1.5"><Label>Drop</Label><SearchableSelect name="drop_id" value={record.drop_id ?? ""} options={drops} placeholder="No drop" searchPlaceholder="Search drops..." loading={optionsLoading} loadingText="Loading drops..." emptyText="No drops found" onChange={(value) => setRecord((current) => ({ ...current, drop_id: value }))} /></div><div className="space-y-1.5"><Label>SKU</Label><Input name="sku" defaultValue={record.sku ?? ""} /></div><div className="space-y-1.5"><Label>Barcode</Label><Input name="barcode" defaultValue={record.barcode ?? ""} /></div><div className="space-y-1.5"><Label>Sizes</Label><Input name="sizes" defaultValue={listToText(record.sizes)} placeholder="S, M, L" /></div><div className="space-y-1.5"><Label>Colors</Label><Input name="colors" defaultValue={listToText(record.colors)} placeholder="Black, Cream" /></div><div className="space-y-1.5"><Label>New drop start</Label><Input name="new_drop_start_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_start_date)} /></div><div className="space-y-1.5"><Label>New drop end</Label><Input name="new_drop_end_date" type="datetime-local" defaultValue={formatInputDate(record.new_drop_end_date)} /></div></div>
+
+        <SizeChartEditor value={record.size_chart} onChange={(size_chart) => setRecord((current) => ({ ...current, size_chart }))} />
 
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6"><label className="flex items-center gap-2 text-sm"><input name="is_active" type="checkbox" defaultChecked={Boolean(record.is_active)} />Active</label><label className="flex items-center gap-2 text-sm"><input name="is_archived" type="checkbox" defaultChecked={Boolean(record.is_archived)} />Archived</label><label className="flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox" defaultChecked={Boolean(record.is_featured)} />Featured</label><label className="flex items-center gap-2 text-sm"><input name="is_best_seller" type="checkbox" defaultChecked={Boolean(record.is_best_seller)} />Best seller</label><label className="flex items-center gap-2 text-sm"><input name="is_new_drop" type="checkbox" defaultChecked={Boolean(record.is_new_drop)} />New drop</label><label className="flex items-center gap-2 text-sm"><input name="is_archive_sale" type="checkbox" defaultChecked={Boolean(record.is_archive_sale)} />Archive sale</label></div>
 

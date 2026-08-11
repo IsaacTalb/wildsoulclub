@@ -5,6 +5,7 @@ import { deleteFiles } from "@/lib/upload";
 import { writeAuditLog, writeInventoryTransaction } from "@/lib/operational-history";
 import { normalizeProductSlug } from "@/lib/product-slug";
 import { getR2PublicUrl, publicImageUrl } from "@/lib/server/public-image-url";
+import { normalizeSizeChart } from "@/lib/size-chart";
 
 type UploadedImage = { image_url?: string; object_key?: string; file_size?: number; mime_type?: string };
 type VariantInput = { id?: string; size?: string; color?: string; stock?: number | string; price?: number | string | null; sale_price?: number | string | null; sku?: string; is_active?: boolean; _delete?: boolean };
@@ -12,7 +13,7 @@ type VariantInput = { id?: string; size?: string; color?: string; stock?: number
 class VariantValidationError extends Error {}
 class ImageCleanupError extends Error {}
 
-const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "sku", "barcode", "sizes", "colors", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_best_seller", "best_seller_rank", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date"];
+const productFields = ["name", "slug", "description", "price", "sale_price", "discount_percent", "category_id", "collection_id", "drop_id", "sku", "barcode", "sizes", "colors", "size_chart", "thumbnail_url", "thumbnail_key", "is_active", "is_archived", "is_featured", "is_best_seller", "best_seller_rank", "is_new_drop", "is_archive_sale", "new_drop_start_date", "new_drop_end_date"];
 
 
 async function cleanupProductImageObjects(objectKeys: Array<string | null | undefined>, context: string) {
@@ -45,6 +46,13 @@ function normalizeValue(field: string, value: unknown) {
   if (["sizes", "colors"].includes(field) && typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
   if (["price", "sale_price"].includes(field) && value != null) return Number(value);
   if (["discount_percent", "best_seller_rank"].includes(field) && value != null) return Number(value);
+  if (field === "size_chart") {
+    try {
+      return normalizeSizeChart(value);
+    } catch (error) {
+      throw new VariantValidationError(error instanceof Error ? error.message : "Invalid size chart.");
+    }
+  }
   return value;
 }
 

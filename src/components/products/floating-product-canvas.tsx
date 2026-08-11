@@ -32,6 +32,12 @@ const layouts = [
   "left-[29%] top-[80%] w-[30%] md:left-[27%] md:top-[72%] md:w-[14%]",
 ] as const;
 
+const compactLayouts = [
+  "left-[6%] top-[8%] w-[42%] md:left-[14%] md:top-[10%] md:w-[21%]",
+  "right-[5%] top-[34%] w-[38%] md:right-[16%] md:top-[18%] md:w-[18%]",
+  "left-[34%] top-[55%] w-[40%] md:left-[42%] md:top-[48%] md:w-[20%]",
+] as const;
+
 export const FLOATING_PRODUCTS_PER_CANVAS = 8;
 
 export function chunkFloatingProducts<T>(items: T[]) {
@@ -53,15 +59,22 @@ export function FloatingProductCanvas({
   products,
   groupIndex = 0,
   fullViewport = false,
+  compactSparse = false,
 }: {
   products: FloatingProduct[];
   groupIndex?: number;
   fullViewport?: boolean;
+  compactSparse?: boolean;
 }) {
+  const isCompact = compactSparse && products.length >= 2 && products.length <= 3;
   return (
     <div
       className={
-        fullViewport
+        isCompact
+          ? products.length === 2
+            ? "relative h-[440px] w-full sm:h-[500px] md:h-[460px] lg:h-[500px]"
+            : "relative h-[610px] w-full sm:h-[680px] md:h-[600px] lg:h-[650px]"
+          : fullViewport
           ? "relative min-h-[calc(100svh-var(--site-header-height))] w-full"
           : "relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]"
       }
@@ -72,7 +85,7 @@ export function FloatingProductCanvas({
         const image = productImage?.transparent_url || product.thumbnail_url || productImage?.url || productImage?.image_url || productImage?.object_key || PLACEHOLDER;
         const status = statusFor(product);
         return (
-          <div key={product.id} className={`absolute ${single ? "left-1/2 top-1/2 w-[65%] -translate-x-1/2 -translate-y-1/2 md:w-[24%]" : layouts[index]}`} style={{ zIndex: 10 + (index % 4) }}>
+          <div key={product.id} className={`absolute ${single ? "left-1/2 top-1/2 w-[65%] -translate-x-1/2 -translate-y-1/2 md:w-[24%]" : isCompact ? compactLayouts[index] : layouts[index]}`} style={{ zIndex: 10 + (index % 4) }}>
             <div className={styles.floatingProduct}>
               <Link href={`/products/${product.slug || product.id}`} aria-label={`View ${product.name}`} prefetch={groupIndex === 0 ? null : false} className="group relative block rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
                 <div className="relative aspect-square w-full">

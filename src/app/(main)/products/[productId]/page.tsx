@@ -15,24 +15,13 @@ import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { useWishlist } from "@/hooks/use-wishlist";
 import type { Product, ProductVariant } from "@/types";
+import type { SizeChart } from "@/lib/size-chart";
 
 import styles from "./product-gallery.module.css";
 import { ProductDetailSkeleton } from "./product-detail-skeleton";
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23f5f5f5'/%3E%3Ccircle cx='10' cy='10' r='6' fill='%23e5e7eb'/%3E%3C/svg%3E";
-
-const SIZE_CHART = {
-  S: { Length: "25.5", Chest: "19", Shoulder: "18.5", Sleeve: "8.5" },
-  M: { Length: "26.5", Chest: "20.5", Shoulder: "19.5", Sleeve: "9" },
-  L: { Length: "27.5", Chest: "22", Shoulder: "20.5", Sleeve: "9.5" },
-  XL: { Length: "28.5", Chest: "24", Shoulder: "21", Sleeve: "10" },
-} as const;
-
-type ChartSize = keyof typeof SIZE_CHART;
-type Measurement = keyof (typeof SIZE_CHART)[ChartSize];
-const CHART_SIZE_ORDER: ChartSize[] = ["S", "M", "L", "XL"];
-const MEASUREMENTS: Measurement[] = ["Length", "Chest", "Shoulder", "Sleeve"];
 
 interface PublicProductImage {
   id?: string | null;
@@ -71,6 +60,7 @@ interface PublicProduct {
   sku?: string | null;
   sizes?: string[] | null;
   colors?: string[] | null;
+  size_chart?: SizeChart | null;
   thumbnail_url?: string | null;
   product_images?: PublicProductImage[] | null;
   product_variants?: PublicProductVariant[] | null;
@@ -433,9 +423,6 @@ export default function ProductDetailPage() {
   const isWishlisted = Boolean(
     product && wishlistItems.some((item) => item.id === product.id),
   );
-  const chartSizes = CHART_SIZE_ORDER.filter((size) =>
-    product?.sizes.some((productSize) => productSize.trim().toUpperCase() === size),
-  );
   const isSizeAvailable = (size: string) =>
     activeVariants.some(
       (variant) =>
@@ -749,7 +736,7 @@ export default function ProductDetailPage() {
                 </div>
               </section>
 
-              <section>
+              {product.size_chart && <section>
                 <button
                   type="button"
                   className="flex min-h-12 w-full items-center justify-between py-3 text-left font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -765,37 +752,36 @@ export default function ProductDetailPage() {
                   className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${sizeChartOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
                 >
                   <div className="min-w-0 overflow-hidden">
-                    {chartSizes.length > 0 ? (
                       <div className="mb-2 overflow-x-auto rounded-lg border border-foreground/10">
-                        <table className="w-full min-w-[22rem] border-collapse text-right text-sm">
+                        <table className="w-full min-w-[22rem] border-collapse text-left text-sm">
+                          <caption className="border-b border-foreground/10 px-3 py-2 text-left text-xs text-muted-foreground">
+                            {product.size_chart.title}
+                          </caption>
                           <thead className="bg-foreground/5">
                             <tr>
-                              <th scope="col" className="whitespace-nowrap px-3 py-2 text-left font-semibold">Measurement (inches)</th>
-                              {chartSizes.map((size) => (
-                                <th key={size} scope="col" className="px-3 py-2 font-semibold">
-                                  {size}{size === "S" ? <span className="block text-[10px] font-normal text-muted-foreground">Estimated</span> : null}
+                              {product.size_chart.columns.map((column, index) => (
+                                <th key={`${column}-${index}`} scope="col" className="whitespace-nowrap px-3 py-2 font-semibold">
+                                  {column}
                                 </th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
-                            {MEASUREMENTS.map((measurement) => (
-                              <tr key={measurement} className="border-t border-foreground/10">
-                                <th scope="row" className="px-3 py-2 text-left font-medium">{measurement}</th>
-                                {chartSizes.map((size) => (
-                                  <td key={size} className="px-3 py-2 tabular-nums text-muted-foreground">{SIZE_CHART[size][measurement]}</td>
+                            {product.size_chart.rows.map((row, rowIndex) => (
+                              <tr key={rowIndex} className="border-t border-foreground/10">
+                                {row.map((cell, cellIndex) => cellIndex === 0 ? (
+                                  <th key={cellIndex} scope="row" className="px-3 py-2 font-medium">{cell}</th>
+                                ) : (
+                                  <td key={cellIndex} className="px-3 py-2 tabular-nums text-muted-foreground">{cell || "—"}</td>
                                 ))}
                               </tr>
                             ))}
                           </tbody>
                         </table>
                       </div>
-                    ) : (
-                      <p className="mb-2 border-t border-dashed border-foreground/20 py-3 text-sm text-muted-foreground">Sizing information is not available for this item. Contact us for fit and measurement guidance before ordering.</p>
-                    )}
                   </div>
                 </div>
-              </section>
+              </section>}
             </div>
           </div>
         </div>
