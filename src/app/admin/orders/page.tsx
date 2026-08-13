@@ -229,7 +229,7 @@ export default function AdminOrdersPage() {
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div><p className="text-xs text-muted-foreground">Payment reference</p><p className="font-mono font-semibold tracking-wider">{order.payment_reference}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Order ID</p><p className="font-mono font-semibold tracking-wider">{order.payment_reference}</p></div>
                     <div><p className="text-xs text-muted-foreground">Order total</p><p className="font-semibold">{formatPrice(Number(order.total))}</p></div>
                     <div><p className="text-xs text-muted-foreground">Payment proof</p>{payment ? <p className="uppercase">{payment.method}</p> : <p>No proof submitted</p>}</div>
                   </div>
