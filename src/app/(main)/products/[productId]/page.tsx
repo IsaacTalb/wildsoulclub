@@ -49,6 +49,7 @@ interface PublicProduct {
   description?: string | null;
   price: number;
   sale_price?: number | null;
+  is_archived?: boolean | null;
   category_id?: string | null;
   category?: string | { name?: string | null } | null;
   categories?: {
@@ -491,7 +492,7 @@ export default function ProductDetailPage() {
       category_id: product.category_id || "",
       sku: product.sku || "",
       is_active: true,
-      is_archived: false,
+      is_archived: product.is_archived ?? false,
       is_featured: false,
       is_best_seller: false,
       best_seller_rank: 0,
@@ -526,6 +527,19 @@ export default function ProductDetailPage() {
   if (!product)
     return <div className="container mx-auto px-4 py-8">Product not found</div>;
 
+  const effectiveRegularPrice = Number(
+    selectedVariant?.price ?? product.price,
+  );
+  const salePrice = selectedVariant?.sale_price ?? product.sale_price;
+  const effectiveSalePrice = salePrice == null ? null : Number(salePrice);
+  const hasValidSalePrice =
+    effectiveSalePrice !== null &&
+    Number.isFinite(effectiveSalePrice) &&
+    effectiveSalePrice > 0 &&
+    effectiveSalePrice < effectiveRegularPrice;
+  const showStruckThroughRegularPrice =
+    product.is_archived === true && hasValidSalePrice;
+
   return (
     <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)]">
       <div className="container mx-auto max-w-[1300px]">
@@ -551,20 +565,20 @@ export default function ProductDetailPage() {
             </h1>
 
             <div className="mb-3 flex items-center gap-2.5">
-              {selectedVariant?.price || product.sale_price ? (
+              {hasValidSalePrice ? (
                 <>
                   <span className="text-xl font-semibold text-red-500">
-                    {formatPrice(
-                      Number(selectedVariant?.price || product.sale_price),
-                    )}
+                    {formatPrice(effectiveSalePrice)}
                   </span>
-                  {/* <span className="text-sm text-muted-foreground line-through">
-                    {formatPrice(product.price)}
-                  </span> */}
+                  {showStruckThroughRegularPrice && (
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(effectiveRegularPrice)}
+                    </span>
+                  )}
                 </>
               ) : (
                 <span className="text-xl font-semibold">
-                  {formatPrice(product.price)}
+                  {formatPrice(effectiveRegularPrice)}
                 </span>
               )}
             </div>
