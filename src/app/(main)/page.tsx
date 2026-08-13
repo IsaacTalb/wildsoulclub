@@ -460,8 +460,8 @@ function HeroCountdown({
             "
           >
             {status.state === "live"
-              ? "Shop Live Collection"
-              : "View Collection"}
+              ? "LIVE NOW"
+              : "LIVE NOW"}
           </Link>
         </div>
       )}
