@@ -145,8 +145,9 @@ export default function NewDropsPage() {
 
               <div className="flex min-h-[calc(100svh-var(--site-header-height))] items-center justify-center px-5 py-10 text-center sm:px-10 lg:px-[max(4rem,8vw)]">
                 <div className="mx-auto max-w-3xl">
-                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-90 sm:text-sm">
-                    <span>{drop.season || "Season coming soon"}</span>
+                  <div className="items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold uppercase opacity-90 sm:text-base">
+                    <span className="text-black/50">{drop.collections?.name || "Latest collection"}</span>
+                    <span className="text-black/50">{drop.season || "Season coming soon"}</span>
                   </div>
                 </div>
                 {/* Scroll Down Button */}
@@ -170,19 +171,21 @@ export default function NewDropsPage() {
                 <ResponsiveFloatingProductCanvases products={drop.products ?? []} fullViewport compactSparse />
                 <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
                   <div className="flex flex-col items-center">
-                    <div className="relative h-10 w-16 overflow-hidden sm:h-14 sm:w-28">
+                    <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
                       <Image
                         src="/images/logo-black.png"
                         alt="Wild Soul Club"
                         fill
-                        sizes="(min-width: 640px) 256px, 224px"
-                        className="object-cover opacity-50"
+                        sizes="(min-width: 640px) 80px, 56px"
+                        className="object-contain opacity-50"
                       />
                     </div>
+
                     <p className="mt-2 text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
                       BOLD PRINT, STREET IDENTITY
                     </p>
-                    <p className="mt-2 text-[7px] font-bold uppercase text-black/50 sm:mt-3 sm:text-[8px]">
+
+                    <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
                       {drop.season || "Season coming soon"}
                     </p>
                   </div>
