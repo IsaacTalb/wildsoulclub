@@ -36,15 +36,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const leftLinks = [
-  { href: "/products", label: "Shop" },
-  { href: "/archive-sales", label: "Archive Sale" },
-  { href: "/about", label: "About Us" },
+  { href: "/products", label: "SHOP" },
+  { href: "/archive-sales", label: "ARCHIVE SALES" },
+  { href: "/about", label: "ABOUT US" },
 ];
 
 const mobileLinks = [
-  { href: "/new-drops", label: "Collections" },
-  { href: "/archive-sales", label: "Archive Sale" },
-  { href: "/about", label: "About Us" },
+  { href: "/new-drops", label: "COLLECTIONS" },
+  { href: "/archive-sales", label: "ARCHIVE SALES" },
+  { href: "/about", label: "ABOUT US" },
   // { href: "/collections", label: "Collections" },
 ];
 
@@ -212,7 +212,7 @@ export function Header() {
                       aria-controls="mobile-shop-menu"
                       onClick={() => setMobileShopOpen((open) => !open)}
                     >
-                      Shop
+                      SHOP
                       <ChevronDown
                         className={cn(
                           "h-4 w-4 transition-transform duration-300",
@@ -250,7 +250,7 @@ export function Header() {
                             className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
                             onClick={() => setIsOpen(false)}
                           >
-                            Shop all
+                            SHOP ALL
                           </Link>
                         </div>
                       </div>
@@ -295,7 +295,7 @@ export function Header() {
                       <Button variant="outline" asChild className="rounded-xl">
                         <Link href="/profile" onClick={() => setIsOpen(false)}>
                           <User className="mr-2 h-4 w-4" />
-                          Profile
+                          PROFILE
                         </Link>
                       </Button>
                       <Button
@@ -304,7 +304,7 @@ export function Header() {
                         onClick={handleSignOut}
                       >
                         <LogOut className="mr-2 h-4 w-4" />
-                        Log out
+                        LOG OUT
                       </Button>
                     </div>
                   </div>
@@ -313,13 +313,13 @@ export function Header() {
                     <Button variant="outline" asChild className="rounded-xl">
                       <Link href="/login" onClick={() => setIsOpen(false)}>
                         <LogIn className="mr-2 h-4 w-4" />
-                        Log in
+                        LOG IN
                       </Link>
                     </Button>
                     <Button asChild className="rounded-xl">
                       <Link href="/signup" onClick={() => setIsOpen(false)}>
                         <UserPlus className="mr-2 h-4 w-4" />
-                        Sign up
+                        SIGN UP
                       </Link>
                     </Button>
                   </div>
@@ -343,7 +343,7 @@ export function Header() {
               )}
               aria-label="Shop menu"
             >
-              Shop
+              SHOP
               <ChevronDown className="h-4 w-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -354,7 +354,7 @@ export function Header() {
                 render={<Link href="/products" />}
                 className="w-full cursor-pointer px-3 py-2 font-medium"
               >
-                Shop all
+                SHOP ALL
               </DropdownMenuItem>
               {categories.length > 0 && <DropdownMenuSeparator />}
               {categories.map((category) => (
@@ -381,7 +381,7 @@ export function Header() {
                 : "text-muted-foreground",
             )}
           >
-            Collections
+            COLLECTIONS
           </Link>
           {leftLinks.slice(1).map((link) => (
             <Link
@@ -451,7 +451,7 @@ export function Header() {
                       className="flex w-full items-center gap-2 cursor-pointer"
                     >
                       <User className="h-4 w-4" />
-                      Profile
+                      PROFILE
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -461,14 +461,14 @@ export function Header() {
                       className="flex items-center gap-2 w-full text-left"
                     >
                       <LogOut className="h-4 w-4" />
-                      Sign Out
+                      LOG OUT
                     </button>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Link href="/login" onClick={() => setIsOpen(false)}>
-                Sign In
+                SIGN IN
               </Link>
             )}
           </div>
