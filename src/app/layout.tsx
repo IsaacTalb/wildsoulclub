@@ -1,51 +1,6 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import { Providers } from "@/components/providers";
 import "./globals.css";
-
-const helvetica = localFont({
-  src: [
-    {
-      path: "../../public/fonts/helvetica-255-webfont/helvetica-light-587ebe5a59211.woff",
-      weight: "300",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/helvetica-255-webfont/Helvetica.woff",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/helvetica-255-webfont/Helvetica-Oblique.woff",
-      weight: "400",
-      style: "italic",
-    },
-    {
-      path: "../../public/fonts/helvetica-255-webfont/Helvetica-Bold.woff",
-      weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/helvetica-255-webfont/Helvetica-BoldOblique.woff",
-      weight: "700",
-      style: "italic",
-    },
-  ],
-  variable: "--font-helvetica",
-  display: "swap",
-});
-
-const helveticaCompressed = localFont({
-  src: "../../public/fonts/helvetica-255-webfont/helvetica-compressed-5871d14b6903a.woff",
-  variable: "--font-helvetica-compressed",
-  display: "swap",
-});
-
-const helveticaRounded = localFont({
-  src: "../../public/fonts/helvetica-255-webfont/helvetica-rounded-bold-5871d05ead8de.woff",
-  variable: "--font-helvetica-rounded",
-  display: "swap",
-});
 
 const metadataBase = new URL(
   process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000",
@@ -139,7 +94,6 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${helvetica.variable} ${helveticaCompressed.variable} ${helveticaRounded.variable}`}
       suppressHydrationWarning
     >
       <body>
