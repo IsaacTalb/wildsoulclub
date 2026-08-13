@@ -1,3 +1,21 @@
+.canvas {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.mobileCanvas {
+  min-height: max(680px, calc(100svh - var(--site-header-height)));
+}
+
+.desktopCanvas {
+  height: 760px;
+}
+
+.desktopGroups {
+  display: none;
+}
+
 .floatingProduct {
   transform-origin: center;
   transition: scale 500ms ease-in-out;
@@ -6,6 +24,35 @@
 .floatingProduct:hover,
 .floatingProduct:focus-within {
   scale: 1.08;
+}
+
+@media (min-width: 768px) {
+  .mobileGroups {
+    display: none;
+  }
+
+  .desktopGroups {
+    display: block;
+  }
+
+  .desktopCanvas {
+    height: 760px;
+  }
+
+  .desktopCanvas[data-full-viewport] {
+    min-height: calc(100svh - var(--site-header-height));
+    height: auto;
+  }
+
+  .desktopCanvas[data-compact-sparse]:not([data-full-viewport]) {
+    height: 680px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktopCanvas {
+    height: 820px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
