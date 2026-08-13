@@ -146,8 +146,9 @@ export default function NewDropsPage() {
               <div className="flex min-h-[calc(100svh-var(--site-header-height))] items-center justify-center px-5 py-10 text-center sm:px-10 lg:px-[max(4rem,8vw)]">
                 <div className="mx-auto max-w-3xl">
                   <div className="items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold uppercase opacity-90 sm:text-base">
-                    <span className="text-black/50">{drop.collections?.name || "Latest collection"}</span>
-                    <span className="text-black/50">{drop.season || "Season coming soon"}</span>
+                    <span>{drop.collections?.name || "Latest collection"}</span>
+                    <br></br>
+                    <span>{drop.season || "Season coming soon"}</span>
                   </div>
                 </div>
                 {/* Scroll Down Button */}
@@ -169,7 +170,7 @@ export default function NewDropsPage() {
             {(drop.products ?? []).length > 0 && (
               <section id={`drop-${drop.id}-products`} className="bg-white px-3 sm:px-4 md:px-8" aria-label={`${drop.name} products`}>
                 <ResponsiveFloatingProductCanvases products={drop.products ?? []} fullViewport compactSparse />
-                <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
+                <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
                   <div className="flex flex-col items-center">
                     <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
                       <Image
@@ -185,7 +186,7 @@ export default function NewDropsPage() {
                       BOLD PRINT, STREET IDENTITY
                     </p>
 
-                    <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
+                    <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
                       {drop.season || "Season coming soon"}
                     </p>
                   </div>

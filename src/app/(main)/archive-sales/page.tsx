@@ -30,7 +30,7 @@ export default function ArchiveSalesPage() {
       <section className="mx-auto max-w-[1600px]" aria-label="Archive sale products">
         {loading ? <FloatingProductSkeleton /> : error ? <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">{error}. Please try again later.</div> : products.length ? <ResponsiveFloatingProductCanvases products={products} /> : <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">There are no archive-sale pieces available right now.</div>}
       </section>
-      <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
+      <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
         <div className="flex flex-col items-center">
           <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
             <Image
@@ -46,7 +46,7 @@ export default function ArchiveSalesPage() {
             BOLD PRINT, STREET IDENTITY
           </p>
 
-          <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
+          <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
             Wild Soul Club's Archives
           </p>
         </div>
