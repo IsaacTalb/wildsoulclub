@@ -7,7 +7,7 @@ import { Fragment } from "react";
 import { ArrowRight, CalendarDays, RefreshCw, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Drop } from "@/types/product";
-import { FloatingProductCanvas, chunkFloatingProducts } from "@/components/products/floating-product-canvas";
+import { ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
 
 const DROP_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23171717'/%3E%3C/svg%3E";
@@ -189,9 +189,7 @@ export default function NewDropsPage() {
             </section>
             {(drop.products ?? []).length > 0 && (
               <section id={`drop-${drop.id}-products`} className="bg-white px-3 sm:px-4 md:px-8" aria-label={`${drop.name} products`}>
-                {chunkFloatingProducts(drop.products ?? []).map((products, groupIndex) => (
-                  <FloatingProductCanvas key={groupIndex} products={products} groupIndex={groupIndex} fullViewport compactSparse />
-                ))}
+                <ResponsiveFloatingProductCanvases products={drop.products ?? []} fullViewport compactSparse />
                 <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
                   <div className="flex flex-col items-center">
                     <div className="relative h-20 w-40 overflow-hidden sm:h-32 sm:w-64">

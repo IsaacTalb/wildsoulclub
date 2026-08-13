@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
 
 import type { Product } from "@/types/product";
-import { FloatingProductCanvas, FloatingProductSkeleton, chunkFloatingProducts } from "@/components/products/floating-product-canvas";
+import { FloatingProductSkeleton, ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -36,11 +36,6 @@ function ProductsContent() {
     void fetchProducts();
     return () => controller.abort();
   }, [requestQuery]);
-
-  const productGroups = useMemo(
-    () => chunkFloatingProducts(products),
-    [products],
-  );
 
   const isInitialLoading = loading && products.length === 0;
   const isRefreshing = loading && products.length > 0;
@@ -97,13 +92,7 @@ function ProductsContent() {
               </div>
             )}
 
-            {productGroups.map((group, groupIndex) => (
-              <FloatingProductCanvas
-                key={`product-group-${groupIndex}`}
-                products={group}
-                groupIndex={groupIndex}
-              />
-            ))}
+            <ResponsiveFloatingProductCanvases products={products} />
           </div>
         )}
       </section>

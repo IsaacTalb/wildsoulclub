@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { FloatingProductCanvas, FloatingProductSkeleton, chunkFloatingProducts } from "@/components/products/floating-product-canvas";
+import { FloatingProductSkeleton, ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
 import type { ArchiveSaleProduct } from "@/types/product";
 
 export default function ArchiveSalesPage() {
@@ -25,11 +25,10 @@ export default function ArchiveSalesPage() {
     return () => controller.abort();
   }, []);
 
-  const groups = useMemo(() => chunkFloatingProducts(products), [products]);
   return (
     <div className="overflow-hidden bg-white px-4 md:px-8">
       <section className="mx-auto max-w-[1600px]" aria-label="Archive sale products">
-        {loading ? <FloatingProductSkeleton /> : error ? <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">{error}. Please try again later.</div> : groups.length ? groups.map((group, index) => <FloatingProductCanvas key={index} products={group} groupIndex={index} />) : <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">There are no archive-sale pieces available right now.</div>}
+        {loading ? <FloatingProductSkeleton /> : error ? <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">{error}. Please try again later.</div> : products.length ? <ResponsiveFloatingProductCanvases products={products} /> : <div className="flex min-h-[60vh] items-center justify-center text-center text-muted-foreground">There are no archive-sale pieces available right now.</div>}
       </section>
       <footer className="flex min-h-[34vh] items-end justify-center pb-8 pt-16 text-center sm:pb-12">
         <div className="flex flex-col items-center">
