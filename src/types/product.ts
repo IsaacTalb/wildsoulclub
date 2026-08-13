@@ -60,6 +60,7 @@ export interface Drop {
   name: string;
   slug: string;
   description?: string;
+  season?: string;
   release_date?: string;
   status: "draft" | "scheduled" | "active" | "archived";
   banner_image_url?: string;

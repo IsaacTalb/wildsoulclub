@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
-import { ArrowRight, CalendarDays, RefreshCw, Sparkles, ChevronDown } from "lucide-react";
+import { ArrowRight, RefreshCw, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Drop } from "@/types/product";
 import { ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
@@ -12,16 +12,6 @@ import { ResponsiveFloatingProductCanvases } from "@/components/products/floatin
 const DROP_IMAGE_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Crect width='20' height='20' fill='%23171717'/%3E%3C/svg%3E";
 const skeletonSections = Array.from({ length: 2 }, (_, index) => index);
-
-function formatReleaseDate(releaseDate?: string) {
-  if (!releaseDate) return "Release date coming soon";
-
-  return new Date(releaseDate).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export default function NewDropsPage() {
   const [newDrops, setNewDrops] = useState<Drop[]>([]);
@@ -156,15 +146,7 @@ export default function NewDropsPage() {
               <div className="flex min-h-[calc(100svh-var(--site-header-height))] items-center justify-center px-5 py-10 text-center sm:px-10 lg:px-[max(4rem,8vw)]">
                 <div className="mx-auto max-w-3xl">
                   <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-90 sm:text-sm">
-                    <span>{drop.collections?.name || "Latest collection"}</span>
-                    {/* <span className="flex items-center gap-2 normal-case tracking-normal">
-                      <CalendarDays className="h-4 w-4" aria-hidden="true" />
-                      {formatReleaseDate(drop.release_date)}
-                    </span> */}
-                  </div>
-                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-90 sm:text-sm">
-                    {/* <span>{drop.collections?.name || "Latest collection"}</span> */}
-                    {/* remove drop.collections?name and need to replace here with season such as Spring 2026, Winter 2026, etc */}
+                    <span>{drop.season || "Season coming soon"}</span>
                   </div>
                 </div>
                 {/* Scroll Down Button */}
@@ -188,7 +170,7 @@ export default function NewDropsPage() {
                 <ResponsiveFloatingProductCanvases products={drop.products ?? []} fullViewport compactSparse />
                 <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
                   <div className="flex flex-col items-center">
-                    <div className="relative h-12 w-20 overflow-hidden sm:h-14 sm:w-28">
+                    <div className="relative h-10 w-16 overflow-hidden sm:h-14 sm:w-28">
                       <Image
                         src="/images/logo-black.png"
                         alt="Wild Soul Club"
@@ -197,12 +179,11 @@ export default function NewDropsPage() {
                         className="object-cover opacity-50"
                       />
                     </div>
-                    <p className="mt-2 text-sm font-bold uppercase text-black/50 sm:mt-3">
+                    <p className="mt-2 text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
                       BOLD PRINT, STREET IDENTITY
                     </p>
-                    <p className="mt-2 text-[8px] font-bold uppercase text-black/50 sm:mt-3">
-                      {/* {drop.collections?.name || "Latest collection"} */}
-                      {/* remove drop.collections?name and need to replace here with season such as Spring 2026, Winter 2026, etc */}
+                    <p className="mt-2 text-[7px] font-bold uppercase text-black/50 sm:mt-3 sm:text-[8px]">
+                      {drop.season || "Season coming soon"}
                     </p>
                   </div>
                 </footer>
