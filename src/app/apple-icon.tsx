@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 export const size = {
@@ -10,10 +8,6 @@ export const size = {
 export const contentType = "image/png";
 
 export default async function AppleIcon() {
-  const helveticaBold = await readFile(
-    join(process.cwd(), "public/fonts/helvetica-255/Helvetica-Bold.ttf"),
-  );
-
   return new ImageResponse(
     (
       <div
@@ -22,7 +16,7 @@ export default async function AppleIcon() {
           background: "white",
           color: "black",
           display: "flex",
-          fontFamily: "Helvetica",
+          fontFamily: "Arial, Helvetica, sans-serif",
           fontSize: 52,
           fontWeight: 700,
           height: "100%",
@@ -36,14 +30,6 @@ export default async function AppleIcon() {
     ),
     {
       ...size,
-      fonts: [
-        {
-          name: "Helvetica",
-          data: helveticaBold,
-          style: "normal",
-          weight: 700,
-        },
-      ],
     },
   );
 }
