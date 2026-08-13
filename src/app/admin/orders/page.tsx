@@ -40,7 +40,12 @@ type OrderRow = {
   fulfillment_method: "delivery" | "pickup";
   notes?: string | null;
   payments?: PaymentRow[];
-  order_items?: Array<{ quantity?: number; products?: { name?: string } | null }>;
+  order_items?: Array<{
+    size?: string | null;
+    color?: string | null;
+    quantity?: number | null;
+    products?: { name?: string | null } | null;
+  }>;
 };
 
 const orderStatuses: OrderStatus[] = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
@@ -227,6 +232,38 @@ export default function AdminOrdersPage() {
                     <div><p className="text-xs text-muted-foreground">Payment reference</p><p className="font-mono font-semibold tracking-wider">{order.payment_reference}</p></div>
                     <div><p className="text-xs text-muted-foreground">Order total</p><p className="font-semibold">{formatPrice(Number(order.total))}</p></div>
                     <div><p className="text-xs text-muted-foreground">Payment proof</p>{payment ? <p className="uppercase">{payment.method}</p> : <p>No proof submitted</p>}</div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold">Order items</h2>
+                      {units > 0 && <p className="text-xs text-muted-foreground">{units} units total</p>}
+                    </div>
+                    {order.order_items?.length ? (
+                      <ul className="divide-y rounded-xl border">
+                        {order.order_items.map((item, index) => {
+                          const hasVariant = Boolean(item.size || item.color);
+                          return (
+                            <li key={index} className="flex flex-col gap-1 px-3 py-3 text-sm sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                              <div>
+                                <p className="font-medium">{item.products?.name || "Deleted or unavailable product"}</p>
+                                {hasVariant ? (
+                                  <p className="text-xs text-muted-foreground">
+                                    {item.size ? `Size: ${item.size}` : "Size unavailable"}
+                                    {item.color ? ` · Color: ${item.color}` : null}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">No variant selected</p>
+                                )}
+                              </div>
+                              <p className="shrink-0 text-xs text-muted-foreground sm:text-sm">Quantity: {item.quantity ?? "Unavailable"}</p>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : (
+                      <p className="rounded-xl border border-dashed px-3 py-4 text-sm text-muted-foreground">No order item details are available.</p>
+                    )}
                   </div>
 
                   {order.notes && <p className="rounded-lg border px-3 py-2 text-sm"><span className="font-medium">Customer note:</span> {order.notes}</p>}
