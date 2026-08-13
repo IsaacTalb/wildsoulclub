@@ -370,9 +370,10 @@ function HeroCountdown({
       ? status.countdown
       : null;
 
-  const showLiveCta = status.state === "live";
+  const showCollectionCta =
+    status.state === "live" || status.state === "ended";
 
-  if (!countdown && !showLiveCta) {
+  if (!countdown && !showCollectionCta) {
     return null;
   }
 
@@ -426,7 +427,7 @@ function HeroCountdown({
         </div>
       )}
 
-      {showLiveCta && (
+      {showCollectionCta && (
         <div className="flex min-h-10 w-full items-center justify-center sm:min-h-11">
           <Link
             href={href}
@@ -458,7 +459,9 @@ function HeroCountdown({
               sm:tracking-[0.16em]
             "
           >
-            Live
+            {status.state === "live"
+              ? "LIVE NOW"
+              : "LIVE NOW"}
           </Link>
         </div>
       )}
@@ -791,18 +794,20 @@ export default function HomePage() {
 
       <section className="relative h-[calc(100svh-env(safe-area-inset-bottom))] min-h-0 w-full overflow-hidden bg-white">
         {heroSlides.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white">
-            <div className="container mx-auto px-4 text-center">
-              <div className="mx-auto flex max-w-2xl flex-col items-center rounded-[32px] border border-neutral-200 bg-white px-6 py-10 shadow-sm sm:px-10">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                  Wild Soul Club
-                </p>
-
-                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-foreground md:text-6xl lg:text-7xl">
-                  New collections are coming
-                </h1>
-              </div>
-            </div>
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-6 bg-white"
+          >
+            <span
+              aria-hidden="true"
+              className="h-16 w-16 animate-spin rounded-full border-[6px] border-neutral-200 border-t-black sm:h-20 sm:w-20 sm:border-[7px] motion-reduce:animate-pulse"
+            />
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-neutral-700 sm:text-base">
+              {loadingHomeData
+                ? "Loading featured collection"
+                : "Loading collections"}
+            </p>
           </div>
         ) : (
           heroSlides.map((slide, index) => {
@@ -889,10 +894,10 @@ export default function HomePage() {
                           setIsHeroInteractionActive(true);
                         }}
                         className={`
-                          relative mx-auto max-w-2xl overflow-hidden
-                          rounded-2xl border border-white/20
-                          bg-white/[0.09] px-4 py-4
-                          shadow-[inset_0_1px_0_rgba(255,255,255,0.28),0_25px_80px_rgba(0,0,0,0.3)]
+                          relative mx-auto max-w-lg overflow-hidden
+                          rounded-xl border border-white/15
+                          bg-white/[0.09] px-3 py-2.5
+                          shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_12px_36px_rgba(0,0,0,0.22)]
                           backdrop-blur-2xl backdrop-saturate-150
                           transition-all delay-100 duration-700
                           hover:scale-[1.02]
@@ -901,7 +906,7 @@ export default function HomePage() {
                           focus-visible:ring-white
                           focus-visible:ring-offset-2
                           focus-visible:ring-offset-black/40
-                          sm:rounded-3xl sm:px-8 sm:py-6
+                          sm:max-w-xl sm:rounded-2xl sm:px-5 sm:py-3
                           ${
                             isActive
                               ? "translate-y-0 opacity-100"
@@ -925,7 +930,7 @@ export default function HomePage() {
                         </h1>
                       </button>
 
-                      {/* Upcoming = countdown. Live = Live button only. */}
+                      {/* Upcoming = countdown. Live and ended = collection link. */}
                       <div
                         aria-hidden={!isHeroStatusVisible}
                         inert={!isHeroStatusVisible}
