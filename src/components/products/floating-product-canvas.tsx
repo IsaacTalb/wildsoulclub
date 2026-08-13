@@ -21,28 +21,46 @@ export interface FloatingProduct {
   is_new_drop?: boolean;
 }
 
-const layouts = [
-  "left-[3%] top-[5%] w-[39%] md:left-[5%] md:top-[9%] md:w-[17%]",
-  "right-[5%] top-[2%] w-[31%] md:left-[34%] md:right-auto md:w-[13%]",
-  "left-[29%] top-[30%] w-[42%] md:left-[43%] md:top-[27%] md:w-[18%]",
-  "right-[3%] top-[21%] w-[27%] md:right-[8%] md:top-[12%] md:w-[13%]",
-  "left-[4%] top-[57%] w-[29%] md:left-[8%] md:top-[55%] md:w-[12%]",
-  "right-[6%] top-[52%] w-[36%] md:right-[18%] md:top-[45%] md:w-[16%]",
-  "right-[-2%] top-[77%] w-[32%] md:top-[75%] md:w-[15%]",
-  "left-[29%] top-[80%] w-[30%] md:left-[27%] md:top-[72%] md:w-[14%]",
-] as const;
+type Layout = readonly string[];
 
-const compactLayouts = [
-  "left-[6%] top-[8%] w-[42%] md:left-[14%] md:top-[10%] md:w-[21%]",
-  "right-[5%] top-[34%] w-[38%] md:right-[16%] md:top-[18%] md:w-[18%]",
-  "left-[34%] top-[55%] w-[40%] md:left-[42%] md:top-[48%] md:w-[20%]",
-] as const;
+const mobileLayoutVariants: readonly Layout[] = [
+  ["left-[7%] top-[10%] w-[52%]", "right-[7%] top-[58%] w-[47%]"],
+  ["right-[7%] top-[12%] w-[49%]", "left-[8%] top-[57%] w-[53%]"],
+  ["left-[15%] top-[9%] w-[47%]", "right-[10%] top-[60%] w-[51%]"],
+];
 
-export const FLOATING_PRODUCTS_PER_CANVAS = 8;
+const mobileSingleLayouts: readonly string[] = [
+  "left-1/2 top-[46%] w-[64%] -translate-x-1/2 -translate-y-1/2",
+  "left-1/2 top-[51%] w-[60%] -translate-x-1/2 -translate-y-1/2",
+];
 
-export function chunkFloatingProducts<T>(items: T[]) {
-  return Array.from({ length: Math.ceil(items.length / FLOATING_PRODUCTS_PER_CANVAS) }, (_, index) =>
-    items.slice(index * FLOATING_PRODUCTS_PER_CANVAS, (index + 1) * FLOATING_PRODUCTS_PER_CANVAS),
+const desktopLayoutVariants: Readonly<Record<number, readonly Layout[]>> = {
+  1: [["left-1/2 top-1/2 w-[25%] -translate-x-1/2 -translate-y-1/2"]],
+  2: [
+    ["left-[13%] top-[15%] w-[19%]", "right-[14%] top-[55%] w-[17%]"],
+    ["right-[16%] top-[14%] w-[18%]", "left-[15%] top-[56%] w-[20%]"],
+  ],
+  3: [
+    ["left-[10%] top-[14%] w-[18%]", "right-[12%] top-[24%] w-[15%]", "left-[42%] top-[60%] w-[19%]"],
+    ["right-[12%] top-[12%] w-[17%]", "left-[13%] top-[34%] w-[19%]", "right-[35%] top-[63%] w-[16%]"],
+  ],
+  4: [
+    ["left-[7%] top-[12%] w-[17%]", "right-[16%] top-[10%] w-[14%]", "left-[27%] top-[55%] w-[19%]", "right-[6%] top-[61%] w-[16%]"],
+    ["right-[8%] top-[13%] w-[18%]", "left-[23%] top-[8%] w-[14%]", "right-[29%] top-[56%] w-[19%]", "left-[7%] top-[64%] w-[15%]"],
+  ],
+  5: [
+    ["left-[5%] top-[12%] w-[17%]", "left-[38%] top-[8%] w-[14%]", "right-[8%] top-[20%] w-[16%]", "left-[22%] top-[58%] w-[19%]", "right-[25%] top-[63%] w-[15%]"],
+    ["right-[6%] top-[10%] w-[17%]", "left-[25%] top-[8%] w-[15%]", "left-[7%] top-[38%] w-[18%]", "right-[29%] top-[50%] w-[14%]", "right-[8%] top-[67%] w-[17%]"],
+    ["left-[7%] top-[16%] w-[16%]", "right-[30%] top-[7%] w-[18%]", "right-[6%] top-[36%] w-[14%]", "left-[29%] top-[48%] w-[19%]", "right-[30%] top-[70%] w-[15%]"],
+  ],
+};
+
+export const MOBILE_FLOATING_PRODUCTS_PER_CANVAS = 2;
+export const DESKTOP_FLOATING_PRODUCTS_PER_CANVAS = 5;
+
+export function chunkFloatingProducts<T>(items: T[], productsPerCanvas: number) {
+  return Array.from({ length: Math.ceil(items.length / productsPerCanvas) }, (_, index) =>
+    items.slice(index * productsPerCanvas, (index + 1) * productsPerCanvas),
   );
 }
 
@@ -55,41 +73,47 @@ function statusFor(product: FloatingProduct) {
   return null;
 }
 
+function layoutFor(viewport: "mobile" | "desktop", count: number, groupIndex: number) {
+  if (viewport === "mobile") {
+    if (count === 1) return [mobileSingleLayouts[groupIndex % mobileSingleLayouts.length]];
+    return mobileLayoutVariants[groupIndex % mobileLayoutVariants.length];
+  }
+
+  const variants = desktopLayoutVariants[count] ?? desktopLayoutVariants[5];
+  return variants[groupIndex % variants.length];
+}
+
 export function FloatingProductCanvas({
   products,
   groupIndex = 0,
   fullViewport = false,
   compactSparse = false,
+  viewport = "desktop",
 }: {
   products: FloatingProduct[];
   groupIndex?: number;
   fullViewport?: boolean;
   compactSparse?: boolean;
+  viewport?: "mobile" | "desktop";
 }) {
-  const isCompact = compactSparse && products.length >= 2 && products.length <= 3;
+  const layout = layoutFor(viewport, products.length, groupIndex);
+
   return (
     <div
-      className={
-        isCompact
-          ? products.length === 2
-            ? "relative h-[440px] w-full sm:h-[500px] md:h-[460px] lg:h-[500px]"
-            : "relative h-[610px] w-full sm:h-[680px] md:h-[600px] lg:h-[650px]"
-          : fullViewport
-          ? "relative min-h-[calc(100svh-var(--site-header-height))] w-full"
-          : "relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]"
-      }
+      className={`${styles.canvas} ${viewport === "mobile" ? styles.mobileCanvas : styles.desktopCanvas}`}
+      data-full-viewport={fullViewport || undefined}
+      data-compact-sparse={compactSparse || undefined}
     >
       {products.map((product, index) => {
-        const single = products.length === 1;
         const productImage = product.product_images?.[0];
         const image = productImage?.transparent_url || product.thumbnail_url || productImage?.url || productImage?.image_url || productImage?.object_key || PLACEHOLDER;
         const status = statusFor(product);
         return (
-          <div key={product.id} className={`absolute ${single ? "left-1/2 top-1/2 w-[65%] -translate-x-1/2 -translate-y-1/2 md:w-[24%]" : isCompact ? compactLayouts[index] : layouts[index]}`} style={{ zIndex: 10 + (index % 4) }}>
+          <div key={product.id} className={`absolute ${layout[index]}`} style={{ zIndex: 10 + (index % 4) }}>
             <div className={styles.floatingProduct}>
               <Link href={`/products/${product.slug || product.id}`} aria-label={`View ${product.name}`} prefetch={groupIndex === 0 ? null : false} className="group relative block rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
                 <div className="relative aspect-square w-full">
-                  <Image src={image} alt={product.name} fill unoptimized sizes="(min-width: 768px) 20vw, 42vw" placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className={productImage?.transparent_url ? "rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" : "rounded-lg object-cover"} />
+                  <Image src={image} alt={product.name} fill unoptimized sizes={viewport === "mobile" ? "(max-width: 767px) 64vw, 1px" : "(min-width: 768px) 25vw, 1px"} placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className={productImage?.transparent_url ? "rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" : "rounded-lg object-cover"} />
                   {status && <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/85 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-black/65 opacity-0 backdrop-blur-xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">{status}</span>}
                 </div>
                 {/* <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-1 w-max max-w-[190px] -translate-x-1/2 rounded-2xl border border-black/[0.06] bg-white/85 px-4 py-3 text-center opacity-0 shadow-xl backdrop-blur-2xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
@@ -107,6 +131,27 @@ export function FloatingProductCanvas({
   );
 }
 
+export function ResponsiveFloatingProductCanvases({ products, fullViewport = false, compactSparse = false }: { products: FloatingProduct[]; fullViewport?: boolean; compactSparse?: boolean }) {
+  const mobileGroups = chunkFloatingProducts(products, MOBILE_FLOATING_PRODUCTS_PER_CANVAS);
+  const desktopGroups = chunkFloatingProducts(products, DESKTOP_FLOATING_PRODUCTS_PER_CANVAS);
+
+  return (
+    <>
+      <div className={styles.mobileGroups}>
+        {mobileGroups.map((group, index) => <FloatingProductCanvas key={`mobile-${index}`} products={group} groupIndex={index} fullViewport={fullViewport} compactSparse={compactSparse} viewport="mobile" />)}
+      </div>
+      <div className={styles.desktopGroups}>
+        {desktopGroups.map((group, index) => <FloatingProductCanvas key={`desktop-${index}`} products={group} groupIndex={index} fullViewport={fullViewport} compactSparse={compactSparse} viewport="desktop" />)}
+      </div>
+    </>
+  );
+}
+
+function SkeletonCanvas({ viewport }: { viewport: "mobile" | "desktop" }) {
+  const layout = layoutFor(viewport, viewport === "mobile" ? 2 : 5, 0);
+  return <div className={`${styles.canvas} ${viewport === "mobile" ? styles.mobileCanvas : styles.desktopCanvas}`} aria-label="Loading products">{layout.map((position) => <div key={position} className={`absolute ${position}`}><div className="aspect-square animate-pulse rounded-lg bg-black/[0.055] motion-reduce:animate-none" /></div>)}</div>;
+}
+
 export function FloatingProductSkeleton() {
-  return <div className="relative h-[900px] w-full sm:h-[960px] md:h-[760px] lg:h-[820px]" aria-label="Loading products">{layouts.map((layout) => <div key={layout} className={`absolute ${layout}`}><div className="aspect-square animate-pulse rounded-lg bg-black/[0.055] motion-reduce:animate-none" /></div>)}</div>;
+  return <><div className={styles.mobileGroups}><SkeletonCanvas viewport="mobile" /></div><div className={styles.desktopGroups}><SkeletonCanvas viewport="desktop" /></div></>;
 }
