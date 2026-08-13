@@ -21,8 +21,12 @@
   transition: scale 500ms ease-in-out;
 }
 
-.floatingProduct:hover,
-.floatingProduct:focus-within {
+.soldOut {
+  transition: none;
+}
+
+.floatingProduct:not(.soldOut):hover,
+.floatingProduct:not(.soldOut):focus-within {
   scale: 1.08;
 }
 

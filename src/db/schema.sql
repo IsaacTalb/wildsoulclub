@@ -105,6 +105,7 @@ CREATE TABLE drops (
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   description TEXT,
+  season TEXT,
   release_date TIMESTAMPTZ,
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'active', 'archived')),
   banner_image_url TEXT,

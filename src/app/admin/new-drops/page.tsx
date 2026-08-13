@@ -8,6 +8,7 @@ export default function Page() {
       fields={[
         { key: "name", label: "Drop name", required: true },
         { key: "slug", label: "Slug", required: true },
+        { key: "season", label: "Season (for example, Spring 2026)", required: true },
         { key: "status", label: "Status", type: "select", required: true, options: ["draft", "scheduled", "active", "archived"], defaultValue: "draft" },
         { key: "release_date", label: "Release date", type: "datetime-local" },
         { key: "description", label: "Description", type: "textarea" },
