@@ -192,17 +192,21 @@ export default function NewDropsPage() {
                 <ResponsiveFloatingProductCanvases products={drop.products ?? []} fullViewport compactSparse />
                 <footer className="flex min-h-[34vh] items-end justify-center pb-8 text-center sm:pb-12">
                   <div className="flex flex-col items-center">
-                    <div className="relative h-20 w-40 overflow-hidden sm:h-32 sm:w-64">
+                    <div className="relative h-12 w-20 overflow-hidden sm:h-14 sm:w-28">
                       <Image
                         src="/images/logo-black.png"
                         alt="Wild Soul Club"
                         fill
                         sizes="(min-width: 640px) 256px, 224px"
-                        className="object-cover"
+                        className="object-cover opacity-50"
                       />
                     </div>
-                    <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.16em] text-foreground sm:mt-3 sm:text-sm sm:tracking-[0.2em]">
-                      {drop.collections?.name || "Latest collection"}
+                    <p className="mt-2 text-sm font-bold uppercase text-black/50 sm:mt-3">
+                      BOLD PRINT, STREET IDENTITY
+                    </p>
+                    <p className="mt-2 text-[8px] font-bold uppercase text-black/50 sm:mt-3">
+                      {/* {drop.collections?.name || "Latest collection"} */}
+                      {/* remove drop.collections?name andneed to replace here with season such as Spring 2026, Winter 2026, etc */}
                     </p>
                   </div>
                 </footer>

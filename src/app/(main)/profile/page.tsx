@@ -209,11 +209,11 @@ export default function ProfilePage() {
     <div className="min-h-[calc(100vh-var(--site-header-height))] bg-gradient-to-b from-muted/30 via-background to-background">
       <div className="container mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8 lg:py-10">
       <div className="mb-5 overflow-hidden rounded-2xl border border-black/5 bg-background shadow-sm sm:mb-7 sm:rounded-3xl">
-        <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent sm:h-24" />
+        <div className="h-16 sm:h-18" />
         <div className="px-4 pb-5 sm:px-6 sm:pb-6">
           <div className="-mt-9 flex min-w-0 items-end gap-3 text-left sm:-mt-10 sm:gap-4">
             <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-2xl border-4 border-background bg-primary text-xl font-bold text-primary-foreground shadow-md sm:h-20 sm:w-20 sm:rounded-3xl">{getInitials(fullName || user.email || "User")}</div>
-            <div className="min-w-0 pb-1"><p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">My account</p><h1 className="truncate text-xl font-bold sm:text-2xl">{fullName}</h1><p className="truncate text-sm text-muted-foreground">{user.email}</p></div>
+            <div className="min-w-0 pb-4"><h1 className="truncate text-xl font-bold sm:text-2xl">{fullName}</h1><p className="truncate text-sm text-muted-foreground">{user.email}</p></div>
           </div>
         </div>
       </div>
