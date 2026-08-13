@@ -155,21 +155,17 @@ export default function NewDropsPage() {
 
               <div className="flex min-h-[calc(100svh-var(--site-header-height))] items-center justify-center px-5 py-10 text-center sm:px-10 lg:px-[max(4rem,8vw)]">
                 <div className="mx-auto max-w-3xl">
-                  <div className="mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-90 sm:text-sm">
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-90 sm:text-sm">
                     <span>{drop.collections?.name || "Latest collection"}</span>
-                    <span className="flex items-center gap-2 normal-case tracking-normal">
+                    {/* <span className="flex items-center gap-2 normal-case tracking-normal">
                       <CalendarDays className="h-4 w-4" aria-hidden="true" />
                       {formatReleaseDate(drop.release_date)}
-                    </span>
+                    </span> */}
                   </div>
-                  {/* {index === 0 && <p className="mb-2 text-sm font-medium text-white/75">Newest release</p>} */}
-                  {/* <h1 id={`drop-${drop.id}`} className="text-4xl font-bold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
-                    {drop.name}
-                  </h1> */}
-                  {/* <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
-                    {drop.description || "Discover the pieces in our latest curated release."}
-                  </p> */}
-
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-90 sm:text-sm">
+                    {/* <span>{drop.collections?.name || "Latest collection"}</span> */}
+                    {/* remove drop.collections?name and need to replace here with season such as Spring 2026, Winter 2026, etc */}
+                  </div>
                 </div>
                 {/* Scroll Down Button */}
                 <div className="absolute inset-x-0 bottom-4 flex justify-center p-4 sm:bottom-8">
@@ -206,7 +202,7 @@ export default function NewDropsPage() {
                     </p>
                     <p className="mt-2 text-[8px] font-bold uppercase text-black/50 sm:mt-3">
                       {/* {drop.collections?.name || "Latest collection"} */}
-                      {/* remove drop.collections?name andneed to replace here with season such as Spring 2026, Winter 2026, etc */}
+                      {/* remove drop.collections?name and need to replace here with season such as Spring 2026, Winter 2026, etc */}
                     </p>
                   </div>
                 </footer>
