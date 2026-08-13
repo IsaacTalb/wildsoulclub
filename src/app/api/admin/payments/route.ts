@@ -15,7 +15,47 @@ export async function GET() {
 
     const { data, error } = await supabaseAdmin
       .from("payments")
-      .select("*, orders(order_number, full_name, status, payment_reference, fulfillment_method)")
+      .select(`
+        id,
+        order_id,
+        method,
+        transaction_id,
+        payment_image,
+        amount,
+        status,
+        admin_notes,
+        created_at,
+        updated_at,
+        orders(
+          order_number,
+          full_name,
+          email,
+          phone,
+          address,
+          township,
+          city,
+          state,
+          zip,
+          status,
+          payment_status,
+          payment_reference,
+          fulfillment_method,
+          subtotal,
+          delivery_fee,
+          discount_amount,
+          total,
+          notes,
+          courier,
+          tracking_number,
+          order_items(
+            size,
+            color,
+            quantity,
+            price,
+            products(name)
+          )
+        )
+      `)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
