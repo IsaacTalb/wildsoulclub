@@ -6,7 +6,7 @@ import { getAuthUser } from "@/lib/auth";
 const REFERENCE_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 const REFERENCE_NUMBERS = "23456789";
 
-function createPaymentReference() {
+function createPaymentReferenceCode() {
   const bytes = crypto.getRandomValues(new Uint8Array(12));
   const characters = [
     ...Array.from(bytes.slice(0, 3), (byte) => REFERENCE_LETTERS[byte % REFERENCE_LETTERS.length]),
@@ -17,6 +17,23 @@ function createPaymentReference() {
     [characters[index], characters[swapIndex]] = [characters[swapIndex], characters[index]];
   }
   return characters.join("");
+}
+
+/**
+ * Amounts are represented as exact decimal thousands of MMK. The database
+ * stores at most two currency decimals, so five decimal places preserve the
+ * amount exactly (for example, 150500 becomes `150.5K`).
+ */
+function createPaymentReference(authoritativeTotal: number, code = createPaymentReferenceCode()) {
+  if (!Number.isFinite(authoritativeTotal) || authoritativeTotal < 0) {
+    throw new Error("Cannot create a payment reference for an invalid order total");
+  }
+
+  const amountInThousands = (authoritativeTotal / 1000)
+    .toFixed(5)
+    .replace(/0+$/, "")
+    .replace(/\.$/, "");
+  return `${amountInThousands}K-${code}`;
 }
 
 const orderItemSchema = z.object({
@@ -151,13 +168,15 @@ export async function POST(req: Request) {
     let savedOrder: Record<string, unknown> | null = null;
     let lastError: DatabaseError | null = null;
     for (let attempt = 0; attempt < 5 && !savedOrder; attempt += 1) {
-      const paymentReference = createPaymentReference();
+      // The RPC receives only the random code. It prepends the authoritative
+      // discounted total after calculating that total inside the transaction.
+      const paymentReferenceCode = createPaymentReferenceCode();
       const { data: order, error } = await supabaseAdmin.rpc("create_checkout_order", {
         p_user_id: user.id,
         p_customer: customer,
         p_items: orderInput.items,
         p_fulfillment_method: orderInput.fulfillment_method,
-        p_payment_reference: paymentReference,
+        p_payment_reference: paymentReferenceCode,
         p_coupon_code: orderInput.coupon_code || null,
       });
 
@@ -177,23 +196,21 @@ export async function POST(req: Request) {
           return NextResponse.json({ success: false, error: "The order could not be created. Please try again." }, { status: 500 });
         }
 
-        if (orderInput.fulfillment_method === "delivery" && legacyOrder.payment_reference && Number(legacyOrder.delivery_fee) === 0) {
-          savedOrder = legacyOrder;
-        } else {
-          const { data: finalizedOrder, error: finalizeError } = await supabaseAdmin
-            .from("orders")
-            .update({
-              payment_reference: paymentReference,
-              fulfillment_method: orderInput.fulfillment_method,
-              delivery_fee: 0,
-              total: Number(legacyOrder.subtotal),
-            })
-            .eq("id", legacyOrder.id)
-            .select()
-            .single();
-          if (finalizeError) return databaseErrorResponse(finalizeError);
-          savedOrder = finalizedOrder;
-        }
+        const authoritativeTotal = Number(legacyOrder.subtotal);
+        const paymentReference = createPaymentReference(authoritativeTotal, paymentReferenceCode);
+        const { data: finalizedOrder, error: finalizeError } = await supabaseAdmin
+          .from("orders")
+          .update({
+            payment_reference: paymentReference,
+            fulfillment_method: orderInput.fulfillment_method,
+            delivery_fee: 0,
+            total: authoritativeTotal,
+          })
+          .eq("id", legacyOrder.id)
+          .select()
+          .single();
+        if (finalizeError) return databaseErrorResponse(finalizeError);
+        savedOrder = finalizedOrder;
       } else if (error) {
         return databaseErrorResponse(error);
       } else {
