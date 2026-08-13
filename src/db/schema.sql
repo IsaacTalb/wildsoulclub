@@ -875,10 +875,10 @@ BEGIN
     UPDATE coupons SET used_count = used_count + 1 WHERE id = v_coupon.id;
   END IF;
 
-  -- References encode the exact decimal-thousands total. Five decimal places
-  -- preserve every NUMERIC(10,2) amount without an ambiguous rounded prefix.
+  -- References encode whole thousands, truncating any sub-thousand remainder.
+  -- This keeps the prefix free of decimal points (56,500 becomes `56K-`).
   v_total := (v_order->>'subtotal')::numeric - v_discount;
-  v_amount_prefix := trim(trailing '.' FROM trim(trailing '0' FROM to_char(v_total / 1000, 'FM9999990.00000')));
+  v_amount_prefix := trunc(v_total / 1000)::TEXT;
   UPDATE orders
   SET payment_reference = v_amount_prefix || 'K-' || p_payment_reference,
       fulfillment_method = p_fulfillment_method,

@@ -20,19 +20,16 @@ function createPaymentReferenceCode() {
 }
 
 /**
- * Amounts are represented as exact decimal thousands of MMK. The database
- * stores at most two currency decimals, so five decimal places preserve the
- * amount exactly (for example, 150500 becomes `150.5K`).
+ * Amounts are represented as whole thousands of MMK, truncated toward zero.
+ * This intentionally omits any remainder so references never contain a dot
+ * (for example, both 56,000 and 56,500 use the `56K-` prefix).
  */
 function createPaymentReference(authoritativeTotal: number, code = createPaymentReferenceCode()) {
   if (!Number.isFinite(authoritativeTotal) || authoritativeTotal < 0) {
     throw new Error("Cannot create a payment reference for an invalid order total");
   }
 
-  const amountInThousands = (authoritativeTotal / 1000)
-    .toFixed(5)
-    .replace(/0+$/, "")
-    .replace(/\.$/, "");
+  const amountInThousands = Math.trunc(authoritativeTotal / 1000);
   return `${amountInThousands}K-${code}`;
 }
 

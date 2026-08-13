@@ -1,6 +1,7 @@
--- Payment references use the exact decimal-thousands order total followed by
--- the existing six-character random code: <amount>K-<code>. Because totals
--- have two currency decimal places, five decimal-thousands places are exact.
+-- Payment references use the whole-thousands order total followed by the
+-- existing six-character random code: <amount>K-<code>. Any remainder below
+-- 1,000 MMK is deliberately truncated, so 56,500 uses the unambiguous `56K-`
+-- prefix and references never contain a decimal point.
 -- create_order needs a unique temporary value before this transactional RPC
 -- knows the final total; it is never returned by a successful checkout.
 ALTER TABLE orders ALTER COLUMN payment_reference
@@ -58,7 +59,7 @@ BEGIN
   END IF;
 
   v_total := (v_order->>'subtotal')::numeric - v_discount;
-  v_amount_prefix := trim(trailing '.' FROM trim(trailing '0' FROM to_char(v_total / 1000, 'FM9999990.00000')));
+  v_amount_prefix := trunc(v_total / 1000)::TEXT;
 
   UPDATE orders SET
     payment_reference = v_amount_prefix || 'K-' || p_payment_reference,
