@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Drop } from "@/types/product";
+import { ShoppingCart } from "lucide-react";
+import type { Drop, Product } from "@/types/product";
 import {
   FloatingProductSkeleton,
   ResponsiveFloatingProductCanvases,
@@ -14,31 +15,48 @@ const HERO_PLACEHOLDER =
 
 export default function HomePage() {
   const [latestDrop, setLatestDrop] = useState<Drop | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [productsError, setProductsError] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("/api/public/drops", {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Failed to load the latest drop");
-        const payload: unknown = await response.json();
+    Promise.all([
+      fetch("/api/public/drops", { cache: "no-store", signal: controller.signal }),
+      fetch("/api/public/products", { cache: "no-store", signal: controller.signal }),
+    ])
+      .then(async ([dropsResponse, productsResponse]) => {
+        const dropsPayload: unknown = dropsResponse.ok
+          ? await dropsResponse.json()
+          : null;
+        const productsPayload: unknown = productsResponse.ok
+          ? await productsResponse.json()
+          : null;
         const drops =
-          typeof payload === "object" &&
-          payload !== null &&
-          "data" in payload &&
-          Array.isArray(payload.data)
-            ? (payload.data as Drop[])
+          typeof dropsPayload === "object" &&
+          dropsPayload !== null &&
+          "data" in dropsPayload &&
+          Array.isArray(dropsPayload.data)
+            ? (dropsPayload.data as Drop[])
+            : [];
+        const allProducts =
+          typeof productsPayload === "object" &&
+          productsPayload !== null &&
+          "data" in productsPayload &&
+          Array.isArray(productsPayload.data)
+            ? (productsPayload.data as Product[])
             : [];
 
         setLatestDrop(drops[0] ?? null);
+        setProducts(allProducts);
+        setProductsError(!productsResponse.ok);
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") return;
         setLatestDrop(null);
+        setProducts([]);
+        setProductsError(true);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -46,8 +64,6 @@ export default function HomePage() {
 
     return () => controller.abort();
   }, []);
-
-  const products = latestDrop?.products ?? [];
 
   return (
     <main className="bg-white">
@@ -81,18 +97,36 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="bg-white px-3 sm:px-4 md:px-8" aria-label="Latest drop products">
-        {loading ? (
-          <FloatingProductSkeleton />
-        ) : products.length > 0 ? (
-          <ResponsiveFloatingProductCanvases products={products} compactSparse />
-        ) : (
-          <div className="flex min-h-[45vh] items-center justify-center px-6 text-center text-sm font-medium uppercase tracking-[0.16em] text-black/50">
-            New pieces are coming soon.
-          </div>
-        )}
+      <section className="relative min-h-screen overflow-hidden bg-white px-4 md:px-8" aria-label="All products">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-[45%] h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/75 blur-3xl" />
+        </div>
 
-        <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
+        <div className="relative mx-auto max-w-[1600px]">
+          {loading ? (
+            <FloatingProductSkeleton />
+          ) : productsError ? (
+            <div className="flex min-h-[620px] items-center justify-center text-center">
+              <div>
+                <ShoppingCart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <h2 className="text-lg font-medium">Error loading products</h2>
+                <p className="text-muted-foreground">Please try again later.</p>
+              </div>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="flex min-h-[620px] items-center justify-center">
+              <div className="liquid-glass mx-auto max-w-md rounded-[2rem] px-6 py-16 text-center">
+                <ShoppingCart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <h2 className="text-lg font-medium">No products found</h2>
+                <p className="text-muted-foreground">New pieces are coming soon.</p>
+              </div>
+            </div>
+          ) : (
+            <ResponsiveFloatingProductCanvases products={products} />
+          )}
+        </div>
+
+        <footer className="relative flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
           <div className="flex flex-col items-center">
             <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
               <Image
