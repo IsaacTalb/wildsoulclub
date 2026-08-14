@@ -268,10 +268,7 @@ export default function CartPage() {
             <section className="pt-4" aria-labelledby="cart-best-sellers-heading">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
-                  <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    <Sparkles className="h-3.5 w-3.5" /> Best sellers
-                  </p>
-                  <h2 id="cart-best-sellers-heading" className="text-xl font-semibold">You might also love</h2>
+                  <h2 id="cart-best-sellers-heading" className="text-xl font-semibold">You might also love<Sparkles className="h-3.5 w-3.5" /></h2>
                 </div>
                 <Link href="/products" className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline">View all</Link>
               </div>
@@ -298,12 +295,12 @@ export default function CartPage() {
                           <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide backdrop-blur">Best seller</span>
                         </Link>
                         <div className="flex flex-1 flex-col p-3">
-                          <Link href={`/products/${product.id}`} className="line-clamp-2 text-sm font-medium leading-snug hover:text-primary">{product.name}</Link>
+                          <Link href={`/products/${product.id}`} className="block h-10 line-clamp-2 overflow-hidden text-sm font-medium leading-5 hover:text-primary">{product.name}</Link>
                           <p className="mt-1 text-sm font-semibold">{formatPrice(product.sale_price ?? product.price)}</p>
                           <Button type="button" size="sm" variant="outline" className="mt-3 w-full text-xs" disabled={!available || added} onClick={() => quickAdd(product)}>
                             {added ? <><Check className="mr-1.5 h-3.5 w-3.5" /> Added</> : available ? <><Plus className="mr-1.5 h-3.5 w-3.5" /> Quick add</> : "Sold out"}
                           </Button>
-                          {available && Boolean(product.product_variants?.length) && <p className="mt-1.5 text-center text-[10px] text-muted-foreground">Adds the first available option</p>}
+                          {available && Boolean(product.product_variants?.length) }
                         </div>
                       </article>
                     );

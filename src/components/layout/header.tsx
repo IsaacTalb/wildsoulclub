@@ -239,7 +239,7 @@ export function Header() {
                             <Link
                               key={category.id}
                               href={`/products?category=${encodeURIComponent(category.id)}`}
-                              className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                              className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm uppercase text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
                               onClick={() => setIsOpen(false)}
                             >
                               {category.name}

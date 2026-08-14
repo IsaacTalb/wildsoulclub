@@ -74,10 +74,10 @@ export default function CollectionsPage() {
               <Card className="group overflow-hidden border-0">
                 <CardContent className="relative flex h-64 items-end bg-white p-0">
                   <div className="relative p-6 w-full">
-                    <h3 className="text-xl font-bold text-foreground">{collection.name}</h3>
+                    <h3 className="h-14 line-clamp-2 overflow-hidden text-xl font-bold leading-7">{collection.name}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">{collection.description}</p>
                     <div className="flex items-center justify-between mt-3">
-                      <span className="text-xs text-muted-foreground">{collection.product_count || 0} Products</span>
+                      {/* <span className="text-xs text-muted-foreground">{collection.product_count || 0} Products</span> */}
                       <span className="inline-flex items-center gap-1 text-sm text-foreground transition-transform group-hover:translate-x-1">
                         Explore <ArrowRight className="h-4 w-4" />
                       </span>
