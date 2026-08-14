@@ -552,7 +552,7 @@ export default function ProductDetailPage() {
           />
 
           {/* Product Info */}
-          <div className="glass-scrollbar relative z-20 mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5 md:sticky md:top-20 md:mx-0 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[440px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5">
+          <div className="glass-scrollbar relative z-20 mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5 md:sticky md:top-4 md:mx-0 md:-translate-y-4 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[440px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5">
             <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {product.categories?.name ||
                 (typeof product.category === "string"
