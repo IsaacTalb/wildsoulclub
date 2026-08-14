@@ -3,8 +3,9 @@
 import type { CSSProperties, PointerEvent, WheelEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
+  Check,
   Minus,
   Plus,
   ShoppingCart,
@@ -331,6 +332,7 @@ function LoopingProductGallery({
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { addItem } = useCart();
   const wishlistItems = useWishlist((state) => state.items);
   const toggleWishlistItem = useWishlist((state) => state.toggleItem);
@@ -340,6 +342,7 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [isAdded, setIsAdded] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
 
@@ -507,6 +510,8 @@ export default function ProductDetailPage() {
       selectedColor || selectedVariant?.color || "",
       selectedVariant?.id,
     );
+    setIsAdded(true);
+    window.setTimeout(() => router.push("/cart"), 650);
   };
 
   const handleToggleWishlist = () => {
@@ -707,12 +712,21 @@ export default function ProductDetailPage() {
                   className="w-full min-w-0 flex-1 text-sm"
                 onClick={handleAddToCart}
                 disabled={
+                  isAdded ||
                   !optionsComplete ||
                   effectiveStock === null ||
                   effectiveStock <= 0
                 }
               >
-                <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+                {isAdded ? (
+                  <>
+                    <Check className="mr-2 h-5 w-5" /> Added! Opening cart…
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+                  </>
+                )}
               </Button>
               <Button
                 variant={isWishlisted ? "liquid-primary" : "liquid"}
