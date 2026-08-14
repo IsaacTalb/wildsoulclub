@@ -118,12 +118,12 @@ export function FloatingProductCanvas({
         const soldOut = product.stock != null && Number(product.stock) <= 0;
         const productVisual = (
           <div className="relative aspect-square w-full">
-            <Image src={image} alt={product.name} fill unoptimized sizes={viewport === "mobile" ? "(max-width: 767px) 64vw, 1px" : "(min-width: 768px) 25vw, 1px"} placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className={productImage?.transparent_url ? "rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" : "rounded-lg object-cover"} />
+            <Image src={image} alt={product.name} fill unoptimized sizes="180px" placeholder="blur" blurDataURL={PLACEHOLDER} preload={groupIndex === 0 && index === 0} className={productImage?.transparent_url ? "rounded-lg object-contain drop-shadow-[0_22px_25px_rgba(0,0,0,0.13)]" : "rounded-lg object-cover"} />
             {soldOut && <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/85 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-black/65 opacity-0 backdrop-blur-xl transition-opacity duration-300 ease-in-out group-hover:opacity-100 motion-reduce:transition-none">Sold out</span>}
           </div>
         );
         return (
-          <div key={product.id} className={`absolute ${layout[index]}`} style={{ zIndex: 10 + (index % 4) }}>
+          <div key={product.id} className={`absolute ${layout[index]}`} style={{ zIndex: 10 + (index % 4), width: "180px" }}>
             <div className={`${styles.floatingProduct} ${soldOut ? styles.soldOut : ""}`}>
               {soldOut ? (
                 <div className="group relative block cursor-not-allowed rounded-lg" aria-label={`${product.name} is sold out`}>
