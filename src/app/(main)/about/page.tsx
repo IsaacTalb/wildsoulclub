@@ -28,7 +28,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="prose prose-neutral max-w-none">
             <p className="text-lg leading-relaxed">
-              Founded in 2024, Wild Soul Club is a Myanmar streetwear brand that blends urban edge with 
+              Founded in 2023, Wild Soul Club is a Myanmar streetwear brand that blends urban edge with 
               local soul. We believe fashion is more than clothing — it&apos;s an expression of identity.
             </p>
             <p className="text-lg leading-relaxed mt-4">

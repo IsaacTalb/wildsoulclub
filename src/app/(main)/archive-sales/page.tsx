@@ -42,7 +42,7 @@ export default function ArchiveSalesPage() {
             />
           </div>
 
-          <p className="mt-2 text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
+          <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
             BOLD PRINT, STREET IDENTITY
           </p>
 

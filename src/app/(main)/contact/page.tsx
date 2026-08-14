@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 
 const contactSettings = {
   businessAddress: "Pannita Street, Hlaing Township, Yangon",
-  contactEmail: "wildsoulclubonline@gmail.com",
+  contactEmail: "wildsoulclubofficial@gmail.com",
   contactPhone: "09767676114",
   viberNumber: "09767676114",
   deliveryNotice: "Delivery within 3–5 business days",

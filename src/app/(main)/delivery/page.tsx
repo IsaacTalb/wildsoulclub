@@ -61,7 +61,7 @@ export default function DeliveryPage() {
           <li>Delivery times are estimates and may vary due to weather or road conditions.</li>
           <li>Please ensure your shipping address is correct. We are not responsible for incorrect addresses.</li>
           <li>If you are not available at the time of delivery, the courier will attempt to contact you.</li>
-          <li>For any delivery concerns, contact us at wildsoulclubonline@gmail.com or via phone at +959 767 676 114.</li>
+          <li>For any delivery concerns, contact us at wildsoulclubofficial@gmail.com or via phone at +959 767 676 114.</li>
         </ul>
       </div>
     </div>
