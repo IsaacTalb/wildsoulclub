@@ -35,7 +35,7 @@ export function Footer() {
             <h3 className="font-semibold mb-3">Quick Links</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/products" className="hover:text-primary transition-colors">All Products</Link></li>
-              <li><Link href="/collections" className="hover:text-primary transition-colors">Collections</Link></li>
+              <li><Link href="/new-drops" className="hover:text-primary transition-colors">Collections</Link></li>
               <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
             </ul>

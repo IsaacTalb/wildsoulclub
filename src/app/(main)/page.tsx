@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
+import { Footer } from "@/components/layout/footer";
 import type { Drop, Product } from "@/types/product";
 import {
   FloatingProductSkeleton,
@@ -90,7 +91,7 @@ export default function HomePage() {
         ) : (
           <Link
             href="/new-drops"
-            className="inline-flex liquid-glass min-h-12 items-center justify-center rounded-full px-8 py-3 text-sm font-bold uppercase text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
+            className="inline-flex header-liquid-glass min-h-12 items-center justify-center rounded-full px-8 py-3 text-sm font-bold uppercase text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
           >
             {latestDrop?.name || "Latest collection"}
           </Link>
@@ -137,11 +138,12 @@ export default function HomePage() {
                 className="object-contain opacity-50"
               />
             </div>
-            <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
+            <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
               BOLD PRINT, STREET IDENTITY
             </p>
           </div>
         </footer>
+        <Footer />
       </section>
     </main>
   );

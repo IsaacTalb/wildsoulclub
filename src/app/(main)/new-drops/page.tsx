@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
 import { ArrowRight, RefreshCw, Sparkles, ChevronDown } from "lucide-react";
+import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import type { Drop } from "@/types/product";
 import { ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
@@ -182,7 +183,7 @@ export default function NewDropsPage() {
                       />
                     </div>
 
-                    <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
+                    <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
                       BOLD PRINT, STREET IDENTITY
                     </p>
 
@@ -191,6 +192,7 @@ export default function NewDropsPage() {
                     </p>
                   </div>
                 </footer>
+                <Footer />
               </section>
             )}
             </Fragment>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { FloatingProductSkeleton, ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
 import type { ArchiveSaleProduct } from "@/types/product";
+import { Footer } from "@/components/layout/footer";
 
 export default function ArchiveSalesPage() {
   const [products, setProducts] = useState<ArchiveSaleProduct[]>([]);
@@ -42,7 +43,7 @@ export default function ArchiveSalesPage() {
             />
           </div>
 
-          <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
+          <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
             BOLD PRINT, STREET IDENTITY
           </p>
 
@@ -51,6 +52,7 @@ export default function ArchiveSalesPage() {
           </p>
         </div>
       </footer>
+      <Footer />
     </div>
   );
 }
