@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-
+import { Footer } from "@/components/layout/footer";
 import { ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
 import { getPublicDropBySlug } from "@/lib/server/drops";
 
@@ -20,7 +20,7 @@ export default async function DropDetailPage({ params }: { params: Promise<{ slu
           </>
         ) : null}
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">{drop.collections?.name || "Wild Soul Club"}</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] opacity-70">{drop.season || "Season coming soon"}</p>
           <h1 id="drop-title" className="mt-3 text-5xl font-bold leading-none tracking-tight sm:text-7xl">{drop.name}</h1>
           {drop.description && <p className="mt-5 max-w-2xl text-lg opacity-80">{drop.description}</p>}
         </div>
@@ -28,6 +28,28 @@ export default async function DropDetailPage({ params }: { params: Promise<{ slu
       <section aria-label={`${drop.name} products`} className="mx-auto max-w-[1600px] px-4 md:px-8">
         {products.length ? <ResponsiveFloatingProductCanvases products={products} /> : <div className="flex min-h-[50vh] items-center justify-center px-6 text-center text-muted-foreground">No products have been added to this drop yet.</div>}
       </section>
+      <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
+        <div className="flex flex-col items-center">
+          <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
+            <Image
+              src="/images/logo-black.png"
+              alt="Wild Soul Club"
+              fill
+              sizes="(min-width: 640px) 80px, 56px"
+              className="object-contain opacity-50"
+            />
+          </div>
+
+          <p className="text-xs font-bold uppercase text-black/50 sm:mt-3 sm:text-sm">
+            BOLD PRINT, STREET IDENTITY
+          </p>
+
+          <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
+            {drop.season || "Season coming soon"}
+          </p>
+        </div>
+      </footer>
+      <Footer />
     </div>
   );
 }

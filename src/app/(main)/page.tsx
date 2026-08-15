@@ -90,9 +90,9 @@ export default function HomePage() {
         ) : (
           <Link
             href="/new-drops"
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/35 bg-white px-8 py-3 text-sm font-bold uppercase tracking-[0.16em] text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
+            className="inline-flex liquid-glass min-h-12 items-center justify-center rounded-full px-8 py-3 text-sm font-bold uppercase text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
           >
-            View Products
+            {drop.collections?.name || "Latest collection"}
           </Link>
         )}
       </section>
