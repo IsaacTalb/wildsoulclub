@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, Truck, Check, Sparkles } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, Truck, Check} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -268,7 +268,7 @@ export default function CartPage() {
             <section className="pt-4" aria-labelledby="cart-best-sellers-heading">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
-                  <h2 id="cart-best-sellers-heading" className="text-xl font-semibold">You might also love<Sparkles className="h-3.5 w-3.5" /></h2>
+                  <h2 id="cart-best-sellers-heading" className="text-xl font-semibold">You might also love</h2>
                 </div>
                 <Link href="/products" className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline">View all</Link>
               </div>
