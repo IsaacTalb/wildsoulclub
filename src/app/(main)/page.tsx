@@ -92,7 +92,7 @@ export default function HomePage() {
             href="/new-drops"
             className="inline-flex liquid-glass min-h-12 items-center justify-center rounded-full px-8 py-3 text-sm font-bold uppercase text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
           >
-            {drop.collections?.name || "Latest collection"}
+            {latestDrop?.name || "Latest collection"}
           </Link>
         )}
       </section>
