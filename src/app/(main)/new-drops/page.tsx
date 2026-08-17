@@ -146,11 +146,17 @@ export default function NewDropsPage() {
 
               <div className="flex min-h-[calc(100svh-var(--site-header-height))] items-center justify-center px-5 py-10 text-center sm:px-10 lg:px-[max(4rem,8vw)]">
                 <div className="mx-auto max-w-3xl">
-                  <div className="items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold uppercase opacity-90 sm:text-base">
+                  <Link
+                    href={`/new-drops/${drop.slug}`}
+                    className="inline-flex home-liquid-glass min-h-12 items-center justify-center rounded-full px-2 py-2 text-sm font-bold uppercase text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
+                  >
+                    {drop.collections?.name || "Latest collection"}
+                  </Link>
+                  {/* <div className="items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold uppercase opacity-90 sm:text-base">
                     <span>{drop.collections?.name || "Latest collection"}</span>
                     <br></br>
                     <span>{drop.season || "Season coming soon"}</span>
-                  </div>
+                  </div> */}
                 </div>
                 {/* Scroll Down Button */}
                 <div className="absolute inset-x-0 bottom-4 flex justify-center p-4 sm:bottom-8">
@@ -192,11 +198,11 @@ export default function NewDropsPage() {
                     </p>
                   </div>
                 </footer>
-                <Footer />
               </section>
             )}
             </Fragment>
           ))}
+          <Footer />
     </div>
   );
 }

@@ -48,7 +48,7 @@ export default function ArchiveSalesPage() {
           </p>
 
           <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
-            Wild Soul Club's Archives
+            WSC© ARCHIVE
           </p>
         </div>
       </footer>

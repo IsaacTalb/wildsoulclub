@@ -235,6 +235,13 @@ export function Header() {
                           aria-label="Shop categories"
                           className="ml-3 border-l pl-2"
                         >
+                          <Link
+                            href="/products"
+                            className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            BEST SELLERS
+                          </Link>
                           {categories.map((category) => (
                             <Link
                               key={category.id}
