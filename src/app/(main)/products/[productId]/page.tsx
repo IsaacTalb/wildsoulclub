@@ -720,11 +720,11 @@ export default function ProductDetailPage() {
               >
                 {isAdded ? (
                   <>
-                    <Check className="mr-2 h-5 w-5" /> Added! Opening cart…
+                    <Check className="mr-2 h-5 w-5 text-black" /> Added! Opening cart…
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+                    <ShoppingCart className="mr-2 h-5 w-5 text-black" /> Add to Cart
                   </>
                 )}
               </Button>
