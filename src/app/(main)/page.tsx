@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ChevronDown, ShoppingCart } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import type { Drop, Product } from "@/types/product";
 import {
@@ -90,12 +90,25 @@ export default function HomePage() {
           <span className="h-14 w-14 animate-spin rounded-full border-4 border-white/30 border-t-white motion-reduce:animate-pulse" aria-label="Loading latest drop" />
         ) : (
           <Link
-            href="/new-drops"
+            href={`/new-drops/${latestDrop?.slug}`}
             className="inline-flex home-liquid-glass min-h-12 items-center justify-center rounded-full px-2 py-2 text-sm font-bold uppercase text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
           >
             {latestDrop?.name || "Latest collection"}
           </Link>
         )}
+        <div className="absolute inset-x-0 bottom-4 flex justify-center p-4 sm:bottom-8">
+          <button
+            onClick={() => {
+              const nextSection = document.getElementById("all-products");
+              nextSection?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="group flex flex-col items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] opacity-80 transition-opacity hover:opacity-100"
+            aria-label="Scroll down to next section"
+          >
+            <span>explore</span>
+            <ChevronDown className="h-5 w-5 animate-bounce transition-transform group-hover:translate-y-1" />
+          </button>
+        </div>
       </section>
 
       <section className="relative min-h-screen overflow-hidden bg-white px-4 md:px-8" aria-label="All products">
@@ -103,7 +116,7 @@ export default function HomePage() {
           <div className="absolute left-1/2 top-[45%] h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/75 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-[1600px]">
+        <div id="all-products" className="relative mx-auto max-w-[1600px]">
           {loading ? (
             <FloatingProductSkeleton />
           ) : productsError ? (

@@ -158,50 +158,31 @@ export default function NewDropsPage() {
                     <span>{drop.season || "Season coming soon"}</span>
                   </div> */}
                 </div>
-                {/* Scroll Down Button */}
-                <div className="absolute inset-x-0 bottom-4 flex justify-center p-4 sm:bottom-8">
-                  <button
-                    onClick={() => {
-                      const nextSection = document.getElementById(`drop-${drop.id}-products`);
-                      nextSection?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="group flex flex-col items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] opacity-80 transition-opacity hover:opacity-100"
-                    aria-label="Scroll down to next section"
-                  >
-                    <span>explore</span>
-                    <ChevronDown className="h-5 w-5 animate-bounce transition-transform group-hover:translate-y-1" />
-                  </button>
-                </div>
               </div>
             </section>
-            {(drop.products ?? []).length > 0 && (
-              <section id={`drop-${drop.id}-products`} className="bg-white px-3 sm:px-4 md:px-8" aria-label={`${drop.name} products`}>
-                <ResponsiveFloatingProductCanvases products={drop.products ?? []} fullViewport compactSparse />
-                <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
-                  <div className="flex flex-col items-center">
-                    <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
-                      <Image
-                        src="/images/logo-black.png"
-                        alt="Wild Soul Club"
-                        fill
-                        sizes="(min-width: 640px) 80px, 56px"
-                        className="object-contain opacity-50"
-                      />
-                    </div>
-
-                    <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
-                      BOLD PRINT, STREET IDENTITY
-                    </p>
-
-                    <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
-                      {drop.season || "Season coming soon"}
-                    </p>
-                  </div>
-                </footer>
-              </section>
-            )}
             </Fragment>
           ))}
+          <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
+            <div className="flex flex-col items-center">
+              <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
+                <Image
+                  src="/images/logo-black.png"
+                  alt="Wild Soul Club"
+                  fill
+                  sizes="(min-width: 640px) 80px, 56px"
+                  className="object-contain opacity-50"
+                />
+              </div>
+
+              <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
+                BOLD PRINT, STREET IDENTITY
+              </p>
+
+              <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
+                WSC© DROPS
+              </p>
+            </div>
+          </footer>
           <Footer />
     </div>
   );
