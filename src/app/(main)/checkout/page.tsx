@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreditCard, ShieldCheck, Info, Store, Truck } from "lucide-react";
+import { Check, Copy, CreditCard, ShieldCheck, Info, Store, Truck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,6 +56,14 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState(() => typeof window === "undefined" ? "" : sessionStorage.getItem("wsc-checkout-coupon") ?? "");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; description?: string | null } | null>(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [paymentCodeCopied, setPaymentCodeCopied] = useState(false);
+
+  const copyPaymentCode = async () => {
+    if (!createdOrder) return;
+    await navigator.clipboard.writeText(createdOrder.payment_reference);
+    setPaymentCodeCopied(true);
+    window.setTimeout(() => setPaymentCodeCopied(false), 1600);
+  };
 
   const getValidSession = async () => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -403,7 +411,13 @@ export default function CheckoutPage() {
                   <div className="md:col-span-2 rounded-lg border-2 border-red-500 bg-red-50 p-4 text-red-950">
                     <p className="text-sm font-bold">KPay payment-note code</p>
                     {createdOrder ? (
-                      <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] text-red-600">{createdOrder.payment_reference}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        <p className="font-mono text-3xl font-black text-red-600">{createdOrder.payment_reference}</p>
+                        <Button type="button" size="sm" variant="outline" onClick={() => void copyPaymentCode()}>
+                          {paymentCodeCopied ? <Check className="mr-1.5 h-4 w-4" /> : <Copy className="mr-1.5 h-4 w-4" />}
+                          {paymentCodeCopied ? "Copied" : "Copy"}
+                        </Button>
+                      </div>
                     ) : (
                       <p className="mt-1 text-sm">Your unique 6-character code will appear here after you click <strong>Continue to Payment</strong>.</p>
                     )}
@@ -441,7 +455,13 @@ export default function CheckoutPage() {
                 {createdOrder && (
                   <div className="mt-6 rounded-lg border-2 border-red-500 bg-red-50 p-5 text-center text-red-950">
                     <p className="text-sm font-bold">Important: use this exact code in your KPay note</p>
-                    <p className="mt-2 font-mono text-3xl font-black tracking-[0.2em] text-red-600">{createdOrder.payment_reference}</p>
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                      <p className="font-mono text-3xl font-black text-red-600">{createdOrder.payment_reference}</p>
+                      <Button type="button" size="sm" variant="outline" onClick={() => void copyPaymentCode()}>
+                        {paymentCodeCopied ? <Check className="mr-1.5 h-4 w-4" /> : <Copy className="mr-1.5 h-4 w-4" />}
+                        {paymentCodeCopied ? "Copied" : "Copy"}
+                      </Button>
+                    </div>
                     <p className="mt-2 text-xs">The same code is saved with your order for payment matching.</p>
                   </div>
                 )}

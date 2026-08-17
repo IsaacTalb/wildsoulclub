@@ -3,20 +3,14 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
 
-const REFERENCE_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-const REFERENCE_NUMBERS = "23456789";
+const REFERENCE_NUMBERS = "0123456789";
 
 function createPaymentReferenceCode() {
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  const characters = [
-    ...Array.from(bytes.slice(0, 3), (byte) => REFERENCE_LETTERS[byte % REFERENCE_LETTERS.length]),
-    ...Array.from(bytes.slice(3, 6), (byte) => REFERENCE_NUMBERS[byte % REFERENCE_NUMBERS.length]),
-  ];
-  for (let index = characters.length - 1; index > 0; index -= 1) {
-    const swapIndex = bytes[index + 5] % (index + 1);
-    [characters[index], characters[swapIndex]] = [characters[swapIndex], characters[index]];
-  }
-  return characters.join("");
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return Array.from(
+    bytes,
+    (byte) => REFERENCE_NUMBERS[byte % REFERENCE_NUMBERS.length],
+  ).join("");
 }
 
 /**
