@@ -125,6 +125,12 @@ export default function NewDropsPage() {
           ))
         : sortedDrops.map((drop, index) => (
             <Fragment key={drop.id}>
+            <Link
+              key={drop.id}
+              href={`/new-drops/${drop.slug}`}
+              className="block"
+              aria-label={`View ${drop.collections?.name || "latest collection"}`}
+            >
             <section
               className={`relative isolate min-h-[calc(100svh-var(--site-header-height))] overflow-hidden bg-white ${drop.banner_image_url ? "text-white" : "text-foreground [&_h1]:!text-foreground [&_p]:!text-foreground [&_span]:!text-foreground"}`}
               aria-labelledby={`drop-${drop.id}`}
@@ -148,7 +154,7 @@ export default function NewDropsPage() {
                 <div className="mx-auto max-w-3xl">
                   <Link
                     href={`/new-drops/${drop.slug}`}
-                    className="inline-flex home-liquid-glass min-h-12 items-center justify-center rounded-full px-2 py-2 text-sm font-bold uppercase text-black shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
+                    className="inline-flex home-liquid-glass min-h-12 items-center justify-center rounded-full px-2 py-2 text-sm font-bold uppercase text-white shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
                   >
                     {drop.collections?.name || "Latest collection"}
                   </Link>
@@ -160,6 +166,7 @@ export default function NewDropsPage() {
                 </div>
               </div>
             </section>
+            </Link>
             </Fragment>
           ))}
           <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">

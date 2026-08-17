@@ -68,6 +68,11 @@ export default function HomePage() {
 
   return (
     <main className="bg-white">
+      <Link
+        href={`/new-drops/${latestDrop?.slug}`}
+        className="block"
+        aria-label={`View ${latestDrop?.name || "latest collection"}`}
+      >
       <section className="relative isolate flex h-[calc(100svh-env(safe-area-inset-bottom))] min-h-[32rem] items-center justify-center overflow-hidden bg-neutral-950 px-5 pt-[var(--site-header-height)]">
         {latestDrop?.banner_image_url ? (
           <Image
@@ -102,14 +107,15 @@ export default function HomePage() {
               const nextSection = document.getElementById("all-products");
               nextSection?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="group flex flex-col items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] opacity-80 transition-opacity hover:opacity-100"
+            className="group flex flex-col items-center gap-2 text-white text-sm font-semibold uppercase tracking-[0.14em] opacity-80 transition-opacity hover:opacity-100"
             aria-label="Scroll down to next section"
           >
             <span>explore</span>
-            <ChevronDown className="h-5 w-5 animate-bounce transition-transform group-hover:translate-y-1" />
+            <ChevronDown className="h-5 w-5 text-white animate-bounce transition-transform group-hover:translate-y-1" />
           </button>
         </div>
       </section>
+      </Link>
 
       <section className="relative min-h-screen overflow-hidden bg-white px-4 md:px-8" aria-label="All products">
         <div className="pointer-events-none absolute inset-0">
