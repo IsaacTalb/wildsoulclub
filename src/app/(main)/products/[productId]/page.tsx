@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import {
+  ChevronLeft,
+  ChevronRight,
   Check,
   Minus,
   Plus,
@@ -159,7 +161,9 @@ function LoopingProductGallery({
     const distanceY = start.y - event.clientY;
     swipeStart.current = null;
 
-    if (Math.abs(distanceX) < 42 || Math.abs(distanceX) <= Math.abs(distanceY))
+    // A short, intentional horizontal gesture should be enough on a phone.
+    // The direction check still lets ordinary vertical page scrolling through.
+    if (Math.abs(distanceX) < 18 || Math.abs(distanceX) < Math.abs(distanceY) * 1.15)
       return;
     event.preventDefault();
     moveGallery(distanceX > 0 ? 1 : -1);
@@ -300,6 +304,26 @@ function LoopingProductGallery({
 
       {canLoop && (
         <>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="absolute left-3 top-1/2 z-30 h-11 w-11 -translate-y-1/2 rounded-full border-white/70 bg-white/85 shadow-lg backdrop-blur md:hidden"
+            onClick={() => moveGallery(-1)}
+            aria-label="Show previous product image"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="absolute right-3 top-1/2 z-30 h-11 w-11 -translate-y-1/2 rounded-full border-white/70 bg-white/85 shadow-lg backdrop-blur md:hidden"
+            onClick={() => moveGallery(1)}
+            aria-label="Show next product image"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
           <p className="pointer-events-none absolute mt-2 bottom-3 left-5 z-30 hidden text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/35 md:block">
             Scroll to explore
           </p>
