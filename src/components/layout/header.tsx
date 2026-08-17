@@ -363,6 +363,12 @@ export function Header() {
               >
                 SHOP ALL
               </DropdownMenuItem>
+                            <DropdownMenuItem
+                render={<Link href="/products" />}
+                className="w-full cursor-pointer px-3 py-2 font-medium"
+              >
+                BEST SELLERS
+              </DropdownMenuItem>
               {categories.length > 0 && <DropdownMenuSeparator />}
               {categories.map((category) => (
                 <DropdownMenuItem
@@ -372,7 +378,7 @@ export function Header() {
                       href={`/products?category=${encodeURIComponent(category.id)}`}
                     />
                   }
-                  className="w-full cursor-pointer px-3 py-2"
+                  className="w-full cursor-pointer uppercase px-3 py-2"
                 >
                   {category.name}
                 </DropdownMenuItem>
