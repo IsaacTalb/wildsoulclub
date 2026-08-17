@@ -355,7 +355,7 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               aria-label="Shop categories"
-              className="max-h-80 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto"
+              className="max-h-84 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto"
             >
               <DropdownMenuItem
                 render={<Link href="/products" />}
@@ -363,7 +363,8 @@ export function Header() {
               >
                 SHOP ALL
               </DropdownMenuItem>
-                            <DropdownMenuItem
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
                 render={<Link href="/products" />}
                 className="w-full cursor-pointer px-3 py-2 font-medium"
               >
