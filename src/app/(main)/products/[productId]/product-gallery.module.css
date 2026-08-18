@@ -67,11 +67,14 @@
   .desktopGallery {
     position: relative;
     display: flex;
-    height: calc(100svh - var(--site-header-height) - 2.5rem);
+    height: calc(100svh - 1rem);
+    margin-top: -1.5rem;
     width: 100%;
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
+    border-radius: 0.5rem;
+    background: #f3f3f0;
     overscroll-behavior-y: contain;
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
