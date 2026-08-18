@@ -404,6 +404,7 @@ function DesktopProductGallery({
         if (mostVisibleIndex >= 0) setActiveImage(mostVisibleIndex);
       },
       {
+        root: galleryRef.current,
         threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
       },
     );
@@ -413,11 +414,14 @@ function DesktopProductGallery({
   }, [imageListKey]);
 
   const scrollToImage = (index: number) => {
-    sectionRefs.current[index]?.scrollIntoView({
+    const section = sectionRefs.current[index];
+    if (!section || !galleryRef.current) return;
+
+    galleryRef.current.scrollTo({
+      top: section.offsetTop,
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth",
-      block: "start",
     });
   };
 
@@ -469,7 +473,7 @@ function DesktopProductGallery({
                 sectionRefs.current[index] = section;
               }}
               data-product-image-section
-              className={`relative h-[calc(100svh-var(--site-header-height))] w-full scroll-mt-[var(--site-header-height)] ${
+              className={`relative h-full w-full shrink-0 ${
                 image.isTransparent ? "bg-[#f3f3f0]" : ""
               }`}
             >
