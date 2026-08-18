@@ -79,6 +79,7 @@ interface DisplayProduct extends PublicProduct {
 
 interface DisplayImage {
   src: string;
+  desktopSrc: string;
   isTransparent: boolean;
 }
 
@@ -404,6 +405,7 @@ function DesktopProductGallery({
         if (mostVisibleIndex >= 0) setActiveImage(mostVisibleIndex);
       },
       {
+        root: galleryRef.current,
         threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
       },
     );
@@ -413,11 +415,14 @@ function DesktopProductGallery({
   }, [imageListKey]);
 
   const scrollToImage = (index: number) => {
-    sectionRefs.current[index]?.scrollIntoView({
+    const section = sectionRefs.current[index];
+    if (!section || !galleryRef.current) return;
+
+    galleryRef.current.scrollTo({
+      top: section.offsetTop,
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth",
-      block: "start",
     });
   };
 
@@ -444,7 +449,7 @@ function DesktopProductGallery({
                   className={styles.thumbnailButton}
                 >
                   <Image
-                    src={image.src}
+                    src={image.desktopSrc}
                     alt=""
                     fill
                     sizes="44px"
@@ -469,12 +474,12 @@ function DesktopProductGallery({
                 sectionRefs.current[index] = section;
               }}
               data-product-image-section
-              className={`relative h-[calc(100svh-var(--site-header-height))] w-full scroll-mt-[var(--site-header-height)] ${
+              className={`relative h-full w-full shrink-0 ${
                 image.isTransparent ? "bg-[#f3f3f0]" : ""
               }`}
             >
               <Image
-                src={image.src}
+                src={image.desktopSrc}
                 alt={
                   images.length > 1
                     ? `${productName} image ${index + 1} of ${images.length}`
@@ -485,11 +490,7 @@ function DesktopProductGallery({
                 placeholder="blur"
                 blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                 preload={index === 0}
-                className={
-                  image.isTransparent
-                    ? "object-contain p-[clamp(2.5rem,6vw,6rem)]"
-                    : "object-cover"
-                }
+                className="object-cover"
               />
             </section>
           ))}
@@ -550,12 +551,22 @@ export default function ProductDetailPage() {
       const productImages = (productData.product_images ?? []).flatMap((image): DisplayImage[] => {
         const original = image.url || image.image_url;
         const preferred = image.transparent_url || original;
-        return preferred ? [{ src: preferred, isTransparent: Boolean(image.transparent_url) }] : [];
+        return preferred
+          ? [{
+              src: preferred,
+              desktopSrc: original || preferred,
+              isTransparent: !original && Boolean(image.transparent_url),
+            }]
+          : [];
       });
       const imageUrls = productImages.length > 0
         ? productImages
         : productData.thumbnail_url
-          ? [{ src: productData.thumbnail_url, isTransparent: false }]
+          ? [{
+              src: productData.thumbnail_url,
+              desktopSrc: productData.thumbnail_url,
+              isTransparent: false,
+            }]
           : [];
 
       setProduct({
@@ -731,8 +742,8 @@ export default function ProductDetailPage() {
     product.is_archived === true && hasValidSalePrice;
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)] lg:h-auto lg:min-h-screen lg:overflow-y-visible">
-      <div className="container mx-auto max-w-[1300px]">
+    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)] lg:h-auto lg:min-h-screen lg:overflow-y-visible lg:px-2">
+      <div className="container mx-auto max-w-[1300px] lg:max-w-none">
         <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)] lg:gap-12">
           {/* Image Gallery */}
           <ProductGallery
