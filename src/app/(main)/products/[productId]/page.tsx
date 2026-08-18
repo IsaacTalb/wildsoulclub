@@ -425,7 +425,7 @@ function DesktopProductGallery({
     <section
       ref={galleryRef}
       aria-label={`${productName} image gallery`}
-      className="relative hidden w-full lg:block"
+      className="relative hidden w-full space-y-0 lg:block"
     >
       {images.length > 0 ? (
         <>
@@ -441,7 +441,7 @@ function DesktopProductGallery({
                   aria-label={`View ${productName} image ${index + 1}`}
                   aria-current={index === activeImage ? "true" : undefined}
                   onClick={() => scrollToImage(index)}
-                  className="relative h-14 w-11 overflow-hidden rounded-md border border-foreground/10 bg-background/80 opacity-55 shadow-sm backdrop-blur transition hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground aria-[current=true]:border-foreground/60 aria-[current=true]:opacity-100"
+                  className="relative h-14 w-11 overflow-hidden bg-background/80 opacity-55 backdrop-blur transition hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground aria-[current=true]:opacity-100"
                 >
                   <Image
                     src={image.src}
@@ -469,21 +469,27 @@ function DesktopProductGallery({
                 sectionRefs.current[index] = section;
               }}
               data-product-image-section
-              className="relative min-h-[calc(100svh-var(--site-header-height))] scroll-mt-[var(--site-header-height)]"
+              className={`relative h-[calc(100svh-var(--site-header-height))] w-full scroll-mt-[var(--site-header-height)] ${
+                image.isTransparent ? "bg-[#f3f3f0]" : ""
+              }`}
             >
               <Image
                 src={image.src}
                 alt={
-                  index === 0
-                    ? productName
-                    : `${productName} image ${index + 1}`
+                  images.length > 1
+                    ? `${productName} image ${index + 1} of ${images.length}`
+                    : productName
                 }
                 fill
-                sizes="(min-width: 1280px) 60vw,55vw"
+                sizes="(min-width: 1300px) 752px, calc(60vw - 2rem)"
                 placeholder="blur"
                 blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
                 preload={index === 0}
-                className="object-contain"
+                className={
+                  image.isTransparent
+                    ? "object-contain p-[clamp(2.5rem,6vw,6rem)]"
+                    : "object-cover"
+                }
               />
             </section>
           ))}
