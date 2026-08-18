@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FaFacebookF, FaInstagram, FaTiktok, FaTelegram } from "react-icons/fa";
 
 export function Footer() {
   return (
@@ -10,24 +11,57 @@ export function Footer() {
             <Link href="/" className="text-xl font-bold tracking-tight">
               WILD SOUL CLUB
             </Link>
+
             <p className="mt-3 text-sm text-muted-foreground">
-              Myanmar streetwear brand inspired by the wild spirit. 
+              Myanmar streetwear brand inspired by the wild spirit.
               Express your soul through our unique designs.
             </p>
-            {/* <div className="flex gap-3 mt-4">
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Globe className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Camera className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <MessageCircle className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Send className="h-5 w-5" />
-              </Link>
-            </div> */}
+
+            <div className="mt-4 flex items-center gap-4">
+              {/* Facebook */}
+              <a
+                href="https://www.facebook.com/profile.php?id=100092032210545"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Wild Soul Club Facebook"
+                className="text-black transition-opacity hover:opacity-60"
+              >
+                <FaFacebookF className="h-5 w-5" />
+              </a>
+
+              {/* Instagram */}
+              <a
+                href="https://www.instagram.com/wild_soul_club"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Wild Soul Club Instagram"
+                className="text-black transition-opacity hover:opacity-60"
+              >
+                <FaInstagram className="h-5 w-5" />
+              </a>
+
+              {/* TikTok */}
+              <a
+                href="https://www.tiktok.com/@wild.soul.club"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Wild Soul Club TikTok"
+                className="text-black transition-opacity hover:opacity-60"
+              >
+                <FaTiktok className="h-5 w-5" />
+              </a>
+
+              {/* Telegram */}
+              <a
+                href="https://t.me/wildsoulclubofficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Wild Soul Club Telegram"
+                className="text-black transition-opacity hover:opacity-60"
+              >
+                <FaTelegram className="h-5 w-5" />
+              </a>
+            </div>
           </div>
 
           {/* Quick Links */}

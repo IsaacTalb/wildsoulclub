@@ -101,19 +101,6 @@ export default function HomePage() {
             {latestDrop?.name || "Latest collection"}
           </Link>
         )}
-        <div className="absolute inset-x-0 bottom-4 flex justify-center p-4 sm:bottom-8">
-          <button
-            onClick={() => {
-              const nextSection = document.getElementById("all-products");
-              nextSection?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="group flex flex-col items-center gap-2 text-white text-sm font-semibold uppercase tracking-[0.14em] opacity-80 transition-opacity hover:opacity-100"
-            aria-label="Scroll down to next section"
-          >
-            <span>explore</span>
-            <ChevronDown className="h-5 w-5 text-white animate-bounce transition-transform group-hover:translate-y-1" />
-          </button>
-        </div>
       </section>
       </Link>
 
@@ -122,7 +109,7 @@ export default function HomePage() {
           <div className="absolute left-1/2 top-[45%] h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/75 blur-3xl" />
         </div>
 
-        <div id="all-products" className="relative mx-auto max-w-[1600px]">
+        <div className="relative mx-auto max-w-[1600px]">
           {loading ? (
             <FloatingProductSkeleton />
           ) : productsError ? (
@@ -159,6 +146,9 @@ export default function HomePage() {
             </div>
             <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
               BOLD PRINT, STREET IDENTITY
+            </p>
+            <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
+              EST - 2023
             </p>
           </div>
         </footer>

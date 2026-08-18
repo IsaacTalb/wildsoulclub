@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ShoppingCart } from "lucide-react";
-
+import Image from "next/image";
 import type { Product } from "@/types/product";
 import { FloatingProductSkeleton, ResponsiveFloatingProductCanvases } from "@/components/products/floating-product-canvas";
+import { Footer } from "@/components/layout/footer";
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -54,7 +55,7 @@ function ProductsContent() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-white px-4 md:px-8">
-        <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-[45%] h-[760px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/75 blur-3xl" />
       </div>
 
@@ -96,6 +97,26 @@ function ProductsContent() {
           </div>
         )}
       </section>
+      <footer className="relative flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
+        <div className="flex flex-col items-center">
+          <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
+            <Image
+              src="/images/logo-black.png"
+              alt="Wild Soul Club"
+              fill
+              sizes="(min-width: 640px) 80px, 56px"
+              className="object-contain opacity-50"
+            />
+          </div>
+          <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
+            BOLD PRINT, STREET IDENTITY
+          </p>
+          <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
+            EST - 2023
+          </p>
+        </div>
+      </footer>
+      <Footer />
     </div>
   );
 }

@@ -169,27 +169,6 @@ export default function NewDropsPage() {
             </Link>
             </Fragment>
           ))}
-          <footer className="flex min-h-[24vh] items-end justify-center pb-8 text-center sm:pb-12">
-            <div className="flex flex-col items-center">
-              <div className="relative h-8 w-14 overflow-hidden sm:h-11 sm:w-20">
-                <Image
-                  src="/images/logo-black.png"
-                  alt="Wild Soul Club"
-                  fill
-                  sizes="(min-width: 640px) 80px, 56px"
-                  className="object-contain opacity-50"
-                />
-              </div>
-
-              <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
-                BOLD PRINT, STREET IDENTITY
-              </p>
-
-              <p className="text-xs font-bold uppercase text-black/50 sm:text-sm">
-                WSC© DROPS
-              </p>
-            </div>
-          </footer>
           <Footer />
     </div>
   );
