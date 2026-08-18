@@ -425,14 +425,14 @@ function DesktopProductGallery({
     <section
       ref={galleryRef}
       aria-label={`${productName} image gallery`}
-      className="relative hidden w-full space-y-0 lg:block"
+      className={styles.desktopGallery}
     >
       {images.length > 0 ? (
         <>
-          <div className="pointer-events-none sticky top-[var(--site-header-height)] z-20 -mb-[calc(100svh-var(--site-header-height))] h-[calc(100svh-var(--site-header-height))]">
+          <div className={styles.desktopGalleryUi}>
             <nav
               aria-label="Choose a product image"
-              className="pointer-events-auto absolute left-5 top-1/2 flex -translate-y-1/2 flex-col gap-2"
+              className={styles.thumbnailRail}
             >
               {images.map((image, index) => (
                 <button
@@ -441,7 +441,7 @@ function DesktopProductGallery({
                   aria-label={`View ${productName} image ${index + 1}`}
                   aria-current={index === activeImage ? "true" : undefined}
                   onClick={() => scrollToImage(index)}
-                  className="relative h-14 w-11 overflow-hidden bg-background/80 opacity-55 backdrop-blur transition hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground aria-[current=true]:opacity-100"
+                  className={styles.thumbnailButton}
                 >
                   <Image
                     src={image.src}
@@ -453,10 +453,10 @@ function DesktopProductGallery({
                 </button>
               ))}
             </nav>
-            <p className="absolute bottom-5 left-5 text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/35">
+            <p className={`${styles.desktopOverlay} ${styles.exploreLabel}`}>
               Scroll to explore
             </p>
-            <p className="absolute bottom-5 right-5 rounded-full bg-background/70 px-3 py-1.5 text-[10px] font-medium tabular-nums text-foreground/45 backdrop-blur">
+            <p className={`${styles.desktopOverlay} ${styles.imageCounter}`}>
               {String(activeImage + 1).padStart(2, "0")} /{" "}
               {String(images.length).padStart(2, "0")}
             </p>

@@ -53,6 +53,127 @@
     opacity 440ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* The desktop controls live in their own sticky, viewport-height layer. Keep this
+   ancestor free of clipping and transforms so the sticky containing block is the
+   viewport rather than the scrolling image stack. */
+.desktopGallery,
+.desktopGalleryUi,
+.thumbnailRail,
+.desktopOverlay {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktopGallery {
+    position: relative;
+    display: block;
+    width: 100%;
+    overflow: visible;
+    transform: none;
+  }
+
+  .desktopGalleryUi {
+    position: sticky;
+    top: var(--site-header-height);
+    z-index: 20;
+    display: block;
+    height: calc(100svh - var(--site-header-height));
+    margin-bottom: calc((100svh - var(--site-header-height)) * -1);
+    overflow: visible;
+    transform: none;
+    pointer-events: none;
+  }
+
+  .thumbnailRail {
+    position: absolute;
+    top: 1rem;
+    bottom: 4.5rem;
+    left: 1.25rem;
+    display: flex;
+    width: 3.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: safe center;
+    padding: 0.375rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(23 23 23 / 35%) transparent;
+    pointer-events: auto;
+  }
+
+  .thumbnailButton {
+    position: relative;
+    width: 3rem;
+    height: 3.5rem;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid transparent;
+    border-radius: 0.125rem;
+    outline: 1px solid transparent;
+    outline-offset: -1px;
+    background: rgb(245 245 244 / 78%);
+    opacity: 0.58;
+    filter: saturate(0.72) contrast(0.94);
+    transition: opacity 160ms ease, filter 160ms ease, outline-color 160ms ease;
+  }
+
+  .thumbnailButton:hover {
+    opacity: 0.86;
+    filter: saturate(0.9) contrast(1);
+  }
+
+  .thumbnailButton[aria-current="true"] {
+    outline-color: rgb(23 23 23 / 90%);
+    opacity: 1;
+    filter: none;
+  }
+
+  .thumbnailButton:focus-visible {
+    outline: 2px solid rgb(23 23 23);
+    outline-offset: 2px;
+    opacity: 1;
+    filter: none;
+  }
+
+  .desktopOverlay {
+    position: absolute;
+    bottom: 1.25rem;
+    display: block;
+    margin: 0;
+    border: 1px solid rgb(255 255 255 / 28%);
+    border-radius: 999px;
+    background: rgb(20 20 20 / 58%);
+    color: rgb(255 255 255 / 94%);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 18%);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+  }
+
+  .exploreLabel {
+    left: 1.25rem;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.5625rem;
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .imageCounter {
+    right: 1.25rem;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
 @media (min-width: 768px) {
   .galleryViewport { touch-action: pan-x pinch-zoom; }
   .gallerySlide {
