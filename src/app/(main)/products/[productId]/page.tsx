@@ -96,7 +96,7 @@ function wrapIndex(index: number, length: number) {
   return ((index % length) + length) % length;
 }
 
-function LoopingProductGallery({
+function MobileProductGallery({
   images,
   productName,
 }: {
@@ -172,7 +172,7 @@ function LoopingProductGallery({
   return (
     <section
       aria-label={`${productName} image gallery`}
-      className={`${styles.galleryViewport} relative isolate w-full max-w-full`}
+      className={`${styles.galleryViewport} relative isolate w-full max-w-full lg:hidden`}
       onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
@@ -351,6 +351,62 @@ function LoopingProductGallery({
         </>
       )}
     </section>
+  );
+}
+
+function DesktopProductGallery({
+  images,
+  productName,
+}: {
+  images: DisplayImage[];
+  productName: string;
+}) {
+  return (
+    <section
+      aria-label={`${productName} image gallery`}
+      className="hidden w-full lg:block"
+    >
+      {images.length > 0 ? (
+        images.map((image, index) => (
+          <section
+            key={image.src}
+            className="relative min-h-[calc(100svh-var(--site-header-height))] scroll-mt-[var(--site-header-height)]"
+          >
+            <Image
+              src={image.src}
+              alt={
+                index === 0 ? productName : `${productName} image ${index + 1}`
+              }
+              fill
+              sizes="(min-width: 1280px) 60vw,55vw"
+              placeholder="blur"
+              blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
+              preload={index === 0}
+              className="object-contain"
+            />
+          </section>
+        ))
+      ) : (
+        <section className="flex min-h-[calc(100svh-var(--site-header-height))] scroll-mt-[var(--site-header-height)] items-center justify-center text-muted-foreground">
+          No Image
+        </section>
+      )}
+    </section>
+  );
+}
+
+function ProductGallery({
+  images,
+  productName,
+}: {
+  images: DisplayImage[];
+  productName: string;
+}) {
+  return (
+    <>
+      <MobileProductGallery images={images} productName={productName} />
+      <DesktopProductGallery images={images} productName={productName} />
+    </>
   );
 }
 
@@ -570,18 +626,18 @@ export default function ProductDetailPage() {
     product.is_archived === true && hasValidSalePrice;
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)]">
+    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)] lg:h-auto lg:min-h-screen lg:overflow-y-visible">
       <div className="container mx-auto max-w-[1300px]">
-        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:gap-12">
+        <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)] lg:gap-12">
           {/* Image Gallery */}
-          <LoopingProductGallery
+          <ProductGallery
             key={product.id}
             images={product.images}
             productName={product.name}
           />
 
           {/* Product Info */}
-          <div className="glass-scrollbar relative z-20 mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5 md:sticky md:top-4 md:mx-0 md:-translate-y-4 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[440px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5">
+          <div className="glass-scrollbar relative z-20 mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5 md:sticky md:top-4 md:mx-0 md:-translate-y-4 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[440px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5 lg:top-[calc(var(--site-header-height)+1rem)] lg:max-h-[calc(100svh-var(--site-header-height)-2rem)] lg:max-w-none lg:translate-y-0">
             <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {product.categories?.name ||
                 (typeof product.category === "string"
