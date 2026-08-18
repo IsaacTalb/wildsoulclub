@@ -82,6 +82,11 @@ interface DisplayImage {
   isTransparent: boolean;
 }
 
+interface ProductGalleryProps {
+  images: DisplayImage[];
+  productName: string;
+}
+
 type GallerySlideStyle = CSSProperties & {
   "--slide-x": string;
   "--slide-y": string;
@@ -99,10 +104,7 @@ function wrapIndex(index: number, length: number) {
 function MobileProductGallery({
   images,
   productName,
-}: {
-  images: DisplayImage[];
-  productName: string;
-}) {
+}: ProductGalleryProps) {
   const [activeImage, setActiveImage] = useState(0);
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(() => new Set());
@@ -357,35 +359,135 @@ function MobileProductGallery({
 function DesktopProductGallery({
   images,
   productName,
-}: {
-  images: DisplayImage[];
-  productName: string;
-}) {
+}: ProductGalleryProps) {
+  const [activeImage, setActiveImage] = useState(0);
+  const galleryRef = useRef<HTMLElement | null>(null);
+  const sectionRefs = useRef<Array<HTMLElement | null>>([]);
+  const imageListKey = JSON.stringify(images.map((image) => image.src));
+
+  useEffect(() => {
+    sectionRefs.current = Array.from(
+      galleryRef.current?.querySelectorAll<HTMLElement>(
+        "[data-product-image-section]",
+      ) ?? [],
+    );
+  }, [imageListKey]);
+
+  useEffect(() => {
+    const sections = sectionRefs.current.filter(
+      (section): section is HTMLElement => section !== null,
+    );
+    if (sections.length === 0) return;
+
+    const intersectionRatios = new Map<Element, number>(
+      sections.map((section) => [section, 0]),
+    );
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          intersectionRatios.set(
+            entry.target,
+            entry.isIntersecting ? entry.intersectionRatio : 0,
+          );
+        });
+
+        let mostVisibleIndex = -1;
+        let highestRatio = 0;
+        sections.forEach((section, index) => {
+          const ratio = intersectionRatios.get(section) ?? 0;
+          if (ratio > highestRatio) {
+            highestRatio = ratio;
+            mostVisibleIndex = index;
+          }
+        });
+
+        if (mostVisibleIndex >= 0) setActiveImage(mostVisibleIndex);
+      },
+      {
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [imageListKey]);
+
+  const scrollToImage = (index: number) => {
+    sectionRefs.current[index]?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <section
+      ref={galleryRef}
       aria-label={`${productName} image gallery`}
-      className="hidden w-full lg:block"
+      className="relative hidden w-full lg:block"
     >
       {images.length > 0 ? (
-        images.map((image, index) => (
-          <section
-            key={image.src}
-            className="relative min-h-[calc(100svh-var(--site-header-height))] scroll-mt-[var(--site-header-height)]"
-          >
-            <Image
-              src={image.src}
-              alt={
-                index === 0 ? productName : `${productName} image ${index + 1}`
-              }
-              fill
-              sizes="(min-width: 1280px) 60vw,55vw"
-              placeholder="blur"
-              blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
-              preload={index === 0}
-              className="object-contain"
-            />
-          </section>
-        ))
+        <>
+          <div className="pointer-events-none sticky top-[var(--site-header-height)] z-20 -mb-[calc(100svh-var(--site-header-height))] h-[calc(100svh-var(--site-header-height))]">
+            <nav
+              aria-label="Choose a product image"
+              className="pointer-events-auto absolute left-5 top-1/2 flex -translate-y-1/2 flex-col gap-2"
+            >
+              {images.map((image, index) => (
+                <button
+                  key={`${image.src || "image"}-${index}`}
+                  type="button"
+                  aria-label={`View ${productName} image ${index + 1}`}
+                  aria-current={index === activeImage ? "true" : undefined}
+                  onClick={() => scrollToImage(index)}
+                  className="relative h-14 w-11 overflow-hidden rounded-md border border-foreground/10 bg-background/80 opacity-55 shadow-sm backdrop-blur transition hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground aria-[current=true]:border-foreground/60 aria-[current=true]:opacity-100"
+                >
+                  <Image
+                    src={image.src}
+                    alt=""
+                    fill
+                    sizes="44px"
+                    className="object-contain"
+                  />
+                </button>
+              ))}
+            </nav>
+            <p className="absolute bottom-5 left-5 text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/35">
+              Scroll to explore
+            </p>
+            <p className="absolute bottom-5 right-5 rounded-full bg-background/70 px-3 py-1.5 text-[10px] font-medium tabular-nums text-foreground/45 backdrop-blur">
+              {String(activeImage + 1).padStart(2, "0")} /{" "}
+              {String(images.length).padStart(2, "0")}
+            </p>
+          </div>
+
+          {images.map((image, index) => (
+            <section
+              key={`${image.src || "image"}-${index}`}
+              ref={(section) => {
+                sectionRefs.current[index] = section;
+              }}
+              data-product-image-section
+              className="relative min-h-[calc(100svh-var(--site-header-height))] scroll-mt-[var(--site-header-height)]"
+            >
+              <Image
+                src={image.src}
+                alt={
+                  index === 0
+                    ? productName
+                    : `${productName} image ${index + 1}`
+                }
+                fill
+                sizes="(min-width: 1280px) 60vw,55vw"
+                placeholder="blur"
+                blurDataURL={PRODUCT_IMAGE_PLACEHOLDER}
+                preload={index === 0}
+                className="object-contain"
+              />
+            </section>
+          ))}
+        </>
       ) : (
         <section className="flex min-h-[calc(100svh-var(--site-header-height))] scroll-mt-[var(--site-header-height)] items-center justify-center text-muted-foreground">
           No Image
@@ -398,10 +500,7 @@ function DesktopProductGallery({
 function ProductGallery({
   images,
   productName,
-}: {
-  images: DisplayImage[];
-  productName: string;
-}) {
+}: ProductGalleryProps) {
   return (
     <>
       <MobileProductGallery images={images} productName={productName} />
