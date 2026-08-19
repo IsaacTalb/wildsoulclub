@@ -779,7 +779,7 @@ export default function ProductDetailPage() {
     product.is_archived === true && hasValidSalePrice;
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)] lg:mt-0 lg:h-svh lg:min-h-0 lg:overflow-hidden lg:p-0">
+    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)] lg:h-svh lg:min-h-0 lg:overflow-hidden lg:p-0">
       <div className="container mx-auto max-w-[1300px] lg:max-w-none">
         <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)] lg:gap-12">
           {/* Image Gallery */}
