@@ -362,6 +362,7 @@ function DesktopProductGallery({
   productName,
 }: ProductGalleryProps) {
   const [activeImage, setActiveImage] = useState(0);
+  const activeImageRef = useRef(0);
   const galleryRef = useRef<HTMLElement | null>(null);
   const sectionRefs = useRef<Array<HTMLElement | null>>([]);
   const imageListKey = JSON.stringify(images.map((image) => image.src));

@@ -96,7 +96,7 @@ export default function HomePage() {
         ) : (
           <Link
             href={`/new-drops/${latestDrop?.slug}`}
-            className="inline-flex home-liquid-glass min-h-12 items-center justify-center rounded-full px-2 py-2 text-sm font-bold uppercase text-white shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
+            className="inline-flex home-liquid-glass min-h-12 -translate-y-[calc(var(--site-header-height)/2)] items-center justify-center rounded-full px-2 py-2 text-sm font-bold uppercase text-white shadow-xl transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-reduce:transition-none"
           >
             {latestDrop?.name || "Latest collection"}
           </Link>
