@@ -76,7 +76,6 @@
     border-radius: 0;
     background: #f3f3f0;
     overscroll-behavior-y: contain;
-    scroll-snap-type: y mandatory;
     scrollbar-width: none;
     transform: none;
   }
@@ -87,8 +86,6 @@
 
   .desktopGallery > [data-product-image-section] {
     flex: 0 0 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
   }
 
   .desktopGalleryUi {

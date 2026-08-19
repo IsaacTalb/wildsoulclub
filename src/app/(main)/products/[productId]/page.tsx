@@ -365,8 +365,6 @@ function DesktopProductGallery({
   const activeImageRef = useRef(0);
   const galleryRef = useRef<HTMLElement | null>(null);
   const sectionRefs = useRef<Array<HTMLElement | null>>([]);
-  const wheelLockedRef = useRef(false);
-  const wheelUnlockTimerRef = useRef<number | null>(null);
   const imageListKey = JSON.stringify(images.map((image) => image.src));
 
   useEffect(() => {
@@ -405,10 +403,11 @@ function DesktopProductGallery({
           }
         });
 
-        if (mostVisibleIndex >= 0 && !wheelLockedRef.current) {
-          activeImageRef.current = mostVisibleIndex;
-          setActiveImage(mostVisibleIndex);
-        }
+        if (mostVisibleIndex < 0) return;
+
+        // Native scrolling can leave two attached images visible at once; the
+        // counter follows whichever section currently occupies more space.
+        setActiveImage(mostVisibleIndex);
       },
       {
         root: galleryRef.current,
@@ -420,69 +419,16 @@ function DesktopProductGallery({
     return () => observer.disconnect();
   }, [imageListKey]);
 
-  useEffect(() => {
-    return () => {
-      if (wheelUnlockTimerRef.current !== null) {
-        window.clearTimeout(wheelUnlockTimerRef.current);
-      }
-    };
-  }, []);
-
-  const scrollToImage = (index: number, jump = false) => {
+  const scrollToImage = (index: number) => {
     const section = sectionRefs.current[index];
     if (!section || !galleryRef.current) return;
 
     galleryRef.current.scrollTo({
       top: section.offsetTop,
-      behavior: jump || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth",
     });
-  };
-
-  const scheduleWheelUnlock = () => {
-    if (wheelUnlockTimerRef.current !== null) {
-      window.clearTimeout(wheelUnlockTimerRef.current);
-    }
-
-    // Keep one trackpad gesture from leaking through after the scroll animation.
-    // Momentum events can outlast the original fixed cooldown, especially after
-    // the gallery wraps from its last image back to its first.
-    wheelUnlockTimerRef.current = window.setTimeout(
-      () => {
-        wheelLockedRef.current = false;
-        wheelUnlockTimerRef.current = null;
-      },
-      520,
-    );
-  };
-
-  const handleDesktopWheel = (event: WheelEvent<HTMLElement>) => {
-    if (
-      images.length < 2 ||
-      Math.abs(event.deltaY) < 10 ||
-      Math.abs(event.deltaY) < Math.abs(event.deltaX)
-    )
-      return;
-
-    event.preventDefault();
-    if (wheelLockedRef.current) {
-      scheduleWheelUnlock();
-      return;
-    }
-
-    const direction = event.deltaY > 0 ? 1 : -1;
-    const currentImage = activeImageRef.current;
-    const nextImage = wrapIndex(currentImage + direction, images.length);
-    const wrapped =
-      (direction > 0 && currentImage === images.length - 1) ||
-      (direction < 0 && currentImage === 0);
-
-    wheelLockedRef.current = true;
-    activeImageRef.current = nextImage;
-    setActiveImage(nextImage);
-    scrollToImage(nextImage, wrapped);
-    scheduleWheelUnlock();
   };
 
   return (
@@ -490,7 +436,6 @@ function DesktopProductGallery({
       ref={galleryRef}
       aria-label={`${productName} image gallery`}
       className={styles.desktopGallery}
-      onWheel={handleDesktopWheel}
     >
       {images.length > 0 ? (
         <>
