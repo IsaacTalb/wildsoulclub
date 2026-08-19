@@ -364,6 +364,8 @@ function DesktopProductGallery({
   const [activeImage, setActiveImage] = useState(0);
   const galleryRef = useRef<HTMLElement | null>(null);
   const sectionRefs = useRef<Array<HTMLElement | null>>([]);
+  const wheelLockedRef = useRef(false);
+  const wheelUnlockTimerRef = useRef<number | null>(null);
   const imageListKey = JSON.stringify(images.map((image) => image.src));
 
   useEffect(() => {
@@ -414,16 +416,50 @@ function DesktopProductGallery({
     return () => observer.disconnect();
   }, [imageListKey]);
 
-  const scrollToImage = (index: number) => {
+  useEffect(() => {
+    return () => {
+      if (wheelUnlockTimerRef.current !== null) {
+        window.clearTimeout(wheelUnlockTimerRef.current);
+      }
+    };
+  }, []);
+
+  const scrollToImage = (index: number, jump = false) => {
     const section = sectionRefs.current[index];
     if (!section || !galleryRef.current) return;
 
     galleryRef.current.scrollTo({
       top: section.offsetTop,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      behavior: jump || window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth",
     });
+  };
+
+  const handleDesktopWheel = (event: WheelEvent<HTMLElement>) => {
+    if (
+      images.length < 2 ||
+      Math.abs(event.deltaY) < 10 ||
+      Math.abs(event.deltaY) < Math.abs(event.deltaX)
+    )
+      return;
+
+    event.preventDefault();
+    if (wheelLockedRef.current) return;
+
+    const direction = event.deltaY > 0 ? 1 : -1;
+    const nextImage = wrapIndex(activeImage + direction, images.length);
+    const wrapped =
+      (direction > 0 && activeImage === images.length - 1) ||
+      (direction < 0 && activeImage === 0);
+
+    wheelLockedRef.current = true;
+    setActiveImage(nextImage);
+    scrollToImage(nextImage, wrapped);
+    wheelUnlockTimerRef.current = window.setTimeout(() => {
+      wheelLockedRef.current = false;
+      wheelUnlockTimerRef.current = null;
+    }, 520);
   };
 
   return (
@@ -431,6 +467,7 @@ function DesktopProductGallery({
       ref={galleryRef}
       aria-label={`${productName} image gallery`}
       className={styles.desktopGallery}
+      onWheel={handleDesktopWheel}
     >
       {images.length > 0 ? (
         <>
@@ -742,7 +779,7 @@ export default function ProductDetailPage() {
     product.is_archived === true && hasValidSalePrice;
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)] lg:h-auto lg:min-h-screen lg:overflow-y-visible lg:px-2">
+    <div className="min-h-screen overflow-x-clip bg-white py-5 md:-mt-[var(--site-header-height)] md:h-svh md:min-h-0 md:overflow-hidden md:px-4 md:pb-4 md:pt-[calc(var(--site-header-height)+1.5rem)] lg:mt-0 lg:h-svh lg:min-h-0 lg:overflow-hidden lg:p-0">
       <div className="container mx-auto max-w-[1300px] lg:max-w-none">
         <div className="grid grid-cols-1 items-start gap-7 md:grid-cols-[minmax(0,1fr)_minmax(320px,0.58fr)] lg:grid-cols-[minmax(0,3fr)_minmax(320px,2fr)] lg:gap-12">
           {/* Image Gallery */}
@@ -753,7 +790,7 @@ export default function ProductDetailPage() {
           />
 
           {/* Product Info */}
-          <div className="glass-scrollbar relative z-20 mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5 md:sticky md:top-4 md:mx-0 md:-translate-y-4 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[440px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5 lg:top-[calc(var(--site-header-height)+1rem)] lg:max-h-[calc(100svh-var(--site-header-height)-2rem)] lg:max-w-none lg:translate-y-0">
+          <div className="glass-scrollbar relative z-20 mx-4 max-h-none w-[calc(100%-2rem)] overflow-visible rounded-[1.75rem] border border-black/10 bg-white/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-5 md:sticky md:top-4 md:mx-0 md:-translate-y-4 md:max-h-[calc(100svh-112px)] md:w-full md:max-w-[440px] md:justify-self-end md:overflow-y-auto md:overscroll-contain md:p-5 lg:top-auto lg:mr-8 lg:max-h-[calc(100svh-var(--site-header-height)-2rem)] lg:max-w-none lg:self-center lg:translate-y-0">
             <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {product.categories?.name ||
                 (typeof product.category === "string"
