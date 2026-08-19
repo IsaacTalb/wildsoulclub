@@ -11,6 +11,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
     const collection = searchParams.get("collection");
+    const bestSeller = searchParams.get("best_seller");
     const sort = searchParams.get("sort");
     const search = searchParams.get("search");
 
@@ -22,6 +23,7 @@ export async function GET(req: Request) {
 
     if (category) query = query.eq("category_id", category);
     if (collection) query = query.eq("collection_id", collection);
+    if (bestSeller === "true") query = query.eq("is_best_seller", true);
     if (search) query = query.ilike("name", `%${search}%`);
 
     query = query

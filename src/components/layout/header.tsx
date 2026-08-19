@@ -236,7 +236,7 @@ export function Header() {
                           className="ml-3 border-l pl-2"
                         >
                           <Link
-                            href="/products"
+                            href="/best-sellers"
                             className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-primary hover:bg-muted"
                             onClick={() => setIsOpen(false)}
                           >
@@ -365,7 +365,7 @@ export function Header() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                render={<Link href="/products" />}
+                render={<Link href="/best-sellers" />}
                 className="w-full cursor-pointer px-3 py-2 font-medium"
               >
                 BEST SELLERS
