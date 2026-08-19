@@ -14,6 +14,7 @@ function matchesPattern(pathname: string, pattern: string): boolean {
 function isPublicRoute(pathname: string): boolean {
   const publicPatterns = [
     "/",
+    "/best-sellers",
     "/products",
     "/products(.*)",
     "/collections(.*)",
