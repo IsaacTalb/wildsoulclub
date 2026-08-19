@@ -362,6 +362,7 @@ function DesktopProductGallery({
   productName,
 }: ProductGalleryProps) {
   const [activeImage, setActiveImage] = useState(0);
+  const activeImageRef = useRef(0);
   const galleryRef = useRef<HTMLElement | null>(null);
   const sectionRefs = useRef<Array<HTMLElement | null>>([]);
   const wheelLockedRef = useRef(false);
@@ -404,7 +405,10 @@ function DesktopProductGallery({
           }
         });
 
-        if (mostVisibleIndex >= 0) setActiveImage(mostVisibleIndex);
+        if (mostVisibleIndex >= 0 && !wheelLockedRef.current) {
+          activeImageRef.current = mostVisibleIndex;
+          setActiveImage(mostVisibleIndex);
+        }
       },
       {
         root: galleryRef.current,
@@ -436,6 +440,23 @@ function DesktopProductGallery({
     });
   };
 
+  const scheduleWheelUnlock = () => {
+    if (wheelUnlockTimerRef.current !== null) {
+      window.clearTimeout(wheelUnlockTimerRef.current);
+    }
+
+    // Keep one trackpad gesture from leaking through after the scroll animation.
+    // Momentum events can outlast the original fixed cooldown, especially after
+    // the gallery wraps from its last image back to its first.
+    wheelUnlockTimerRef.current = window.setTimeout(
+      () => {
+        wheelLockedRef.current = false;
+        wheelUnlockTimerRef.current = null;
+      },
+      520,
+    );
+  };
+
   const handleDesktopWheel = (event: WheelEvent<HTMLElement>) => {
     if (
       images.length < 2 ||
@@ -445,21 +466,23 @@ function DesktopProductGallery({
       return;
 
     event.preventDefault();
-    if (wheelLockedRef.current) return;
+    if (wheelLockedRef.current) {
+      scheduleWheelUnlock();
+      return;
+    }
 
     const direction = event.deltaY > 0 ? 1 : -1;
-    const nextImage = wrapIndex(activeImage + direction, images.length);
+    const currentImage = activeImageRef.current;
+    const nextImage = wrapIndex(currentImage + direction, images.length);
     const wrapped =
-      (direction > 0 && activeImage === images.length - 1) ||
-      (direction < 0 && activeImage === 0);
+      (direction > 0 && currentImage === images.length - 1) ||
+      (direction < 0 && currentImage === 0);
 
     wheelLockedRef.current = true;
+    activeImageRef.current = nextImage;
     setActiveImage(nextImage);
     scrollToImage(nextImage, wrapped);
-    wheelUnlockTimerRef.current = window.setTimeout(() => {
-      wheelLockedRef.current = false;
-      wheelUnlockTimerRef.current = null;
-    }, 520);
+    scheduleWheelUnlock();
   };
 
   return (
