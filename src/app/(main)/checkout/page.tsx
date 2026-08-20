@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,13 +18,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
 import { checkoutSchema, type CheckoutFormData } from "@/schemas";
-
-const paymentMethodDefinitions = [
-  { id: "kpay", name: "KBZPay", settingKey: "kpay_number" },
-  { id: "wave", name: "Wave", settingKey: "wave_number" },
-  { id: "ayapay", name: "AYA Pay", settingKey: "ayapay_number" },
-  { id: "cbpay", name: "CB Pay", settingKey: "cbpay_number" },
-] as const;
 
 type CheckoutApiResponse = {
   data?: {
@@ -47,20 +39,16 @@ type CheckoutApiResponse = {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, hasHydrated, getSubtotal, clearCart } = useCart();
-  const [paymentMethod, setPaymentMethod] = useState("kpay");
+  const paymentMethod = "kpay";
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"delivery" | "pickup">("delivery");
   const [createdOrder, setCreatedOrder] = useState<{ id: string; order_number?: string; payment_reference: string; guestAccessToken?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [storefrontSettings, setStorefrontSettings] = useState<Record<string, string>>({});
   const [couponCode, setCouponCode] = useState(() => typeof window === "undefined" ? "" : sessionStorage.getItem("wsc-checkout-coupon") ?? "");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; description?: string | null } | null>(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [paymentCodeCopied, setPaymentCodeCopied] = useState(false);
-  const captchaSiteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaKey, setCaptchaKey] = useState(0);
 
   const copyPaymentCode = async () => {
     if (!createdOrder) return;
@@ -79,32 +67,6 @@ export default function CheckoutPage() {
     if (refreshError) return null;
     return refreshedSession;
   };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/public/storefront-settings", { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error("Unable to load payment details");
-        return response.json();
-      })
-      .then((result: { data?: Record<string, string> }) =>
-        setStorefrontSettings(result.data ?? {}),
-      )
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setSubmitError("Payment account details are temporarily unavailable. Please refresh before paying.");
-      });
-    return () => controller.abort();
-  }, []);
-
-  const paymentMethods = useMemo(
-    () =>
-      paymentMethodDefinitions.flatMap((method) => {
-        const number = storefrontSettings[method.settingKey]?.trim();
-        return number ? [{ ...method, number }] : [];
-      }),
-    [storefrontSettings],
-  );
 
   const subtotal = getSubtotal();
   const total = Math.max(0, subtotal - (appliedCoupon?.discount ?? 0));
@@ -213,15 +175,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!paymentMethods.some((method) => method.id === paymentMethod)) {
-      setSubmitError("Validation error: no valid payment account is selected. Please refresh and try again.");
-      return;
-    }
-    if (!captchaToken || !captchaSiteKey) {
-      setSubmitError("Please complete the CAPTCHA challenge.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -248,7 +201,6 @@ export default function CheckoutPage() {
           zip: data.zip,
           notes: data.notes,
           coupon_code: appliedCoupon?.code ?? null,
-          captcha_token: captchaToken,
         }),
       });
 
@@ -266,8 +218,6 @@ export default function CheckoutPage() {
       setCreatedOrder({ id: order.id, order_number: order.order_number, payment_reference: order.payment_reference, guestAccessToken: order.guest_access_token });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
-      setCaptchaToken(null);
-      setCaptchaKey((key) => key + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -445,27 +395,25 @@ export default function CheckoutPage() {
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Transfer to one of our accounts and upload the payment screenshot
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Scan the MMQR code to pay, then upload your payment screenshot.
                 </p>
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} disabled={Boolean(createdOrder)} className="space-y-3">
-                  {paymentMethods.map((method) => (
-                    <div key={method.id} className="flex items-center justify-between p-4 rounded-lg border has-[[data-state=checked]]:border-primary">
-                      <div className="flex items-center gap-3">
-                        <RadioGroupItem value={method.id} id={method.id} />
-                        <Label htmlFor={method.id} className="font-medium cursor-pointer">
-                          {method.name} (Min Khant Kyaw)
-                        </Label>
-                      </div>
-                      <span className="text-sm text-muted-foreground">{method.number}</span>
-                    </div>
-                  ))}
-                  {paymentMethods.length === 0 && (
-                    <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                      Loading payment account details…
-                    </p>
-                  )}
-                </RadioGroup>
+                <div className="mx-auto max-w-sm rounded-xl border bg-muted/20 p-3 shadow-sm sm:p-4">
+                  <Image
+                    src="/images/mmqr/wscmmqr.jpg"
+                    alt="Wild Soul Club MMQR payment code"
+                    width={1067}
+                    height={1601}
+                    sizes="(max-width: 640px) calc(100vw - 80px), 384px"
+                    className="h-auto w-full rounded-lg"
+                    priority
+                  />
+                  <Button asChild type="button" variant="outline" className="mt-3 w-full">
+                    <a href="/images/mmqr/wscmmqr.jpg" download="wild-soul-club-mmqr.jpg">
+                      Download MMQR
+                    </a>
+                  </Button>
+                </div>
 
                 {createdOrder && (
                   <div className="mt-6 rounded-lg border-2 border-red-500 bg-red-50 p-5 text-center text-red-950">
@@ -488,7 +436,7 @@ export default function CheckoutPage() {
                       <p className="mb-2 font-bold">Easy payment steps</p>
                       <ol className="list-decimal list-inside space-y-1">
                         <li>{createdOrder ? `Enter ${createdOrder.payment_reference} in the payment note` : "Continue to generate your payment reference"}</li>
-                        <li>Transfer the total amount to the selected account</li>
+                        <li>Transfer the total amount to the selected MMQR</li>
                         <li>Take a screenshot of the payment confirmation</li>
                         <li>Upload the screenshot below</li>
                         <li>Admin will verify and confirm your order</li>
@@ -571,27 +519,12 @@ export default function CheckoutPage() {
                   {fulfillmentMethod === "delivery" && <p className="rounded-lg bg-muted/60 p-3 text-xs leading-relaxed text-muted-foreground">This total covers products only. Pay the separate delivery charge to the delivery person when the order arrives.</p>}
                 </div>
 
-                {!createdOrder && captchaSiteKey && (
-                  <div className="mt-6 flex justify-center">
-                    <HCaptcha
-                      key={captchaKey}
-                      sitekey={captchaSiteKey}
-                      onVerify={setCaptchaToken}
-                      onExpire={() => setCaptchaToken(null)}
-                      onError={() => setCaptchaToken(null)}
-                    />
-                  </div>
-                )}
-                {!createdOrder && !captchaSiteKey && (
-                  <p className="mt-6 text-sm text-destructive">CAPTCHA is not configured. Please contact store support.</p>
-                )}
-
                 <Button
                   type={createdOrder ? "button" : "submit"}
                   onClick={createdOrder ? completePayment : undefined}
                   size="lg"
                   className="w-full mt-6 text-base"
-                  disabled={isSubmitting || (!createdOrder && (!captchaToken || !captchaSiteKey))}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     "Processing..."

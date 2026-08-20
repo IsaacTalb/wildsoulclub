@@ -38,7 +38,6 @@ const orderItemSchema = z.object({
 });
 
 const createOrderSchema = z.object({
-  captcha_token: z.string().trim().min(1).max(4096),
   fulfillment_method: z.enum(["delivery", "pickup"]),
   full_name: z.string().trim().min(1),
   email: z.email(),
@@ -67,25 +66,6 @@ function requestIp(req: Request) {
 async function sha256(value: string) {
   const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-async function verifyCaptcha(token: string, ip: string) {
-  const secret = process.env.HCAPTCHA_SECRET_KEY;
-  if (!secret) {
-    console.error("HCAPTCHA_SECRET_KEY is not configured");
-    return false;
-  }
-  const body = new URLSearchParams({ secret, response: token });
-  if (ip !== "unknown") body.set("remoteip", ip);
-  const response = await fetch("https://api.hcaptcha.com/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-    cache: "no-store",
-  });
-  if (!response.ok) return false;
-  const result = await response.json() as { success?: boolean };
-  return result.success === true;
 }
 
 type DatabaseError = {
@@ -169,9 +149,6 @@ export async function POST(req: Request) {
     if (rateLimitError) return databaseErrorResponse(rateLimitError);
     if (!rateLimitAllowed) {
       return NextResponse.json({ success: false, error: "Too many checkout attempts. Please try again later." }, { status: 429 });
-    }
-    if (!await verifyCaptcha(orderInput.captcha_token, ip)) {
-      return validationError("CAPTCHA verification failed. Please try again.");
     }
     if (orderInput.fulfillment_method === "delivery" &&
       (!orderInput.address || !orderInput.township || !orderInput.city || !orderInput.state)) {
