@@ -27,11 +27,17 @@ export async function POST(request: Request) {
   const identifierColumn = UUID_PATTERN.test(identifier) ? "id" : "order_number";
   const { data: order, error } = await supabaseAdmin
     .from("orders")
-    .select("order_number, user_id, guest_access_token_hash, subtotal, delivery_fee, discount_amount, total, status, payment_status, payment_reference, courier, tracking_number, created_at, updated_at, order_items(quantity, size, color, unit_price, products(name, thumbnail_url))")
+    .select("order_number, user_id, guest_access_token_hash, subtotal, delivery_fee, discount_amount, total, status, payment_status, payment_reference, courier, tracking_number, created_at, updated_at, order_items(quantity, size, color, price, products(name, thumbnail_url))")
     .eq(identifierColumn, identifier)
     .maybeSingle();
 
   if (error) {
+    console.error("Guest order lookup failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
     return NextResponse.json({ success: false, error: "Unable to look up this order" }, { status: 500 });
   }
 
@@ -45,7 +51,13 @@ export async function POST(request: Request) {
     success: true,
     data: {
       order_number: order.order_number,
-      items: order.order_items,
+      items: order.order_items.map((item) => ({
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        unit_price: item.price,
+        products: item.products,
+      })),
       totals: {
         subtotal: order.subtotal,
         delivery_fee: order.delivery_fee,
