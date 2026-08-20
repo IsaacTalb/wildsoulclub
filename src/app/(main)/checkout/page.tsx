@@ -216,6 +216,12 @@ export default function CheckoutPage() {
 
       if (!order.payment_reference) throw new Error("Order creation failed: no payment reference was returned.");
       setCreatedOrder({ id: order.id, order_number: order.order_number, payment_reference: order.payment_reference, guestAccessToken: order.guest_access_token });
+      if (order.guest_access_token) {
+        sessionStorage.setItem("wsc-guest-order", JSON.stringify({
+          identifier: order.order_number ?? order.id,
+          capability: order.guest_access_token,
+        }));
+      }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
     } finally {
@@ -261,7 +267,7 @@ export default function CheckoutPage() {
         reference: createdOrder.payment_reference,
       });
       const guestFragment = createdOrder.guestAccessToken
-        ? `#${new URLSearchParams({ order: createdOrder.id, capability: createdOrder.guestAccessToken })}`
+        ? `#${new URLSearchParams({ order: createdOrder.order_number ?? createdOrder.id, capability: createdOrder.guestAccessToken })}`
         : "";
       router.push(`/order-success?${successQuery}${guestFragment}`);
     } catch (error) {
@@ -374,7 +380,7 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   <div className="md:col-span-2 rounded-lg border-2 border-red-500 bg-red-50 p-4 text-red-950">
-                    <p className="text-sm font-bold">KPay payment-note code</p>
+                    <p className="text-sm font-bold">Payment-note code</p>
                     {createdOrder ? (
                       <div className="mt-2 flex flex-wrap items-center gap-3">
                         <p className="font-mono text-3xl font-black text-red-600">{createdOrder.payment_reference}</p>
@@ -395,18 +401,23 @@ export default function CheckoutPage() {
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
+                {!createdOrder ? (
+                  <div className="rounded-lg border border-dashed bg-muted/30 p-5 text-center">
+                    <p className="font-medium">Complete Fulfillment &amp; Contact first</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Click <strong>Continue to Payment</strong> to get your Payment-note code and reveal the MMQR.</p>
+                  </div>
+                ) : <>
                 <p className="mb-4 text-sm text-muted-foreground">
-                  Scan the MMQR code to pay, then upload your payment screenshot.
+                  Scan or download the MMQR, use your Payment-note code, then upload your payment screenshot.
                 </p>
-                <div className="mx-auto max-w-sm rounded-xl border bg-muted/20 p-3 shadow-sm sm:p-4">
+                <div className="mx-auto w-full max-w-[260px] rounded-xl border bg-muted/20 p-2 shadow-sm sm:max-w-xs sm:p-3">
                   <Image
                     src="/images/mmqr/wscmmqr.jpg"
                     alt="Wild Soul Club MMQR payment code"
                     width={1067}
                     height={1601}
-                    sizes="(max-width: 640px) calc(100vw - 80px), 384px"
+                    sizes="(max-width: 640px) 260px, 320px"
                     className="h-auto w-full rounded-lg"
-                    priority
                   />
                   <Button asChild type="button" variant="outline" className="mt-3 w-full">
                     <a href="/images/mmqr/wscmmqr.jpg" download="wild-soul-club-mmqr.jpg">
@@ -417,7 +428,7 @@ export default function CheckoutPage() {
 
                 {createdOrder && (
                   <div className="mt-6 rounded-lg border-2 border-red-500 bg-red-50 p-5 text-center text-red-950">
-                    <p className="text-sm font-bold">Important: use this exact code in your KPay note</p>
+                    <p className="text-sm font-bold">Important: use this exact Payment-note code</p>
                     <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
                       <p className="font-mono text-3xl font-black text-red-600">{createdOrder.payment_reference}</p>
                       <Button type="button" size="sm" variant="outline" onClick={() => void copyPaymentCode()}>
@@ -457,6 +468,7 @@ export default function CheckoutPage() {
                     Upload a clear JPG, PNG, or other image up to 10 MB.
                   </p>
                 </div>}
+                </>}
               </CardContent>
             </Card>
           </div>
