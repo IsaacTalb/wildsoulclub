@@ -3,34 +3,15 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
 
-// Keep this alphabet in sync with create_checkout_order's database validation.
-// Ambiguous characters (0, 1, I, and O) are intentionally excluded so the
-// payment note is easy to read from a screenshot.
-const REFERENCE_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-const REFERENCE_NUMBERS = "23456789";
-const REFERENCE_CHARACTERS = `${REFERENCE_LETTERS}${REFERENCE_NUMBERS}`;
-
-function randomCharacter(alphabet: string) {
-  const [byte] = crypto.getRandomValues(new Uint8Array(1));
-  return alphabet[byte % alphabet.length];
-}
+const REFERENCE_NUMBERS = "0123456789";
+const REFERENCE_FIRST_NUMBERS = "123456789";
 
 function createPaymentReferenceCode() {
-  // The database requires every six-character code to contain at least one
-  // letter and one number. Seed both categories, then randomize their positions.
-  const characters = [
-    randomCharacter(REFERENCE_LETTERS),
-    randomCharacter(REFERENCE_NUMBERS),
-    ...Array.from({ length: 4 }, () => randomCharacter(REFERENCE_CHARACTERS)),
-  ];
-
-  const shuffleBytes = crypto.getRandomValues(new Uint8Array(characters.length - 1));
-  for (let index = characters.length - 1; index > 0; index -= 1) {
-    const swapIndex = shuffleBytes[index - 1] % (index + 1);
-    [characters[index], characters[swapIndex]] = [characters[swapIndex], characters[index]];
-  }
-
-  return characters.join("");
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return Array.from(bytes, (byte, index) => {
+    const alphabet = index === 0 ? REFERENCE_FIRST_NUMBERS : REFERENCE_NUMBERS;
+    return alphabet[byte % alphabet.length];
+  }).join("");
 }
 
 /**
@@ -43,7 +24,7 @@ function createPaymentReference(authoritativeTotal: number, code = createPayment
     throw new Error("Cannot create a payment reference for an invalid order total");
   }
 
-  const amountInThousands = Math.trunc(authoritativeTotal / 1000);
+  const amountInThousands = Math.trunc(authoritativeTotal / 1000).toLocaleString("en-US");
   return `${amountInThousands}K-${code}`;
 }
 

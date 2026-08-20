@@ -847,9 +847,7 @@ BEGIN
   IF p_fulfillment_method NOT IN ('delivery', 'pickup') THEN
     RAISE EXCEPTION 'Invalid fulfillment method';
   END IF;
-  IF p_payment_reference IS NULL OR length(p_payment_reference) <> 6
-     OR p_payment_reference !~ '^[A-HJ-NP-Z2-9]+$'
-     OR p_payment_reference !~ '[A-HJ-NP-Z]' OR p_payment_reference !~ '[2-9]' THEN
+  IF p_payment_reference IS NULL OR p_payment_reference !~ '^[1-9][0-9]{5}$' THEN
     RAISE EXCEPTION 'Invalid payment reference code';
   END IF;
 
@@ -879,7 +877,7 @@ BEGIN
   -- References encode whole thousands, truncating any sub-thousand remainder.
   -- This keeps the prefix free of decimal points (56,500 becomes `56K-`).
   v_total := (v_order->>'subtotal')::numeric - v_discount;
-  v_amount_prefix := trunc(v_total / 1000)::TEXT;
+  v_amount_prefix := to_char(trunc(v_total / 1000), 'FM999,999,999,999,990');
   UPDATE orders
   SET payment_reference = v_amount_prefix || 'K-' || p_payment_reference,
       fulfillment_method = p_fulfillment_method,
