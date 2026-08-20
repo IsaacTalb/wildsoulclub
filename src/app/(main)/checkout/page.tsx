@@ -306,7 +306,14 @@ export default function CheckoutPage() {
 
       clearCart();
       sessionStorage.removeItem("wsc-checkout-coupon");
-      router.push(`/order-success?order=${encodeURIComponent(createdOrder.order_number ?? "")}&reference=${createdOrder.payment_reference}`);
+      const successQuery = new URLSearchParams({
+        order: createdOrder.order_number ?? "",
+        reference: createdOrder.payment_reference,
+      });
+      const guestFragment = createdOrder.guestAccessToken
+        ? `#${new URLSearchParams({ order: createdOrder.id, capability: createdOrder.guestAccessToken })}`
+        : "";
+      router.push(`/order-success?${successQuery}${guestFragment}`);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
     } finally {

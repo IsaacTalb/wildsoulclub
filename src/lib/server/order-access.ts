@@ -14,7 +14,8 @@ export function createGuestOrderToken() {
   return Buffer.from(bytes).toString("base64url");
 }
 
-async function hashesMatch(actual: string, expected: string) {
+export function verifyGuestOrderHash(actual: string, expected: unknown) {
+  if (typeof expected !== "string") return false;
   if (!TOKEN_HASH_PATTERN.test(actual) || !TOKEN_HASH_PATTERN.test(expected)) return false;
   const actualBytes = Uint8Array.from(actual.match(/../g)!, (value) => Number.parseInt(value, 16));
   const expectedBytes = Uint8Array.from(expected.match(/../g)!, (value) => Number.parseInt(value, 16));
@@ -37,7 +38,7 @@ export async function authorizeOrderAccess(orderId: string, guestToken: unknown)
   const suppliedHash = await hashGuestOrderToken(guestToken);
   return order.user_id === null
     && typeof order.guest_access_token_hash === "string"
-    && await hashesMatch(suppliedHash, order.guest_access_token_hash)
+    && verifyGuestOrderHash(suppliedHash, order.guest_access_token_hash)
     ? order
     : null;
 }
