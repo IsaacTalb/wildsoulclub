@@ -3,14 +3,34 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
 
-const REFERENCE_NUMBERS = "0123456789";
+// Keep this alphabet in sync with create_checkout_order's database validation.
+// Ambiguous characters (0, 1, I, and O) are intentionally excluded so the
+// payment note is easy to read from a screenshot.
+const REFERENCE_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+const REFERENCE_NUMBERS = "23456789";
+const REFERENCE_CHARACTERS = `${REFERENCE_LETTERS}${REFERENCE_NUMBERS}`;
+
+function randomCharacter(alphabet: string) {
+  const [byte] = crypto.getRandomValues(new Uint8Array(1));
+  return alphabet[byte % alphabet.length];
+}
 
 function createPaymentReferenceCode() {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return Array.from(
-    bytes,
-    (byte) => REFERENCE_NUMBERS[byte % REFERENCE_NUMBERS.length],
-  ).join("");
+  // The database requires every six-character code to contain at least one
+  // letter and one number. Seed both categories, then randomize their positions.
+  const characters = [
+    randomCharacter(REFERENCE_LETTERS),
+    randomCharacter(REFERENCE_NUMBERS),
+    ...Array.from({ length: 4 }, () => randomCharacter(REFERENCE_CHARACTERS)),
+  ];
+
+  const shuffleBytes = crypto.getRandomValues(new Uint8Array(characters.length - 1));
+  for (let index = characters.length - 1; index > 0; index -= 1) {
+    const swapIndex = shuffleBytes[index - 1] % (index + 1);
+    [characters[index], characters[swapIndex]] = [characters[swapIndex], characters[index]];
+  }
+
+  return characters.join("");
 }
 
 /**
