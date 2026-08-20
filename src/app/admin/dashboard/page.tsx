@@ -59,7 +59,7 @@ const statDefinitions = [
   { key: "revenue", title: "Paid Revenue", icon: DollarSign, money: true },
   { key: "orders", title: "Total Orders", icon: ShoppingBag, money: false },
   { key: "products", title: "Total Products", icon: Package, money: false },
-  { key: "customers", title: "Registered Customers", icon: Users, money: false },
+  { key: "customers", title: "Customers", icon: Users, money: false },
   { key: "pending_payments", title: "Pending Payments", icon: Clock, money: false },
   { key: "today_sales", title: "Today's Paid Sales", icon: TrendingUp, money: true },
 ] as const;
