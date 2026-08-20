@@ -48,7 +48,6 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("kpay");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"delivery" | "pickup">("delivery");
   const [createdOrder, setCreatedOrder] = useState<{ id: string; order_number?: string; payment_reference: string } | null>(null);
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -75,13 +74,6 @@ export default function CheckoutPage() {
     if (refreshError) return null;
     return refreshedSession;
   };
-
-  useEffect(() => {
-    getValidSession().then((session) => {
-      if (!session) router.replace("/sign-in?redirect=%2Fcheckout");
-      else setCheckingAuth(false);
-    });
-  }, [router]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -133,7 +125,7 @@ export default function CheckoutPage() {
       return JSON.parse(body) as CheckoutApiResponse;
     } catch {
       throw new Error(response.redirected
-        ? "Your session expired. Please sign in again before placing your order."
+        ? "Checkout could not be completed because the request was redirected. Please try again."
         : `${fallback} The server returned an invalid response.`);
     }
   };
@@ -218,9 +210,6 @@ export default function CheckoutPage() {
 
     try {
       const authHeaders = await getAuthHeaders();
-      if (!("Authorization" in authHeaders)) {
-        throw new Error("Please sign in before placing your order.");
-      }
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
@@ -274,7 +263,6 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
     try {
       const authHeaders = await getAuthHeaders();
-      if (!("Authorization" in authHeaders)) throw new Error("Your session expired. Please sign in again.");
       if (!paymentProof.type.startsWith("image/") || paymentProof.size > 10 * 1024 * 1024) {
         throw new Error("Payment proof must be an image smaller than 10 MB.");
       }
@@ -306,7 +294,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!hasHydrated || checkingAuth) {
+  if (!hasHydrated) {
     return <div className="container mx-auto min-h-[50vh] px-4 py-16 text-center text-muted-foreground" role="status">Loading checkout…</div>;
   }
 
