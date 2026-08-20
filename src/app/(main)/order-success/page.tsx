@@ -9,10 +9,15 @@ import { Separator } from "@/components/ui/separator";
 
 export default function OrderSuccessPage() {
   const [details, setDetails] = useState({ orderNumber: "Your order", reference: "" });
+  const [guestTrackingFragment, setGuestTrackingFragment] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const timeout = window.setTimeout(() => setDetails({ orderNumber: params.get("order") || "Your order", reference: params.get("reference") || "" }), 0);
+    const timeout = window.setTimeout(() => {
+      setDetails({ orderNumber: params.get("order") || "Your order", reference: params.get("reference") || "" });
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      if (fragment.get("order") && fragment.get("capability")) setGuestTrackingFragment(fragment.toString());
+    }, 0);
     return () => window.clearTimeout(timeout);
   }, []);
 
@@ -35,13 +40,13 @@ export default function OrderSuccessPage() {
           </CardContent>
         </Card>
 
-        {/* <Card className="mb-8 border-primary/50 bg-primary/5">
+        {guestTrackingFragment && <Card className="mb-8 border-primary/50 bg-primary/5">
           <CardContent className="p-6">
             <h3 className="mb-2 font-semibold">Track your order</h3>
-            <p className="mb-4 text-sm text-muted-foreground">View payment verification, pickup or delivery status, and tracking details from My Orders.</p>
-            <Button variant="outline" asChild><Link href="/orders">Track Order <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
+            <p className="mb-4 text-sm text-muted-foreground">This private link lets you view payment, fulfillment, and delivery updates. Keep it safe.</p>
+            <Button variant="outline" type="button" onClick={() => window.location.assign(`/orders#${guestTrackingFragment}`)}>Track Order <ArrowRight className="ml-2 h-4 w-4" /></Button>
           </CardContent>
-        </Card> */}
+        </Card>}
 
         <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Button asChild><Link href="/products"><ShoppingBag className="mr-2 h-5 w-5" /> Continue Shopping</Link></Button>
