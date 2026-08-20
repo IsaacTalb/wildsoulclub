@@ -67,9 +67,9 @@
   .desktopGallery {
     position: relative;
     display: flex;
-    height: 110svh;
+    height: 107svh;
     margin-top: 0;
-    width: 100%;
+    width: 90%;
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
