@@ -102,9 +102,19 @@ export default function OrdersPage() {
       const fragmentCapability = fragment.get("capability");
       if (fragmentIdentifier && fragmentCapability) {
         setIdentifier(fragmentIdentifier);
+        sessionStorage.setItem("wsc-guest-order", JSON.stringify({ identifier: fragmentIdentifier, capability: fragmentCapability }));
         void loadGuestOrder({ identifier: fragmentIdentifier, capability: fragmentCapability });
       } else {
-        setLoading(false);
+        try {
+          const saved = JSON.parse(sessionStorage.getItem("wsc-guest-order") ?? "null") as GuestCredentials | null;
+          if (saved?.identifier && saved.capability) {
+            setIdentifier(saved.identifier);
+            void loadGuestOrder(saved);
+          } else setLoading(false);
+        } catch {
+          sessionStorage.removeItem("wsc-guest-order");
+          setLoading(false);
+        }
       }
     });
     const interval = window.setInterval(() => {
@@ -124,7 +134,7 @@ export default function OrdersPage() {
     const presentation = guestOrder ? paymentPresentation(guestOrder.payment_status) : null;
     const PaymentIcon = presentation?.icon;
     return <div className="container mx-auto max-w-3xl px-4 py-8 sm:py-12">
-      <div className="mb-6"><h1 className="text-2xl font-bold sm:text-3xl">Track a guest order</h1><p className="mt-1 text-sm text-muted-foreground">Use the order number and private guest access code provided after checkout.</p></div>
+      <div className="mb-6"><h1 className="text-2xl font-bold sm:text-3xl">Track a guest order</h1><p className="mt-1 text-sm text-muted-foreground">Orders opened from checkout are loaded automatically. You can also use the order number and backup guest access code.</p></div>
       {!guestOrder && <Card><CardContent className="p-5 sm:p-6"><form className="space-y-4" onSubmit={submitGuestLookup}>
         <div className="space-y-2"><Label htmlFor="order-identifier">Order number</Label><Input id="order-identifier" value={identifier} onChange={(event) => setIdentifier(event.target.value)} placeholder="WSC-…" autoComplete="off" required /></div>
         <div className="space-y-2"><Label htmlFor="guest-capability">Guest access code</Label><Input id="guest-capability" type="password" value={capability} onChange={(event) => setCapability(event.target.value)} autoComplete="off" required /></div>
