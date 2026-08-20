@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { getSignedUploadUrl, PUBLIC_IMAGE_CACHE_CONTROL } from "@/lib/upload";
-import { getAuthUser, requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { getR2PublicUrl } from "@/lib/server/public-image-url";
+import { authorizeOrderAccess } from "@/lib/server/order-access";
+
+const PAYMENT_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]);
+const MAX_PAYMENT_IMAGE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { folder, contentType, fileName } = body;
+    const { folder, contentType, fileName, fileSize, order_id, guest_access_token } = body;
 
     if (!folder || !contentType) {
       return NextResponse.json(
@@ -24,8 +28,17 @@ export async function POST(req: Request) {
     }
 
     if (folder === "payments") {
-      const user = await getAuthUser();
-      if (!user) throw new Error("Unauthorized");
+      if (!order_id || !Number.isInteger(fileSize) || fileSize <= 0 || fileSize > MAX_PAYMENT_IMAGE_SIZE || !PAYMENT_IMAGE_TYPES.has(contentType)) {
+        return NextResponse.json({ success: false, error: "Payment uploads require an order and an image no larger than 10 MB" }, { status: 400 });
+      }
+      const order = await authorizeOrderAccess(order_id, guest_access_token);
+      if (!order) throw new Error("Unauthorized");
+      const extension = ({ "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" } as Record<string, string>)[contentType];
+      const { url, objectKey } = await getSignedUploadUrl(folder, contentType, `proof.${extension}`, {
+        contentLength: fileSize,
+        objectKeyPrefix: `payments/${order.id}`,
+      });
+      return NextResponse.json({ success: true, data: { uploadUrl: url, uploadHeaders: { "Content-Type": contentType }, objectKey, imageUrl: getR2PublicUrl(objectKey) } });
     } else {
       await requireAdmin();
     }

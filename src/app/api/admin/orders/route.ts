@@ -15,12 +15,15 @@ export async function GET() {
 
     const { data, error } = await supabaseAdmin
       .from("orders")
-      .select("*, order_items(*, products(name)), payments(*)")
+      .select("id, order_number, user_id, full_name, email, phone, address, township, city, state, zip, notes, payment_reference, fulfillment_method, subtotal, delivery_fee, coupon_code, discount_amount, total, status, payment_status, courier, tracking_number, created_at, updated_at, order_items(*, products(name)), payments(*)")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, data });
+    const safeData = data && typeof data === "object"
+      ? Object.fromEntries(Object.entries(data).filter(([key]) => key !== "guest_access_token_hash"))
+      : data;
+    return NextResponse.json({ success: true, data: safeData });
   } catch {
     return NextResponse.json(
       { success: false, error: "Failed to fetch orders" },

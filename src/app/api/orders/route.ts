@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
+import { createGuestOrderToken, hashGuestOrderToken } from "@/lib/server/order-access";
 
 const REFERENCE_NUMBERS = "0123456789";
 const REFERENCE_FIRST_NUMBERS = "123456789";
@@ -158,6 +159,8 @@ export async function POST(req: Request) {
     }
 
     const orderInput = parsed.data;
+    const guestAccessToken = user ? null : createGuestOrderToken();
+    const guestAccessTokenHash = guestAccessToken ? await hashGuestOrderToken(guestAccessToken) : null;
     const ip = requestIp(req);
     const rateLimitKey = await sha256(`${ip}:${user?.id ?? orderInput.email.toLowerCase()}`);
     const { data: rateLimitAllowed, error: rateLimitError } = await supabaseAdmin.rpc("check_order_request_rate_limit", {
@@ -252,6 +255,15 @@ export async function POST(req: Request) {
     }
     if (!savedOrder) return databaseErrorResponse(lastError ?? { message: "Unable to generate a unique payment reference" });
 
+    if (guestAccessTokenHash) {
+      const { error: tokenError } = await supabaseAdmin
+        .from("orders")
+        .update({ guest_access_token_hash: guestAccessTokenHash })
+        .eq("id", savedOrder.id)
+        .is("user_id", null);
+      if (tokenError) return databaseErrorResponse(tokenError);
+    }
+
     // Keep checkout contact details reusable in the customer profile. This is
     // intentionally done after the transactional order succeeds so a profile
     // sync problem can never cause a duplicate checkout retry.
@@ -301,8 +313,10 @@ export async function POST(req: Request) {
       }
     }
 
+    const safeOrder = { ...savedOrder };
+    delete safeOrder.guest_access_token_hash;
     return NextResponse.json(
-      { success: true, data: savedOrder },
+      { success: true, data: { ...safeOrder, ...(guestAccessToken ? { guest_access_token: guestAccessToken } : {}) } },
       { status: 201 }
     );
   } catch (error) {
@@ -323,7 +337,7 @@ export async function GET() {
 
     const { data, error } = await supabaseAdmin
       .from("orders")
-      .select("*, order_items(*, products(name, thumbnail_url)), payments(*)")
+      .select("id, order_number, user_id, full_name, email, phone, address, township, city, state, zip, notes, payment_reference, fulfillment_method, subtotal, delivery_fee, coupon_code, discount_amount, total, status, payment_status, courier, tracking_number, created_at, updated_at, order_items(*, products(name, thumbnail_url)), payments(*)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 

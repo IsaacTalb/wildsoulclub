@@ -122,15 +122,18 @@ export async function deletePaymentProofFile(payment: { payment_object_key?: str
 export async function getSignedUploadUrl(
   folder: UploadFolder,
   contentType: string,
-  fileName?: string
+  fileName?: string,
+  options?: { contentLength?: number; objectKeyPrefix?: string },
 ): Promise<{ url: string; objectKey: string }> {
   const ext = fileName?.split(".").pop() || "jpg";
-  const objectKey = `${folder}/${uuidv4()}.${ext}`;
+  const prefix = options?.objectKeyPrefix?.replace(/^\/+|\/+$/g, "") || folder;
+  const objectKey = `${prefix}/${uuidv4()}.${ext}`;
 
   const command = new PutObjectCommand({
     Bucket: BUCKET,
     Key: objectKey,
     ContentType: contentType,
+    ...(options?.contentLength ? { ContentLength: options.contentLength } : {}),
     ...(PUBLIC_IMAGE_FOLDERS.has(folder)
       ? { CacheControl: PUBLIC_IMAGE_CACHE_CONTROL }
       : {}),
