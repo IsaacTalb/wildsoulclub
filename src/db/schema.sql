@@ -252,6 +252,7 @@ CREATE TABLE orders (
   state TEXT NOT NULL,
   zip TEXT,
   notes TEXT,
+  guest_access_token_hash TEXT CHECK (guest_access_token_hash IS NULL OR guest_access_token_hash ~ '^[0-9a-f]{64}$'),
   payment_reference TEXT UNIQUE NOT NULL DEFAULT 'PENDING-' || upper(replace(uuid_generate_v4()::TEXT, '-', '')),
   fulfillment_method TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfillment_method IN ('delivery', 'pickup')),
   subtotal DECIMAL(10, 2) NOT NULL,
@@ -525,7 +526,7 @@ BEGIN
   END IF;
   SELECT * INTO v_order FROM orders WHERE id = p_order_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Order not found'; END IF;
-  v_before := to_jsonb(v_order);
+  v_before := to_jsonb(v_order) - 'guest_access_token_hash';
   IF v_order.status = 'cancelled' AND p_status <> 'cancelled' THEN
     RAISE EXCEPTION 'Cancelled orders cannot be reopened because their inventory was restored';
   END IF;
@@ -540,8 +541,8 @@ BEGIN
     tracking_number = CASE WHEN p_status = 'shipped' THEN NULLIF(trim(p_tracking_number), '') ELSE tracking_number END,
     updated_at = NOW() WHERE id = p_order_id RETURNING * INTO v_order;
   INSERT INTO audit_logs(actor_user_id, entity_type, entity_id, action, before, after)
-  VALUES (p_actor_user_id, 'order', p_order_id, 'update', v_before, to_jsonb(v_order));
-  RETURN to_jsonb(v_order);
+  VALUES (p_actor_user_id, 'order', p_order_id, 'update', v_before, to_jsonb(v_order) - 'guest_access_token_hash');
+  RETURN to_jsonb(v_order) - 'guest_access_token_hash';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
@@ -564,6 +565,7 @@ CREATE TABLE payments (
 );
 
 CREATE INDEX idx_payments_order ON payments(order_id);
+CREATE UNIQUE INDEX payments_one_per_order ON payments(order_id);
 CREATE INDEX idx_payments_status ON payments(status);
 
 -- Atomically review a payment and keep its order payment fields in sync.

@@ -39,6 +39,7 @@ type CheckoutApiResponse = {
     description?: string | null;
     discount?: number;
     total?: number;
+    guest_access_token?: string;
   };
   error?: string;
 };
@@ -48,7 +49,7 @@ export default function CheckoutPage() {
   const { items, hasHydrated, getSubtotal, clearCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState("kpay");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"delivery" | "pickup">("delivery");
-  const [createdOrder, setCreatedOrder] = useState<{ id: string; order_number?: string; payment_reference: string } | null>(null);
+  const [createdOrder, setCreatedOrder] = useState<{ id: string; order_number?: string; payment_reference: string; guestAccessToken?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -143,11 +144,18 @@ export default function CheckoutPage() {
     }
   };
 
-  const uploadPaymentProof = async (file: File, headers: Record<string, string>) => {
+  const uploadPaymentProof = async (file: File, headers: Record<string, string>, order: NonNullable<typeof createdOrder>) => {
     const uploadResponse = await fetch("/api/upload", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify({ folder: "payments", contentType: file.type, fileName: file.name }),
+      body: JSON.stringify({
+        folder: "payments",
+        contentType: file.type,
+        fileName: file.name,
+        fileSize: file.size,
+        order_id: order.id,
+        guest_access_token: order.guestAccessToken,
+      }),
     });
 
     if (!uploadResponse.ok) {
@@ -255,7 +263,7 @@ export default function CheckoutPage() {
       }
 
       if (!order.payment_reference) throw new Error("Order creation failed: no payment reference was returned.");
-      setCreatedOrder({ id: order.id, order_number: order.order_number, payment_reference: order.payment_reference });
+      setCreatedOrder({ id: order.id, order_number: order.order_number, payment_reference: order.payment_reference, guestAccessToken: order.guest_access_token });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
       setCaptchaToken(null);
@@ -277,7 +285,7 @@ export default function CheckoutPage() {
       if (!paymentProof.type.startsWith("image/") || paymentProof.size > 10 * 1024 * 1024) {
         throw new Error("Payment proof must be an image smaller than 10 MB.");
       }
-      const uploadedProof = await uploadPaymentProof(paymentProof, authHeaders);
+      const uploadedProof = await uploadPaymentProof(paymentProof, authHeaders, createdOrder);
 
       const paymentResponse = await fetch("/api/payments", {
         method: "POST",
@@ -288,6 +296,7 @@ export default function CheckoutPage() {
           transaction_id: createdOrder.payment_reference,
           payment_image: uploadedProof.imageUrl,
           payment_object_key: uploadedProof.objectKey,
+          guest_access_token: createdOrder.guestAccessToken,
         }),
       });
 
