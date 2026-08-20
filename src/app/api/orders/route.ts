@@ -4,13 +4,14 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthUser } from "@/lib/auth";
 
 const REFERENCE_NUMBERS = "0123456789";
+const REFERENCE_FIRST_NUMBERS = "123456789";
 
 function createPaymentReferenceCode() {
   const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return Array.from(
-    bytes,
-    (byte) => REFERENCE_NUMBERS[byte % REFERENCE_NUMBERS.length],
-  ).join("");
+  return Array.from(bytes, (byte, index) => {
+    const alphabet = index === 0 ? REFERENCE_FIRST_NUMBERS : REFERENCE_NUMBERS;
+    return alphabet[byte % alphabet.length];
+  }).join("");
 }
 
 /**
@@ -23,7 +24,7 @@ function createPaymentReference(authoritativeTotal: number, code = createPayment
     throw new Error("Cannot create a payment reference for an invalid order total");
   }
 
-  const amountInThousands = Math.trunc(authoritativeTotal / 1000);
+  const amountInThousands = Math.trunc(authoritativeTotal / 1000).toLocaleString("en-US");
   return `${amountInThousands}K-${code}`;
 }
 
