@@ -327,6 +327,40 @@ CREATE TRIGGER derive_product_stock_before_product_write
   BEFORE UPDATE OF stock ON products
   FOR EACH ROW EXECUTE FUNCTION derive_product_stock_when_variants_exist();
 
+-- Durable abuse throttling for the public, service-role-backed checkout API.
+CREATE TABLE order_request_rate_limits (
+  request_key TEXT PRIMARY KEY,
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  request_count INTEGER NOT NULL DEFAULT 1 CHECK (request_count > 0)
+);
+
+CREATE OR REPLACE FUNCTION check_order_request_rate_limit(p_request_key TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE v_count INTEGER;
+BEGIN
+  IF p_request_key IS NULL OR length(p_request_key) <> 64 THEN
+    RETURN false;
+  END IF;
+  INSERT INTO order_request_rate_limits (request_key, window_started_at, request_count)
+  VALUES (p_request_key, now(), 1)
+  ON CONFLICT (request_key) DO UPDATE SET
+    window_started_at = CASE
+      WHEN order_request_rate_limits.window_started_at <= now() - interval '10 minutes' THEN now()
+      ELSE order_request_rate_limits.window_started_at
+    END,
+    request_count = CASE
+      WHEN order_request_rate_limits.window_started_at <= now() - interval '10 minutes' THEN 1
+      ELSE order_request_rate_limits.request_count + 1
+    END
+  RETURNING request_count INTO v_count;
+  RETURN v_count <= 5;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+REVOKE ALL ON TABLE order_request_rate_limits FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION check_order_request_rate_limit(TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION check_order_request_rate_limit(TEXT) TO service_role;
+
 -- Create the complete order and consume inventory in the RPC's single database
 -- transaction. Any raised exception rolls back the order, its items, stock, and
 -- inventory ledger entries together.
@@ -346,7 +380,7 @@ DECLARE
   v_delivery_fee NUMERIC(10, 2);
   v_has_variants BOOLEAN;
 BEGIN
-  IF p_user_id IS NULL OR p_items IS NULL OR jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) = 0 THEN
+  IF p_items IS NULL OR jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) = 0 THEN
     RAISE EXCEPTION 'Invalid order items';
   END IF;
 
@@ -817,9 +851,10 @@ INSERT INTO admin_settings (key, value, group_name, description) VALUES
   ('default_delivery_fee', '3000', 'settings', 'Default delivery fee (MMK)');
 
 
--- These RPCs are server-only entry points. The API authenticates callers and uses
--- the service role; clients must not be able to choose user/actor identifiers.
+-- These RPCs are server-only entry points. The API validates callers and uses the
+-- service role; clients must not be able to choose user/actor identifiers.
 REVOKE ALL ON FUNCTION create_order(UUID, JSONB, JSONB) FROM PUBLIC;
+REVOKE ALL ON FUNCTION create_order(UUID, JSONB, JSONB) FROM anon, authenticated;
 REVOKE ALL ON FUNCTION restock_order_inventory(UUID, UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION update_order_status(UUID, TEXT, TEXT, TEXT, UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION create_order(UUID, JSONB, JSONB) TO service_role;
@@ -894,6 +929,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 REVOKE ALL ON FUNCTION create_checkout_order(UUID, JSONB, JSONB, TEXT, TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION create_checkout_order(UUID, JSONB, JSONB, TEXT, TEXT, TEXT) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION create_checkout_order(UUID, JSONB, JSONB, TEXT, TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION restock_order_inventory(UUID, UUID) TO service_role;
 GRANT EXECUTE ON FUNCTION update_order_status(UUID, TEXT, TEXT, TEXT, UUID) TO service_role;

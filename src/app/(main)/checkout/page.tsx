@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -56,6 +57,9 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; description?: string | null } | null>(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [paymentCodeCopied, setPaymentCodeCopied] = useState(false);
+  const captchaSiteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   const copyPaymentCode = async () => {
     if (!createdOrder) return;
@@ -205,6 +209,10 @@ export default function CheckoutPage() {
       setSubmitError("Validation error: no valid payment account is selected. Please refresh and try again.");
       return;
     }
+    if (!captchaToken || !captchaSiteKey) {
+      setSubmitError("Please complete the CAPTCHA challenge.");
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -232,6 +240,7 @@ export default function CheckoutPage() {
           zip: data.zip,
           notes: data.notes,
           coupon_code: appliedCoupon?.code ?? null,
+          captcha_token: captchaToken,
         }),
       });
 
@@ -249,6 +258,8 @@ export default function CheckoutPage() {
       setCreatedOrder({ id: order.id, order_number: order.order_number, payment_reference: order.payment_reference });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Validation error: checkout could not be completed.");
+      setCaptchaToken(null);
+      setCaptchaKey((key) => key + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -544,12 +555,27 @@ export default function CheckoutPage() {
                   {fulfillmentMethod === "delivery" && <p className="rounded-lg bg-muted/60 p-3 text-xs leading-relaxed text-muted-foreground">This total covers products only. Pay the separate delivery charge to the delivery person when the order arrives.</p>}
                 </div>
 
+                {!createdOrder && captchaSiteKey && (
+                  <div className="mt-6 flex justify-center">
+                    <HCaptcha
+                      key={captchaKey}
+                      sitekey={captchaSiteKey}
+                      onVerify={setCaptchaToken}
+                      onExpire={() => setCaptchaToken(null)}
+                      onError={() => setCaptchaToken(null)}
+                    />
+                  </div>
+                )}
+                {!createdOrder && !captchaSiteKey && (
+                  <p className="mt-6 text-sm text-destructive">CAPTCHA is not configured. Please contact store support.</p>
+                )}
+
                 <Button
                   type={createdOrder ? "button" : "submit"}
                   onClick={createdOrder ? completePayment : undefined}
                   size="lg"
                   className="w-full mt-6 text-base"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (!createdOrder && (!captchaToken || !captchaSiteKey))}
                 >
                   {isSubmitting ? (
                     "Processing..."

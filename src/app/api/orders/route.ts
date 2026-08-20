@@ -37,6 +37,7 @@ const orderItemSchema = z.object({
 });
 
 const createOrderSchema = z.object({
+  captcha_token: z.string().trim().min(1).max(4096),
   fulfillment_method: z.enum(["delivery", "pickup"]),
   full_name: z.string().trim().min(1),
   email: z.email(),
@@ -53,6 +54,37 @@ const createOrderSchema = z.object({
 
 function validationError(message: string) {
   return NextResponse.json({ success: false, error: message }, { status: 400 });
+}
+
+function requestIp(req: Request) {
+  return req.headers.get("cf-connecting-ip")?.trim()
+    || req.headers.get("x-real-ip")?.trim()
+    || req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || "unknown";
+}
+
+async function sha256(value: string) {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function verifyCaptcha(token: string, ip: string) {
+  const secret = process.env.HCAPTCHA_SECRET_KEY;
+  if (!secret) {
+    console.error("HCAPTCHA_SECRET_KEY is not configured");
+    return false;
+  }
+  const body = new URLSearchParams({ secret, response: token });
+  if (ip !== "unknown") body.set("remoteip", ip);
+  const response = await fetch("https://api.hcaptcha.com/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+    cache: "no-store",
+  });
+  if (!response.ok) return false;
+  const result = await response.json() as { success?: boolean };
+  return result.success === true;
 }
 
 type DatabaseError = {
@@ -113,10 +145,6 @@ function databaseErrorResponse(error: DatabaseError) {
 export async function POST(req: Request) {
   try {
     const user = await getAuthUser();
-    if (!user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-
     let json: unknown;
     try {
       json = await req.json();
@@ -130,6 +158,18 @@ export async function POST(req: Request) {
     }
 
     const orderInput = parsed.data;
+    const ip = requestIp(req);
+    const rateLimitKey = await sha256(`${ip}:${user?.id ?? orderInput.email.toLowerCase()}`);
+    const { data: rateLimitAllowed, error: rateLimitError } = await supabaseAdmin.rpc("check_order_request_rate_limit", {
+      p_request_key: rateLimitKey,
+    });
+    if (rateLimitError) return databaseErrorResponse(rateLimitError);
+    if (!rateLimitAllowed) {
+      return NextResponse.json({ success: false, error: "Too many checkout attempts. Please try again later." }, { status: 429 });
+    }
+    if (!await verifyCaptcha(orderInput.captcha_token, ip)) {
+      return validationError("CAPTCHA verification failed. Please try again.");
+    }
     if (orderInput.fulfillment_method === "delivery" &&
       (!orderInput.address || !orderInput.township || !orderInput.city || !orderInput.state)) {
       return validationError("Delivery address is required");
@@ -137,12 +177,12 @@ export async function POST(req: Request) {
 
     // Older Auth accounts can predate the auth.users -> public.users trigger.
     // Ensure the foreign-key target exists before create_order inserts the order.
-    const { error: userSyncError } = await supabaseAdmin.from("users").upsert({
+    const userSyncError = user ? (await supabaseAdmin.from("users").upsert({
       id: user.id,
       email: user.email ?? orderInput.email,
       full_name: orderInput.full_name,
       phone: orderInput.phone,
-    }, { onConflict: "id" });
+    }, { onConflict: "id" })).error : null;
     if (userSyncError) return databaseErrorResponse(userSyncError);
 
     const customer = {
@@ -164,7 +204,7 @@ export async function POST(req: Request) {
       // discounted total after calculating that total inside the transaction.
       const paymentReferenceCode = createPaymentReferenceCode();
       const { data: order, error } = await supabaseAdmin.rpc("create_checkout_order", {
-        p_user_id: user.id,
+        p_user_id: user?.id ?? null,
         p_customer: customer,
         p_items: orderInput.items,
         p_fulfillment_method: orderInput.fulfillment_method,
@@ -178,7 +218,7 @@ export async function POST(req: Request) {
         if (orderInput.coupon_code) return databaseErrorResponse(error);
         // Fall back while the checkout RPC or its cached schema is still being deployed.
         const { data: legacyOrder, error: legacyError } = await supabaseAdmin.rpc("create_order", {
-          p_user_id: user.id,
+          p_user_id: user?.id ?? null,
           p_customer: customer,
           p_items: orderInput.items,
         });
@@ -215,15 +255,16 @@ export async function POST(req: Request) {
     // Keep checkout contact details reusable in the customer profile. This is
     // intentionally done after the transactional order succeeds so a profile
     // sync problem can never cause a duplicate checkout retry.
-    const fullNameParts = orderInput.full_name.trim().split(/\s+/);
-    const firstName = fullNameParts.shift() ?? orderInput.full_name.trim();
-    const lastName = fullNameParts.join(" ");
-    const { error: authProfileError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-      user_metadata: { ...user.user_metadata, full_name: orderInput.full_name, first_name: firstName, last_name: lastName, phone: orderInput.phone },
-    });
-    if (authProfileError) console.error("Order created but Auth profile sync failed", authProfileError);
+    if (user) {
+      const fullNameParts = orderInput.full_name.trim().split(/\s+/);
+      const firstName = fullNameParts.shift() ?? orderInput.full_name.trim();
+      const lastName = fullNameParts.join(" ");
+      const { error: authProfileError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        user_metadata: { ...user.user_metadata, full_name: orderInput.full_name, first_name: firstName, last_name: lastName, phone: orderInput.phone },
+      });
+      if (authProfileError) console.error("Order created but Auth profile sync failed", authProfileError);
 
-    if (orderInput.fulfillment_method === "delivery") {
+      if (orderInput.fulfillment_method === "delivery") {
       const { data: savedAddresses, error: addressReadError } = await supabaseAdmin
         .from("delivery_addresses")
         .select("id, address, township, city, state, zip")
@@ -256,6 +297,7 @@ export async function POST(req: Request) {
           });
           if (error) console.error("Order created but checkout address save failed", error);
         }
+      }
       }
     }
 
