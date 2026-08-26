@@ -89,10 +89,20 @@ export default function CartPage() {
     setApplyingCoupon(true);
     try {
       const response = await fetch("/api/coupons/validate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: couponCode, subtotal }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? "Unable to apply coupon.");
+      const body = await response.text();
+      let result: { data?: { code?: unknown; discount?: unknown }; error?: unknown };
+      try {
+        result = JSON.parse(body) as typeof result;
+      } catch {
+        throw new Error(response.redirected
+          ? "Coupon validation was redirected. Please refresh the page and try again."
+          : "Coupon validation is temporarily unavailable. Please try again.");
+      }
+      if (!response.ok) throw new Error(typeof result.error === "string" ? result.error : "Unable to apply coupon.");
+      if (!result.data?.code || result.data.discount == null) throw new Error("Coupon validation returned an invalid response.");
       const code = String(result.data.code);
       const discount = Number(result.data.discount);
+      if (!Number.isFinite(discount) || discount < 0) throw new Error("Coupon validation returned an invalid discount.");
       setCouponCode(code);
       setCouponDiscount(discount);
       setCouponMessage(`${code} applied. It will be verified again at checkout.`);
