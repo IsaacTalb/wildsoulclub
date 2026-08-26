@@ -6,7 +6,6 @@ import Image from "next/image";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, Truck, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
@@ -51,11 +50,6 @@ export default function CartPage() {
     "Delivery timing is confirmed after your order is placed.",
   );
   const subtotal = getSubtotal();
-  const [couponCode, setCouponCode] = useState("");
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponMessage, setCouponMessage] = useState("");
-  const [applyingCoupon, setApplyingCoupon] = useState(false);
-  const total = Math.max(0, subtotal - couponDiscount);
   const recommendedProducts = useMemo(() => {
     const cartProductIds = new Set(items.map((item) => item.product_id));
     return recommendations.filter((product) => !cartProductIds.has(product.id)).slice(0, 5);
@@ -76,33 +70,6 @@ export default function CartPage() {
   const quickAddStock = quickAddProduct?.product_variants?.length
     ? quickAddVariant?.stock ?? 0
     : quickAddProduct?.stock ?? 0;
-
-  function resetCoupon() {
-    setCouponDiscount(0);
-    setCouponMessage("");
-    sessionStorage.removeItem("wsc-checkout-coupon");
-  }
-
-  async function applyCoupon() {
-    setCouponMessage("");
-    if (!couponCode.trim()) { setCouponDiscount(0); setCouponMessage("Enter a coupon code first."); return; }
-    setApplyingCoupon(true);
-    try {
-      const response = await fetch("/api/coupons/validate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: couponCode, subtotal }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? "Unable to apply coupon.");
-      const code = String(result.data.code);
-      const discount = Number(result.data.discount);
-      setCouponCode(code);
-      setCouponDiscount(discount);
-      setCouponMessage(`${code} applied. It will be verified again at checkout.`);
-      sessionStorage.setItem("wsc-checkout-coupon", code);
-    } catch (error) {
-      setCouponDiscount(0);
-      sessionStorage.removeItem("wsc-checkout-coupon");
-      setCouponMessage(error instanceof Error ? error.message : "Unable to apply coupon.");
-    } finally { setApplyingCoupon(false); }
-  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -182,7 +149,6 @@ export default function CartPage() {
       updated_at: "",
     };
 
-    resetCoupon();
     addItem(
       cartProduct,
       Math.min(quickAddQuantity, quickAddStock),
@@ -268,7 +234,7 @@ export default function CartPage() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => { resetCoupon(); updateQuantity(item.id, item.quantity - 1); }}
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
@@ -279,7 +245,7 @@ export default function CartPage() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => { resetCoupon(); updateQuantity(item.id, item.quantity + 1); }}
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -288,7 +254,7 @@ export default function CartPage() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-destructive"
-                    onClick={() => { resetCoupon(); removeItem(item.id); }}
+                    onClick={() => removeItem(item.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -356,22 +322,8 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between font-semibold text-base">
                   <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
-                {couponDiscount > 0 && <div className="flex justify-between text-green-700"><span>Coupon discount</span><span>-{formatPrice(couponDiscount)}</span></div>}
-              </div>
-
-              <div className="mt-4">
-                <Input
-                  placeholder="Enter coupon code"
-                  className="mb-3"
-                  value={couponCode}
-                  onChange={(event) => { setCouponCode(event.target.value.toUpperCase()); setCouponDiscount(0); setCouponMessage(""); }}
-                />
-                <Button type="button" variant="outline" className="w-full mb-2" disabled={applyingCoupon} onClick={() => void applyCoupon()}>
-                  {applyingCoupon ? "Checking…" : "Apply Coupon"}
-                </Button>
-                {couponMessage && <p className={`mb-4 text-xs ${couponDiscount > 0 ? "text-green-700" : "text-destructive"}`}>{couponMessage}</p>}
               </div>
 
               <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-black/5 bg-muted/45 p-3 text-sm">

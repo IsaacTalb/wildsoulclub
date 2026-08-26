@@ -46,6 +46,9 @@ function isPublicRoute(pathname: string): boolean {
     "/api/orders(.*)",
     "/api/payments(.*)",
     "/api/profile(.*)",
+    // Coupon validation is a public storefront API. Keeping it behind the
+    // cookie guard redirects guest requests to the sign-in HTML page.
+    "/api/coupons(.*)",
     // Supabase browser sessions are stored client-side, so admin pages must load
     // before src/app/admin/layout.tsx can verify the user. This is only a UI
     // gate; every admin API request is independently protected by requireAdmin().
