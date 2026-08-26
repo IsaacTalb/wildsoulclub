@@ -13,7 +13,7 @@ export default function Page() {
         { key: "release_date", label: "Release date", type: "datetime-local" },
         { key: "description", label: "Description", type: "textarea" },
         { key: "collection_id", label: "Collection", type: "select", optionResource: "collections" },
-        { key: "banner_image_url", label: "Banner image", type: "image", folder: "new-drops", objectKeyField: "banner_object_key" },
+        { key: "banner_image_url", label: "Banner image", type: "image", folder: "new-drops", objectKeyField: "banner_object_key", focalPoint: { xField: "banner_position_x", yField: "banner_position_y" } },
       ]}
     />
   );

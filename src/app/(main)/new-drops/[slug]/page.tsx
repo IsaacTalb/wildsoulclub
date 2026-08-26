@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/footer";
@@ -15,7 +16,7 @@ export default async function DropDetailPage({ params }: { params: Promise<{ slu
       <section className={`relative isolate flex h-[calc(100svh-env(safe-area-inset-bottom))] min-h-[32rem] items-end overflow-hidden bg-white px-5 py-10 sm:px-10 lg:px-[max(4rem,8vw)] lg:py-16 ${drop.banner_image_url ? "text-white" : "text-foreground"}`} aria-labelledby="drop-title">
         {drop.banner_image_url ? (
           <>
-            <Image src={drop.banner_image_url} alt="" fill priority sizes="100vw" className="-z-20 object-cover" />
+            <Image src={drop.banner_image_url} alt="" fill priority sizes="100vw" className="-z-20 object-cover object-center md:[object-position:var(--drop-banner-position)]" style={{ "--drop-banner-position": `${drop.banner_position_x ?? 50}% ${drop.banner_position_y ?? 50}%` } as CSSProperties} />
             <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/95 via-black/35 to-black/15" />
           </>
         ) : null}

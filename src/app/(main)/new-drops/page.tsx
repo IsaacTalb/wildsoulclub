@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
@@ -145,7 +145,7 @@ export default function NewDropsPage() {
                   placeholder="blur"
                   blurDataURL={DROP_IMAGE_PLACEHOLDER}
                   preload={index === 0}
-                  className="-z-20 object-cover"
+                  className="-z-20 object-cover object-center md:[object-position:var(--drop-banner-position)]" style={{ "--drop-banner-position": `${drop.banner_position_x ?? 50}% ${drop.banner_position_y ?? 50}%` } as CSSProperties}
                 />
               ) : null}
               {drop.banner_image_url ? <div className="absolute inset-0 -z-10 bg-black/18" /> : null}
