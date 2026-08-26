@@ -110,6 +110,8 @@ CREATE TABLE drops (
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'active', 'archived')),
   banner_image_url TEXT,
   banner_object_key TEXT,
+  banner_position_x NUMERIC(5, 2) NOT NULL DEFAULT 50 CHECK (banner_position_x BETWEEN 0 AND 100),
+  banner_position_y NUMERIC(5, 2) NOT NULL DEFAULT 50 CHECK (banner_position_y BETWEEN 0 AND 100),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

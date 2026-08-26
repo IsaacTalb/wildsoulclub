@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, ShoppingCart } from "lucide-react";
@@ -84,7 +84,7 @@ export default function HomePage() {
             placeholder="blur"
             blurDataURL={HERO_PLACEHOLDER}
             preload
-            className="-z-20 object-cover"
+            className="-z-20 object-cover object-center md:[object-position:var(--drop-banner-position)]" style={{ "--drop-banner-position": `${latestDrop.banner_position_x ?? 50}% ${latestDrop.banner_position_y ?? 50}%` } as CSSProperties}
           />
         ) : (
           <div className="absolute inset-0 -z-20 bg-gradient-to-br from-neutral-700 via-neutral-950 to-black" />
