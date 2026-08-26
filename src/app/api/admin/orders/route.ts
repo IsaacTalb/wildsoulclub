@@ -20,10 +20,7 @@ export async function GET() {
 
     if (error) throw error;
 
-    const safeData = data && typeof data === "object"
-      ? Object.fromEntries(Object.entries(data).filter(([key]) => key !== "guest_access_token_hash"))
-      : data;
-    return NextResponse.json({ success: true, data: safeData });
+    return NextResponse.json({ success: true, data: data ?? [] });
   } catch {
     return NextResponse.json(
       { success: false, error: "Failed to fetch orders" },

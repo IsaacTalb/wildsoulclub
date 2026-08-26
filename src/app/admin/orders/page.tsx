@@ -96,7 +96,8 @@ export default function AdminOrdersPage() {
       });
       const result = await readJson(response);
       if (!response.ok) throw new Error(result.error ?? "Unable to load orders");
-      setOrders(result.data ?? []);
+      if (!Array.isArray(result.data)) throw new Error("The orders response was invalid. Please reload and try again.");
+      setOrders(result.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load orders");
     } finally {
